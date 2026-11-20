@@ -130,6 +130,15 @@ func _run() -> void:
 	game.health[28] = 200
 	game._apply_mission_modifier()
 	_assert_ok(int(game.health[28]) < 200, "Frost damages exposed hero on scheduled turn")
+	game.raid_mission = {"modifier":"none"}
+	game.raid_stage = 3
+	game.raid_round = 2
+	game.health[60] = 1
+	game._draw()
+	_assert_ok(game.battlefield_3d.active_hazards.has(60), "Ghost strike previews weakest hero before enemy turn")
+	game._boss_aoe_hit(60, 100)
+	_assert_ok(game.winner == "ПОРАЖЕНИЕ", "Lethal environmental damage to allied king ends the raid")
+	game._reset()
 	_assert_ok(Progression.boss_hazard_cells(2, 3, "Осада").size() == 32, "Ice boss forecasts four rows")
 	_assert_ok(Progression.boss_hazard_cells(5, 3, "Охота").size() == 16, "Sky boss forecasts two columns")
 	_assert_ok(Progression.boss_hazard_cells(6, 3, "Засада").size() == 64, "Final boss warns of board-wide darkness")
