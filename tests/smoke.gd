@@ -4,7 +4,7 @@ const Progression = preload("res://scripts/progression.gd")
 const MainScene = preload("res://scenes/main.tscn")
 
 func _initialize() -> void:
-	call_deferred("_run")
+	_run()
 
 func _assert_ok(condition: bool, description: String) -> void:
 	if not condition:
