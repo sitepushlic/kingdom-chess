@@ -1,5 +1,7 @@
 extends Control
 
+const Progression = preload("res://scripts/progression.gd")
+
 const UNIT_TEXTURES = {
 	"K": preload("res://assets/units/k.svg"),
 	"Q": preload("res://assets/units/q.svg"),
@@ -35,8 +37,15 @@ var inventory_label: Label
 var mode_button: Button
 var skill_button: Button
 var battle_log := "Битва начинается."
+var equipment: Array = []
+var equipped := -1
+var raid_wins := 0
+var boss_target := -1
+var raid_round := 0
+var equipment_label: Label
 
 func _ready() -> void:
+	_load_profile()
 	var bg := TextureRect.new()
 	bg.texture = preload("res://assets/backgrounds/ruined_kingdom.svg")
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -144,6 +153,16 @@ func _ready() -> void:
 	inventory_label.add_theme_font_size_override("font_size", 18)
 	inventory_label.add_theme_color_override("font_color", Color("#e5c58c"))
 	ui.add_child(inventory_label)
+	equipment_label = Label.new()
+	equipment_label.add_theme_font_size_override("font_size", 17)
+	equipment_label.add_theme_color_override("font_color", Color("#c6e3e5"))
+	equipment_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	ui.add_child(equipment_label)
+	var equip_button := Button.new()
+	equip_button.text = "СНАРЯДИТЬ ЛУЧШИЙ ПРЕДМЕТ"
+	equip_button.custom_minimum_size.y = 52
+	equip_button.pressed.connect(_equip_best)
+	ui.add_child(equip_button)
 	var guide := Label.new()
 	guide.text = "Выбери героя и клетку назначения.\n2 действия на ход • Тактический бой"
 	guide.add_theme_font_size_override("font_size", 18)
@@ -191,14 +210,62 @@ func _start_raid() -> void:
 	mode = "raid"
 	_reset()
 
+func _load_profile() -> void:
+	var profile: Dictionary = Progression.load_profile()
+	player_level = int(profile["level"])
+	experience = int(profile["xp"])
+	gold = int(profile["gold"])
+	potions = int(profile["potions"])
+	equipment = profile["items"]
+	equipped = int(profile["equipped"])
+	raid_wins = int(profile["wins"])
+	if equipped < 0 or equipped >= equipment.size():
+		equipped = -1
+
+func _save_profile() -> void:
+	Progression.save_profile({
+		"level": player_level, "xp": experience, "gold": gold,
+		"potions": potions, "items": equipment,
+		"equipped": equipped, "wins": raid_wins
+	})
+
+func _attack_bonus() -> int:
+	if equipped < 0 or equipped >= equipment.size(): return 0
+	return int(equipment[equipped].get("attack", 0))
+
+func _equip_best() -> void:
+	if equipment.is_empty():
+		battle_log = "Предметы выпадают после победы в рейде."
+		_draw()
+		return
+	var best := 0
+	for i in range(1, equipment.size()):
+		if int(equipment[i].get("attack", 0)) > int(equipment[best].get("attack", 0)):
+			best = i
+	equipped = best
+	battle_log = "Экипировано: " + str(equipment[best].get("name", "Артефакт"))
+	_save_profile()
+	_draw()
+
 func _reward(amount: int) -> void:
 	experience += amount
-	gold += amount / 2
-	if experience >= player_level * 100:
-		experience -= player_level * 100
+	gold += int(amount / 2.0)
+	while player_level < 50 and experience >= Progression.experience_needed(player_level):
+		experience -= Progression.experience_needed(player_level)
 		player_level += 1
 		potions += 1
 		battle_log = "Новый уровень! Получено зелье."
+	_save_profile()
+
+func _raid_victory() -> void:
+	if winner != "": return
+	winner = "ПОБЕДА! БОСС ПОВЕРЖЕН!"
+	raid_wins += 1
+	_reward(100)
+	var item: Dictionary = Progression.roll_item(player_level)
+	equipment.append(item)
+	battle_log = "Добыча: %s (%s), +%d к атаке" % [item["name"], Progression.RARITIES[int(item["rarity"])], int(item["attack"])]
+	_save_profile()
 
 func _use_potion() -> void:
 	if winner != "" or potions <= 0 or selected < 0 or ap < 1 or acted.has(selected): return
@@ -207,6 +274,7 @@ func _use_potion() -> void:
 	if health[selected] >= HP[p]: return
 	health[selected] = mini(HP[p], health[selected] + 40)
 	potions -= 1
+	_save_profile()
 	_spend_action(selected)
 	battle_log = "Зелье восстанавливает 40 здоровья."
 	_draw()
@@ -227,9 +295,10 @@ func _curse_selected() -> void:
 		pieces[target] = ""
 		health[target] = 0
 		if victim.to_upper() == "K":
-			winner = "ПОБЕДА!"
-			if mode == "raid": _reward(100)
-		_reward(20)
+			if mode == "raid": _raid_victory()
+			else: winner = "ПОБЕДА!"
+		elif mode == "raid":
+			_reward(20)
 	_spend_action(selected)
 	battle_log = "Проклятие наносит 30 урона."
 	_draw()
@@ -257,6 +326,8 @@ func _reset() -> void:
 	ap = 2
 	selected = -1
 	boss_hp = 240
+	raid_round = 0
+	boss_target = -1
 	battle_log = "Рейд: уничтожь тёмного короля!" if mode == "raid" else "Арена: два игрока на одном устройстве."
 	if mode == "raid":
 		for i in range(8,16):
@@ -267,6 +338,7 @@ func _reset() -> void:
 				pieces[i] = ""
 				health[i] = 0
 		health[4] = boss_hp
+		boss_target = _choose_boss_target()
 	winner = ""
 	acted.clear()
 	heal_used = false
@@ -317,7 +389,7 @@ func _tap(i: int) -> void:
 		var attacker: String = pieces[selected]
 		if pieces[i] != "":
 			var damage: int = DAMAGE[attacker.to_upper()]
-			if mode == "raid": damage += (player_level - 1) * 2
+			if mode == "raid": damage += (player_level - 1) * 2 + _attack_bonus()
 			health[i] -= damage
 			if mode == "raid" and i == 4:
 				boss_hp = maxi(0,health[i])
@@ -325,8 +397,8 @@ func _tap(i: int) -> void:
 				acted.append(selected)
 			else:
 				if pieces[i].to_upper() == "K":
-					winner = "ПОБЕДА! БОСС ПОВЕРЖЕН!" if mode == "raid" else ("ПОБЕДА СВЕТЛЫХ!" if turn == 1 else "ПОБЕДА ТЁМНЫХ!")
-					if mode == "raid": _reward(100)
+					if mode == "raid": _raid_victory()
+					else: winner = "ПОБЕДА СВЕТЛЫХ!" if turn == 1 else "ПОБЕДА ТЁМНЫХ!"
 				_move(selected,i)
 		else:
 			_move(selected,i)
@@ -371,23 +443,35 @@ func _end_turn() -> void:
 	selected = -1
 	_draw()
 
+func _choose_boss_target() -> int:
+	var target := -1
+	var score := 99999
+	for i in range(64):
+		if _team(pieces[i]) != 1: continue
+		var distance: int = absi(int(i / 8) - 0) + absi(i % 8 - 4)
+		var value: int = distance * 10 + int(health[i] / 10)
+		if value < score:
+			score = value
+			target = i
+	return target
+
 func _boss_action() -> void:
 	if winner != "": return
 	enemy_turn = true
-	var targets: Array = []
-	for i in range(64):
-		if _team(pieces[i]) == 1:
-			targets.append(i)
-	if targets.is_empty():
-		winner = "ПОРАЖЕНИЕ"
+	raid_round += 1
+	if boss_target >= 0 and _team(pieces[boss_target]) == 1:
+		var damage := 25 if raid_round % 3 != 0 else 45
+		health[boss_target] -= damage
+		battle_log = "Падший король наносит %d урона по отмеченной клетке!" % damage
+		if health[boss_target] <= 0:
+			if pieces[boss_target] == "K": winner = "ПОРАЖЕНИЕ"
+			pieces[boss_target] = ""
+			health[boss_target] = 0
 	else:
-		var target: int = targets[randi_range(0,targets.size()-1)]
-		health[target] -= 25
-		battle_log = "Падший король наносит 25 урона!"
-		if health[target] <= 0:
-			if pieces[target] == "K": winner = "ПОРАЖЕНИЕ"
-			pieces[target] = ""
-			health[target] = 0
+		battle_log = "Герои уклонились от удара Падшего короля!"
+	boss_target = _choose_boss_target()
+	if boss_target >= 0 and winner == "":
+		battle_log += "\nСледующая цель: %s%d" % [char(65 + boss_target % 8), 8 - int(boss_target / 8)]
 	turn = 1
 	ap = 2
 	acted.clear()
@@ -399,7 +483,11 @@ func _boss_action() -> void:
 func _draw() -> void:
 	status.text = winner if winner != "" else ("ГЕРОИ" if mode == "raid" else ("СВЕТЛЫЕ" if turn == 1 else "ТЁМНЫЕ")) + " • ОД: " + str(ap)
 	mode_button.text = "РЕЖИМ: АРЕНА" if mode == "arena" else "РЕЖИМ: РЕЙД"
-	inventory_label.text = "Ур. %d  •  Опыт: %d/%d  •  Золото: %d  •  Зелья: %d" % [player_level,experience,player_level*100,gold,potions]
+	inventory_label.text = "Ур. %d  •  Опыт: %d/%d  •  Золото: %d  •  Зелья: %d" % [player_level,experience,Progression.experience_needed(player_level),gold,potions]
+	var equipped_name := "нет"
+	if equipped >= 0 and equipped < equipment.size():
+		equipped_name = str(equipment[equipped].get("name", "Артефакт")) + " (+" + str(_attack_bonus()) + ")"
+	equipment_label.text = "Снаряжение: %s\nТрофеи: %d  •  Побед в рейдах: %d" % [equipped_name,equipment.size(),raid_wins]
 	info.text = ("БОСС: %d/240 HP\n" % boss_hp if mode == "raid" else "") + battle_log
 	for i in range(64):
 		var b: Button = buttons[i]
@@ -417,6 +505,10 @@ func _draw() -> void:
 		style.border_color = Color("#8b7453") if (row+i%8)%2 == 0 else Color("#6f5a55")
 		style.set_border_width_all(1)
 		style.set_corner_radius_all(4)
+		if mode == "raid" and boss_target == i and winner == "":
+			style.bg_color = Color("#8c3440")
+			style.border_color = Color("#ff8c7e")
+			style.set_border_width_all(3)
 		if selected == i: style.bg_color = Color("#d4a53c")
 		elif selected >= 0 and _legal(selected,i): style.bg_color = Color("#44675e")
 		b.add_theme_stylebox_override("normal",style)
