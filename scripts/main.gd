@@ -1633,6 +1633,55 @@ func _boss_aoe_hit(index: int, damage: int) -> void:
 		pieces[index] = ""
 		health[index] = 0
 
+func _apply_mission_modifier() -> void:
+	if mode != "raid" or winner != "": return
+	var modifier: String = str(raid_mission.get("modifier", "none"))
+	match modifier:
+		"frost":
+			if raid_round % 3 == 0:
+				var chilled := 0
+				for cell in range(64):
+					if _team(pieces[cell]) == 1 and int(cell / 8) <= 4:
+						_boss_aoe_hit(cell, 8 + raid_stage * 3)
+						chilled += 1
+				if chilled > 0: battle_log += "\nМОРОЗ: ледяная волна поразила %d героев." % chilled
+		"poison":
+			if raid_round % 3 == 0:
+				var poisoned := 0
+				for cell in range(64):
+					if _team(pieces[cell]) == 1 and cell % 8 in [1, 6]:
+						_boss_aoe_hit(cell, 6 + raid_stage * 2)
+						poisoned += 1
+				if poisoned > 0: battle_log += "\nЯДОВИТЫЙ ТУМАН: %d героев под ударом." % poisoned
+		"fury":
+			if raid_round % 3 == 0:
+				for cell in range(64):
+					if _team(pieces[cell]) == -1 and cell != 4:
+						health[cell] += 10 + raid_stage * 3
+				battle_log += "\nЯРОСТЬ: прислужники восстанавливают здоровье."
+		"fortified":
+			if raid_round % 4 == 0:
+				for cell in range(64):
+					if _team(pieces[cell]) == -1 and cell != 4:
+						health[cell] += 8 + raid_stage * 2
+				battle_log += "\nУКРЕПЛЕНИЯ: гарнизон укрепляет оборону."
+		"ambush":
+			if raid_round % 4 == 0:
+				for cell in [16, 23]:
+					if pieces[cell] == "":
+						pieces[cell] = "p"
+						health[cell] = HP["P"] + raid_stage * 5
+						battle_log += "\nЗАСАДА: прибыло подкрепление!"
+						break
+		"rift":
+			if raid_round % 3 == 0:
+				var burned := 0
+				for cell in range(64):
+					if _team(pieces[cell]) == 1 and cell % 8 in [3, 4]:
+						_boss_aoe_hit(cell, 9 + raid_stage * 3)
+						burned += 1
+				if burned > 0: battle_log += "\nРАЗЛОМ: %d героев получили урон." % burned
+
 func _boss_action() -> void:
 	if winner != "": return
 	enemy_turn = true
@@ -1711,6 +1760,11 @@ func _boss_action() -> void:
 			if _team(pieces[hero_index]) == 1 and hero_index % 8 == 4:
 				_deal_damage(hero_index, 12 + raid_stage * 5, false)
 				battle_log += "\nРазлом обжигает центральную линию!"
+	_apply_mission_modifier()
+	if winner != "":
+		enemy_turn = false
+		_draw()
+		return
 	if raid_round % (3 if boss_phase == 2 else 4) == 0 and boss_hp > 0:
 		var spawn := -1
 		for cell in [8, 9, 10, 13, 14, 15]:
