@@ -72,9 +72,14 @@ func _ready() -> void:
 	panel_style.set_border_width_all(2)
 	panel_style.set_content_margin_all(22)
 	sidebar.add_theme_stylebox_override("panel", panel_style)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	sidebar.add_child(scroll)
 	var ui := VBoxContainer.new()
-	ui.add_theme_constant_override("separation", 16)
-	sidebar.add_child(ui)
+	ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ui.add_theme_constant_override("separation", 12)
+	scroll.add_child(ui)
 	var heading := Label.new()
 	heading.text = "⚔ ВОЙНА КОРОЛЕВСТВ"
 	heading.add_theme_font_size_override("font_size", 28)
@@ -275,7 +280,9 @@ func _tap(i: int) -> void:
 	elif _legal(selected,i):
 		var attacker: String = pieces[selected]
 		if pieces[i] != "":
-			health[i] -= DAMAGE[attacker.to_upper()] + (player_level - 1) * 2 if mode == "raid" else DAMAGE[attacker.to_upper()]
+			var damage: int = DAMAGE[attacker.to_upper()]
+			if mode == "raid": damage += (player_level - 1) * 2
+			health[i] -= damage
 			if mode == "raid" and i == 4:
 				boss_hp = maxi(0,health[i])
 			if health[i] > 0:
@@ -357,7 +364,7 @@ func _draw() -> void:
 	status.text = winner if winner != "" else ("ГЕРОИ" if mode == "raid" else ("СВЕТЛЫЕ" if turn == 1 else "ТЁМНЫЕ")) + " • ОД: " + str(ap)
 	mode_button.text = "РЕЖИМ: АРЕНА" if mode == "arena" else "РЕЖИМ: РЕЙД"
 	inventory_label.text = "Ур. %d  •  Опыт: %d/%d  •  Золото: %d  •  Зелья: %d" % [player_level,experience,player_level*100,gold,potions]
-	info.text = ("БОСС: %d/240 HP\\n" % boss_hp if mode == "raid" else "") + battle_log
+	info.text = ("БОСС: %d/240 HP\n" % boss_hp if mode == "raid" else "") + battle_log
 	for i in range(64):
 		var b: Button = buttons[i]
 		var p: String = pieces[i]
