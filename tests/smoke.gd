@@ -18,6 +18,8 @@ func _run() -> void:
 	_assert_ok(game.unit_images.size() == 64, "Board creates 64 illustrated units")
 	_assert_ok(game.inventory_popup != null, "Inventory dialog exists")
 	_assert_ok(game.shop_popup != null, "Alchemist shop exists")
+	_assert_ok(game.main_menu != null and game.main_menu.visible, "Cinematic start menu visible at launch")
+	_assert_ok(game.get_node_or_null("NetworkLobby") != null, "Co-op lobby is a dedicated dialog")
 	_assert_ok(game.lan_address != null, "LAN address field exists")
 	_assert_ok(game.lan_status != null, "LAN status field exists")
 	_assert_ok(game.battle_result_dialog != null, "Battle result dialog exists")
