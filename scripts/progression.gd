@@ -156,6 +156,20 @@ static func first_clear_reward(wins: int) -> Dictionary:
 static func region_for_run(wins: int) -> String:
 	return REGIONS[clampi(int(wins / 3.0), 0, REGIONS.size() - 1)]
 
+static func boss_hazard_cells(stage: int, next_round: int, encounter: String) -> Array[int]:
+	var cells: Array[int] = []
+	if next_round <= 0: return cells
+	for i in range(64):
+		var threatened := false
+		match stage:
+			2: threatened = next_round % 3 == 0 and int(i / 8) <= 3
+			5: threatened = next_round % 3 == 0 and i % 8 in [2, 5]
+			6: threatened = next_round % 3 == 0
+		if encounter == "Разлом" and next_round % 4 == 0 and i % 8 == 4:
+			threatened = true
+		if threatened: cells.append(i)
+	return cells
+
 static func hazard_cells(modifier: String, next_round: int) -> Array[int]:
 	var cells: Array[int] = []
 	if next_round <= 0: return cells
