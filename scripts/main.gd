@@ -43,6 +43,8 @@ var raid_wins := 0
 var boss_target := -1
 var raid_round := 0
 var equipment_label: Label
+var boss_portrait: TextureRect
+var boss_bar: ProgressBar
 var curse_mode := false
 var turn_count := 0
 var enemy_wave := 0
@@ -138,6 +140,18 @@ func _ready() -> void:
 	status = Label.new()
 	status.add_theme_font_size_override("font_size", 25)
 	ui.add_child(status)
+	boss_portrait = TextureRect.new()
+	boss_portrait.texture = preload("res://assets/backgrounds/fallen_king.svg")
+	boss_portrait.custom_minimum_size = Vector2(0, 120)
+	boss_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	boss_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	ui.add_child(boss_portrait)
+	boss_bar = ProgressBar.new()
+	boss_bar.max_value = 240
+	boss_bar.value = 240
+	boss_bar.show_percentage = false
+	boss_bar.custom_minimum_size.y = 16
+	ui.add_child(boss_bar)
 	var mode_row := HBoxContainer.new()
 	ui.add_child(mode_row)
 	mode_button = Button.new()
@@ -521,6 +535,9 @@ func _boss_action() -> void:
 func _draw() -> void:
 	status.text = winner if winner != "" else ("ГЕРОИ" if mode == "raid" else ("СВЕТЛЫЕ" if turn == 1 else "ТЁМНЫЕ")) + " • ОД: " + str(ap)
 	mode_button.text = "РЕЖИМ: АРЕНА" if mode == "arena" else "РЕЖИМ: РЕЙД"
+	boss_portrait.visible = mode == "raid"
+	boss_bar.visible = mode == "raid"
+	boss_bar.value = boss_hp
 	inventory_label.text = "Ур. %d  •  Опыт: %d/%d  •  Золото: %d  •  Зелья: %d" % [player_level,experience,Progression.experience_needed(player_level),gold,potions]
 	var equipped_name := "нет"
 	if equipped >= 0 and equipped < equipment.size():
