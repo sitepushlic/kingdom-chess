@@ -283,7 +283,7 @@ func _ready() -> void:
 	restart.pressed.connect(_reset)
 	ui.add_child(restart)
 	var note := Label.new()
-	note.text = "Одиночный рейд и локальная арена.\nСеть, 3D и кооператив ещё не готовы."
+	note.text = "Одиночный рейд, локальная арена и экспериментальный Wi-Fi кооператив.\n3D и онлайн-серверы ещё не готовы."
 	note.add_theme_font_size_override("font_size", 15)
 	ui.add_child(note)
 	multiplayer.peer_connected.connect(_on_peer_connected)
@@ -513,7 +513,8 @@ func _snapshot() -> Dictionary:
 		"boss_hp": boss_hp, "boss_phase": boss_phase,
 		"raid_round": raid_round, "raid_stage": raid_stage,
 		"boss_target": boss_target, "battle_log": battle_log,
-		"acted": acted.duplicate(), "enemy_wave": enemy_wave
+		"acted": acted.duplicate(), "enemy_wave": enemy_wave,
+		"selected": selected, "curse_mode": curse_mode, "heal_used": heal_used
 	}
 
 func _broadcast_snapshot() -> void:
@@ -540,8 +541,9 @@ func _send_snapshot(data: Dictionary) -> void:
 	acted = data["acted"].duplicate()
 	enemy_wave = int(data["enemy_wave"])
 	mode = "raid"
-	selected = -1
-	curse_mode = false
+	selected = int(data.get("selected", -1))
+	curse_mode = bool(data.get("curse_mode", false))
+	heal_used = bool(data.get("heal_used", false))
 	_draw()
 
 @rpc("any_peer", "call_remote", "reliable")
