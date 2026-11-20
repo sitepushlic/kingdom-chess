@@ -269,7 +269,12 @@ static func set_bonus(items: Array, slots: Dictionary) -> Dictionary:
 		var index: int = int(slots.get(slot, -1))
 		if index < 0 or index >= items.size():
 			continue
-		if typeof(items[index]) != TYPE_DICTIONARY:\n\t\t\tcontinue\n\t\tvar item: Dictionary = items[index]\n\t\tif not is_valid_equipment_item(item) or str(item["slot"]) != slot:\n\t\t\tcontinue\n\t\tvar set_id: int = int(item["set_id"])
+		if typeof(items[index]) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = items[index]
+		if not is_valid_equipment_item(item) or str(item["slot"]) != slot:
+			continue
+		var set_id: int = int(item["set_id"])
 		if set_id >= 0:
 			counts[set_id] = int(counts.get(set_id, 0)) + 1
 	var bonus := {"attack": 0, "armor": 0, "hp": 0, "crit": 0, "lifesteal": 0}
