@@ -76,6 +76,13 @@ Portrait-first Android commercial-quality **3D tactical chess RPG**, with intuit
 - CI #143 passed: 18 authored missions, variable enemy modifiers, campaign finale, HUD mission text, save and LAN sync; fixed a Godot 4.3 type-inference parse error in the mission generator.
 - Check the most recent workflow at https://github.com/sitepushlic/kingdom-chess/actions before asserting any newer commit passed.
 
+## Automated development session — save equipment integrity (2026-11-21)
+- Verified GitHub Actions **#166 success**: Godot gameplay smoke tests passed, Android debug APK exported and artifact upload completed. https://github.com/sitepushlic/kingdom-chess/actions/runs/44800820117
+- Commit `686ba3a` (`scripts/progression.gd`): save loading now validates each equipped index against inventory bounds, actual item slot, item dictionary type and current character level. Invalid or level-locked references are unequipped; legacy `equipped` weapon index is synchronized to validated weapon slot. Prevents stale saved indices from granting wrong-slot or locked bonuses after inventory changes.
+- Commit `10b8375` (`tests/smoke.gd`): regression coverage for level-locked weapons, wrong-slot references, valid relic retention, out-of-bounds indices and malformed inventory entries.
+- Latest CI after these commits is **not yet verified** at handoff-writing time; inspect Actions, repair any failure and confirm APK upload. The project remains a prototype, not commercial-ready.
+- Next: strengthen inventory item schema validation, implement unique objectives and persistent poison/status effects; real-device testing, authored 3D art, release signing and co-op QA remain outstanding.
+
 ## Required next steps (prioritized)
 1. **Verify latest CI** and fix failed tests immediately. Ensure APK artifact exists; inspect headless test output, not just a green commit.
 2. Implement genuinely unique mission **win conditions** and scripted objectives, boss-specific behavior, environmental hazard telegraphs, persistent status effects and campaign storytelling. Six modifiers now affect combat but are not yet visually telegraphed.
