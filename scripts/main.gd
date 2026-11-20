@@ -43,6 +43,9 @@ var raid_wins := 0
 var boss_target := -1
 var raid_round := 0
 var equipment_label: Label
+var curse_mode := false
+var turn_count := 0
+var enemy_wave := 0
 
 func _ready() -> void:
 	_load_profile()
@@ -173,7 +176,7 @@ func _ready() -> void:
 	skill_button.pressed.connect(_heal_selected)
 	ui.add_child(skill_button)
 	var fire := Button.new()
-	fire.text = "🔥 ПРОКЛЯТИЕ (30 УРОНА)"
+	fire.text = "🔥 ПРОКЛЯТИЕ — ВЫБРАТЬ ЦЕЛЬ"
 	fire.custom_minimum_size.y = 58
 	fire.pressed.connect(_curse_selected)
 	ui.add_child(fire)
@@ -281,15 +284,22 @@ func _use_potion() -> void:
 
 func _curse_selected() -> void:
 	if winner != "" or selected < 0 or ap < 1 or acted.has(selected): return
-	if pieces[selected].to_upper() != "Q" and pieces[selected].to_upper() != "B": return
-	var target := -1
-	for i in range(64):
-		if _team(pieces[i]) == -turn and _legal(selected,i):
-			target = i
-			break
-	if target < 0: return
+	if pieces[selected].to_upper() != "Q" and pieces[selected].to_upper() != "B":
+		battle_log = "Проклятие доступно только ферзю и слону."
+		_draw()
+		return
+	curse_mode = not curse_mode
+	battle_log = "Выбери подсвеченного врага." if curse_mode else "Проклятие отменено."
+	_draw()
+
+func _apply_curse(target: int) -> void:
+	if selected < 0 or not _legal(selected,target) or pieces[target] == "":
+		return
+	if _team(pieces[target]) != -turn: return
+	var source: int = selected
 	health[target] -= 30
-	if mode == "raid" and target == 4: boss_hp = maxi(0,health[target])
+	if mode == "raid" and target == 4:
+		boss_hp = maxi(0, health[target])
 	if health[target] <= 0:
 		var victim: String = pieces[target]
 		pieces[target] = ""
@@ -299,7 +309,8 @@ func _curse_selected() -> void:
 			else: winner = "ПОБЕДА!"
 		elif mode == "raid":
 			_reward(20)
-	_spend_action(selected)
+	curse_mode = false
+	_spend_action(source)
 	battle_log = "Проклятие наносит 30 урона."
 	_draw()
 
@@ -325,6 +336,9 @@ func _reset() -> void:
 	turn = 1
 	ap = 2
 	selected = -1
+	curse_mode = false
+	turn_count = 0
+	enemy_wave = 0
 	boss_hp = 240
 	raid_round = 0
 	boss_target = -1
@@ -338,6 +352,10 @@ func _reset() -> void:
 				pieces[i] = ""
 				health[i] = 0
 		health[4] = boss_hp
+		pieces[11] = "n"
+		health[11] = HP["N"]
+		pieces[12] = "p"
+		health[12] = HP["P"]
 		boss_target = _choose_boss_target()
 	winner = ""
 	acted.clear()
@@ -381,6 +399,13 @@ func _legal(a: int, b: int) -> bool:
 
 func _tap(i: int) -> void:
 	if winner != "" or enemy_turn or (mode == "raid" and turn == -1): return
+	if curse_mode:
+		if selected >= 0 and pieces[i] != "" and _team(pieces[i]) == -turn and _legal(selected,i):
+			_apply_curse(i)
+		elif i == selected:
+			curse_mode = false
+			_draw()
+		return
 	if selected == -1:
 		if _team(pieces[i]) == turn and not acted.has(i): selected = i
 	elif selected == i:
@@ -459,6 +484,7 @@ func _boss_action() -> void:
 	if winner != "": return
 	enemy_turn = true
 	raid_round += 1
+	turn_count += 1
 	if boss_target >= 0 and _team(pieces[boss_target]) == 1:
 		var damage := 25 if raid_round % 3 != 0 else 45
 		health[boss_target] -= damage
@@ -469,6 +495,17 @@ func _boss_action() -> void:
 			health[boss_target] = 0
 	else:
 		battle_log = "Герои уклонились от удара Падшего короля!"
+	if raid_round % 4 == 0 and boss_hp > 0:
+		var spawn := -1
+		for cell in [8, 9, 10, 13, 14, 15]:
+			if pieces[cell] == "":
+				spawn = cell
+				break
+		if spawn >= 0:
+			pieces[spawn] = "p"
+			health[spawn] = HP["P"]
+			enemy_wave += 1
+			battle_log += "\nВосстал скелет-страж!"
 	boss_target = _choose_boss_target()
 	if boss_target >= 0 and winner == "":
 		battle_log += "\nСледующая цель: %s%d" % ["ABCDEFGH".substr(boss_target % 8, 1), 8 - int(boss_target / 8)]
@@ -476,6 +513,7 @@ func _boss_action() -> void:
 	ap = 2
 	acted.clear()
 	selected = -1
+	curse_mode = false
 	heal_used = false
 	enemy_turn = false
 	_draw()
@@ -488,7 +526,7 @@ func _draw() -> void:
 	if equipped >= 0 and equipped < equipment.size():
 		equipped_name = str(equipment[equipped].get("name", "Артефакт")) + " (+" + str(_attack_bonus()) + ")"
 	equipment_label.text = "Снаряжение: %s\nТрофеи: %d  •  Побед в рейдах: %d" % [equipped_name,equipment.size(),raid_wins]
-	info.text = ("БОСС: %d/240 HP\n" % boss_hp if mode == "raid" else "") + battle_log
+	info.text = ("БОСС: %d/240 HP • Раунд %d\n" % [boss_hp, raid_round] if mode == "raid" else "") + battle_log
 	for i in range(64):
 		var b: Button = buttons[i]
 		var p: String = pieces[i]
@@ -510,7 +548,9 @@ func _draw() -> void:
 			style.border_color = Color("#ff8c7e")
 			style.set_border_width_all(3)
 		if selected == i: style.bg_color = Color("#d4a53c")
-		elif selected >= 0 and _legal(selected,i): style.bg_color = Color("#44675e")
+		elif selected >= 0 and _legal(selected,i):
+			if curse_mode and pieces[i] != "": style.bg_color = Color("#8b426c")
+			elif not curse_mode: style.bg_color = Color("#44675e")
 		b.add_theme_stylebox_override("normal",style)
 		b.add_theme_stylebox_override("hover",style)
 		b.add_theme_stylebox_override("pressed",style)
