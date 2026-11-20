@@ -93,7 +93,11 @@ static func is_valid_equipment_item(item: Dictionary) -> bool:
 	if not ITEM_SLOTS.has(item.get("slot", null)):
 		return false
 	for field in ["level", "rarity", "power", "upgrade", "set_id", "trait_id", "attack", "armor", "hp", "crit", "lifesteal", "penetration", "block", "bleed"]:
-		if typeof(item.get(field)) != TYPE_INT and typeof(item.get(field)) != TYPE_FLOAT:
+		var value: Variant = item.get(field)
+		if typeof(value) != TYPE_INT and typeof(value) != TYPE_FLOAT:
+			return false
+		# JSON can carry fractional, infinite or enormous values: never truncate these into bonuses.
+		if not is_finite(float(value)) or absf(float(value)) > 1000000.0 or float(value) != float(int(value)):
 			return false
 	if int(item["level"]) < 1 or int(item["level"]) > 50:
 		return false
@@ -107,6 +111,9 @@ static func is_valid_equipment_item(item: Dictionary) -> bool:
 		return false
 	for stat in ["power", "attack", "armor", "hp", "crit", "lifesteal", "penetration", "block", "bleed"]:
 		if int(item[stat]) < 0:
+			return false
+	for percent in ["crit", "lifesteal", "penetration", "block", "bleed"]:
+		if int(item[percent]) > 100:
 			return false
 	return true
 
