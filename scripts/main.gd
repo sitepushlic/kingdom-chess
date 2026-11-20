@@ -37,9 +37,12 @@ var skill_button: Button
 var battle_log := "Битва начинается."
 
 func _ready() -> void:
-	var bg := ColorRect.new()
-	bg.color = Color("#110f19")
+	var bg := TextureRect.new()
+	bg.texture = preload("res://assets/backgrounds/ruined_kingdom.svg")
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_SCALE
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 	var layout := HBoxContainer.new()
 	layout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
