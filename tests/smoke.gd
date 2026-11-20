@@ -14,13 +14,15 @@ func _assert_ok(condition: bool, description: String) -> void:
 func _run() -> void:
 	var game = MainScene.instantiate()
 	root.add_child(game)
+	await process_frame
 	_assert_ok(ProjectSettings.get_setting("display/window/size/viewport_width") == 720, "Portrait viewport width")
 	_assert_ok(ProjectSettings.get_setting("display/window/size/viewport_height") == 1280, "Portrait viewport height")
 	_assert_ok(game.battle_layout is VBoxContainer, "Portrait layout stacks battlefield and HUD")
 	_assert_ok(game.menu_toggle != null, "Menu is accessible from top button")
 	var end_turn_buttons := game.find_children("*", "Button", true, false).filter(func(button): return button.text == "➤ ЗАВЕРШИТЬ ХОД")
 	_assert_ok(end_turn_buttons.size() == 1, "End Turn button exists")
-	_assert_ok(end_turn_buttons[0].get_parent() is VBoxContainer, "End Turn remains in fixed portrait action footer")
+	if end_turn_buttons.size() == 1:
+		_assert_ok(end_turn_buttons[0].get_parent() is VBoxContainer, "End Turn remains in fixed portrait action footer")
 	_assert_ok(game.buttons.size() == 64, "Board creates 64 interactive buttons")
 	_assert_ok(game.unit_images.size() == 64, "Board creates 64 illustrated units")
 	_assert_ok(game.hazard_overlays.size() == 64, "Animated danger warning on every square")
