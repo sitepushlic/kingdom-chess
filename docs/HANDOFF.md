@@ -106,3 +106,10 @@ For EVERY future implementation session:
 - Update THIS `docs/HANDOFF.md` with commits, changed files, implemented behavior, tests, known defects, next tasks and final product goal.
 - Give user a concise Russian summary and direct links to commit, workflow and this file.
 - Do not say “finished” or “commercial ready” while art, gameplay, real-device tests and release pipeline are unfinished.
+
+## Automated CI recovery — 2026-11-20 (run #172)
+- Inspected failed run #172: https://github.com/sitepushlic/kingdom-chess/actions/runs/44812941111 . Godot reported `Could not preload resource script res://scripts/progression.gd` and smoke tests could not start. Root cause found in `set_bonus`: five literal `\\n` sequences and `\\t` escapes had been committed into the GDScript source rather than actual line breaks/tabs.
+- Commit `141d001` converted the escaped source sequences into valid GDScript indentation and lines; this repairs the parser-breaking regression from inventory schema hardening.
+- Commit `60c5b63` strengthens Android CI: after the smoke success marker, reject parser/script errors in smoke.log to avoid a false green build.
+- **Next run must verify** the current latest Actions run and debug APK artifact before claiming recovery. #172 was failed; #169 was the last verified successful APK at session start.
+- Product gaps remain: original production-quality 3D art/animation, authored distinct objectives, persistent status effects, mobile/co-op QA, signing and commercial release readiness.
