@@ -13,6 +13,26 @@ const PREFIXES = ["Закалённый", "Зачарованный", "Прок�
 const AFFIXES = ["Пробуждение", "Ярость", "Стойкость", "Жатва", "Сокрушение", "Оберег"]
 const REGIONS = ["Пепельная крепость", "Ледяной бастион", "Затонувший собор", "Обсидиановая цитадель", "Небесный разлом", "Трон вечной ночи"]
 const ENCOUNTERS = ["Штурм", "Осада", "Охота", "Засада", "Разлом"]
+const CAMPAIGN = [
+	{"title":"Пепельный дозор", "type":"Штурм", "goal":"Прорви передовую и уничтожь Падшего короля.", "enemy":"p", "modifier":"none"},
+	{"title":"Стены без знамён", "type":"Осада", "goal":"Пройди через тяжёлую оборону ладей.", "enemy":"r", "modifier":"fortified"},
+	{"title":"Пепельный маршал", "type":"Засада", "goal":"Победи командира и открой путь к северу.", "enemy":"b", "modifier":"ambush"},
+	{"title":"Белая метель", "type":"Охота", "goal":"Переживи натиск быстрых всадников.", "enemy":"n", "modifier":"frost"},
+	{"title":"Ледяные ворота", "type":"Осада", "goal":"Разбей гарнизон ледяного бастиона.", "enemy":"r", "modifier":"fortified"},
+	{"title":"Страж вечной зимы", "type":"Разлом", "goal":"Избегай опасной центральной линии.", "enemy":"q", "modifier":"frost"},
+	{"title":"Затонувший причал", "type":"Засада", "goal":"Не дай врагам окружить своего короля.", "enemy":"b", "modifier":"ambush"},
+	{"title":"Храм глубин", "type":"Штурм", "goal":"Очисти путь через храмовых стражей.", "enemy":"p", "modifier":"poison"},
+	{"title":"Сердце собора", "type":"Разлом", "goal":"Сломи проклятие затонувшего собора.", "enemy":"q", "modifier":"poison"},
+	{"title":"Обсидиановая тропа", "type":"Охота", "goal":"Останови стремительных охотников.", "enemy":"n", "modifier":"fury"},
+	{"title":"Кузницы тьмы", "type":"Осада", "goal":"Разрушь укрепления обсидиановой цитадели.", "enemy":"r", "modifier":"fortified"},
+	{"title":"Генерал чёрного камня", "type":"Засада", "goal":"Победи элитный отряд генерала.", "enemy":"b", "modifier":"fury"},
+	{"title":"Мост над бездной", "type":"Разлом", "goal":"Пробейся через опасный небесный мост.", "enemy":"q", "modifier":"rift"},
+	{"title":"Стражи небес", "type":"Охота", "goal":"Сдержи штурм небесной кавалерии.", "enemy":"n", "modifier":"fury"},
+	{"title":"Разорванное небо", "type":"Разлом", "goal":"Преодолей нестабильную магию разлома.", "enemy":"q", "modifier":"rift"},
+	{"title":"Врата вечной ночи", "type":"Осада", "goal":"Победи стражей последнего бастиона.", "enemy":"r", "modifier":"fortified"},
+	{"title":"Совет теней", "type":"Засада", "goal":"Разбей элитных советников короля.", "enemy":"b", "modifier":"poison"},
+	{"title":"Последняя корона", "type":"Разлом", "goal":"Одержи решающую победу над Падшим королём.", "enemy":"q", "modifier":"rift"}
+]
 const SET_NAMES = ["Пепельный легион", "Ледяная стража", "Бездонная бездна", "Золотой рассвет", "Проклятый трон", "Звёздный орден"]
 const BOSS_RARITY_WEIGHTS = [8, 20, 27, 23, 14, 6, 2]
 const ITEM_SLOTS = ["Оружие", "Тело", "Реликвия"]
@@ -136,8 +156,21 @@ static func first_clear_reward(wins: int) -> Dictionary:
 static func region_for_run(wins: int) -> String:
 	return REGIONS[clampi(int(wins / 3.0), 0, REGIONS.size() - 1)]
 
+static func mission_for_run(wins: int) -> Dictionary:
+	if wins < CAMPAIGN.size():
+		return CAMPAIGN[clampi(wins, 0, CAMPAIGN.size() - 1)].duplicate(true)
+	# Post-campaign expeditions are generated from independent modifiers, not a fixed five-stage loop.
+	var expedition := maxi(0, wins - CAMPAIGN.size())
+	var seed := (expedition * 1103515245 + 12345) & 0x7fffffff
+	var encounter := ENCOUNTERS[seed % ENCOUNTERS.size()]
+	var modifier_names := ["fury", "frost", "poison", "fortified", "rift", "ambush"]
+	var modifier: String = modifier_names[int(seed / 7) % modifier_names.size()]
+	return {"title":"Экспедиция №%d" % (expedition + 1), "type":encounter,
+		"goal":"Выживи в экспедиции и получи материалы для улучшения снаряжения.",
+		"enemy":"q" if modifier == "rift" else "n", "modifier":modifier}
+
 static func encounter_for_run(wins: int) -> String:
-	return ENCOUNTERS[clampi(wins, 0, 999999) % ENCOUNTERS.size()]
+	return str(mission_for_run(wins).get("type", "Штурм"))
 
 static func upgrade_cost(item: Dictionary) -> int:
 	var tier := clampi(int(item.get("upgrade", 0)), 0, 12)
