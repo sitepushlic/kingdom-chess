@@ -238,7 +238,7 @@ func _ready() -> void:
 	_make_action_button("🎒 СНАРЯЖЕНИЕ", _open_inventory, quick)
 	_make_action_button("⚗ ЛАВКА", _open_shop, quick)
 	_make_action_button("☰ МЕНЮ", _show_main_menu, quick)
-		var tutorial := _make_action_button("❔ ПРАВИЛА И СПОСОБНОСТИ", _show_tutorial, ui)
+	var tutorial := _make_action_button("❔ ПРАВИЛА И СПОСОБНОСТИ", _show_tutorial, ui)
 	tutorial.custom_minimum_size.y = 38
 	var network := Button.new()
 	network.text = "◈  КООПЕРАТИВ ПО WI-FI"
