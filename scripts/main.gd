@@ -1603,7 +1603,11 @@ func _draw() -> void:
 			for square_index in range(64):
 				if _legal(selected, square_index):
 					legal_targets.append(square_index)
-		battlefield_3d.sync_board(pieces, selected, legal_targets, boss_target if mode == "raid" and winner == "" else -1)
+		var max_health: Array = []
+		for index in range(64):
+			var piece: String = pieces[index]
+			max_health.append((240 + (raid_stage - 1) * 100) if mode == "raid" and index == 4 else (_max_hp(piece, _team(piece) == 1) if piece != "" else 1))
+		battlefield_3d.sync_board(pieces, selected, legal_targets, boss_target if mode == "raid" and winner == "" else -1, health, max_health)
 	if winner != "" and not battle_result_shown:
 		call_deferred("_show_result")
 	if lan_host and lan_connected:
