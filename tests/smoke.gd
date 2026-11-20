@@ -24,6 +24,7 @@ func _run() -> void:
 	_assert_ok(game.buttons.size() == 64, "Board creates 64 interactive buttons")
 	_assert_ok(game.unit_images.size() == 64, "Board creates 64 illustrated units")
 	_assert_ok(game.hazard_overlays.size() == 64, "Animated danger warning on every square")
+	_assert_ok(game.equipment_auras.size() == 64, "Equipment auras rendered on chess units")
 	_assert_ok(game.inventory_popup != null, "Inventory dialog exists")
 	_assert_ok(game.shop_popup != null, "Alchemist shop exists")
 	_assert_ok(game.main_menu != null and game.main_menu.visible, "Cinematic start menu visible at launch")
