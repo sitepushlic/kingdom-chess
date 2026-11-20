@@ -53,7 +53,10 @@ jobs:
       - name: Export debug APK
         run: |
           mkdir -p build
-          ./Godot_v4.3-stable_linux.x86_64 --headless --path . --export-debug Android build/kingdom-chess-debug.apk
+          echo "=== Android toolchain ==="
+          ls -la "$ANDROID_HOME/build-tools/34.0.0" | head
+          echo "=== Godot export diagnostics ==="
+          ./Godot_v4.3-stable_linux.x86_64 --headless --verbose --path . --export-debug Android build/kingdom-chess-debug.apk
       - uses: actions/upload-artifact@v4
         with:
           name: kingdom-chess-android
