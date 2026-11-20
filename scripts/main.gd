@@ -330,7 +330,7 @@ func _create_main_menu() -> void:
 	main_menu.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	main_menu.mouse_filter = Control.MOUSE_FILTER_STOP
 	var backdrop := StyleBoxFlat.new()
-	backdrop.bg_color = Color(0.025, 0.038, 0.07, 0.96)
+	backdrop.bg_color = Color(0.025, 0.038, 0.07, 0.87)
 	main_menu.add_theme_stylebox_override("panel", backdrop)
 	add_child(main_menu)
 	var center := CenterContainer.new()
@@ -338,18 +338,18 @@ func _create_main_menu() -> void:
 	main_menu.add_child(center)
 	var column := VBoxContainer.new()
 	column.custom_minimum_size.x = 440
-	column.add_theme_constant_override("separation", 14)
+	column.add_theme_constant_override("separation", 8)
 	center.add_child(column)
 	menu_title = Label.new()
 	menu_title.text = "♛"
 	menu_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	menu_title.add_theme_font_size_override("font_size", 88)
+	menu_title.add_theme_font_size_override("font_size", 56)
 	menu_title.add_theme_color_override("font_color", Color("#d9b97e"))
 	column.add_child(menu_title)
 	var game_title := Label.new()
 	game_title.text = "ВОЙНА КОРОЛЕВСТВ"
 	game_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	game_title.add_theme_font_size_override("font_size", 38)
+	game_title.add_theme_font_size_override("font_size", 34)
 	game_title.add_theme_color_override("font_color", Color("#f6e6c7"))
 	column.add_child(game_title)
 	var game_subtitle := Label.new()
@@ -358,6 +358,12 @@ func _create_main_menu() -> void:
 	game_subtitle.add_theme_font_size_override("font_size", 18)
 	game_subtitle.add_theme_color_override("font_color", Color("#adbbc6"))
 	column.add_child(game_subtitle)
+	var menu_art := TextureRect.new()
+	menu_art.texture = preload("res://assets/backgrounds/fallen_king.svg")
+	menu_art.custom_minimum_size = Vector2(440, 110)
+	menu_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	menu_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	column.add_child(menu_art)
 	_make_action_button("⚔  НАЧАТЬ РЕЙД", _menu_start_raid, column)
 	_make_action_button("♜  АРЕНА ДЛЯ ДВОИХ", _menu_start_arena, column)
 	_make_action_button("◈  КООПЕРАТИВ ПО WI-FI", _menu_start_coop, column)
