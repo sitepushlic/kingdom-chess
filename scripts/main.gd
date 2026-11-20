@@ -68,9 +68,16 @@ var lan_host := false
 var lan_joined := false
 var lan_raid := false
 var sync_revision := 0
+var main_menu: PanelContainer
+var menu_title: Label
+var sidebar_tabs: TabContainer
+var ui_combat: VBoxContainer
+var ui_camp: VBoxContainer
+var ui_network: VBoxContainer
 
 func _ready() -> void:
 	_load_profile()
+	_apply_global_theme()
 	var bg := TextureRect.new()
 	bg.texture = preload("res://assets/backgrounds/ruined_kingdom.svg")
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -80,14 +87,14 @@ func _ready() -> void:
 	add_child(bg)
 	var layout := HBoxContainer.new()
 	layout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	layout.add_theme_constant_override("separation", 22)
+	layout.add_theme_constant_override("separation", 12)
 	add_child(layout)
 	var board_frame := MarginContainer.new()
 	board_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	board_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	board_frame.add_theme_constant_override("margin_left", 16)
-	board_frame.add_theme_constant_override("margin_top", 12)
-	board_frame.add_theme_constant_override("margin_bottom", 12)
+	board_frame.add_theme_constant_override("margin_left", 18)
+	board_frame.add_theme_constant_override("margin_top", 18)
+	board_frame.add_theme_constant_override("margin_bottom", 18)
 	layout.add_child(board_frame)
 	var square := AspectRatioContainer.new()
 	square.ratio = 1.0
@@ -96,8 +103,8 @@ func _ready() -> void:
 	board_frame.add_child(square)
 	var grid := GridContainer.new()
 	grid.columns = 8
-	grid.add_theme_constant_override("h_separation", 2)
-	grid.add_theme_constant_override("v_separation", 2)
+	grid.add_theme_constant_override("h_separation", 1)
+	grid.add_theme_constant_override("v_separation", 1)
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	square.add_child(grid)
@@ -130,14 +137,15 @@ func _ready() -> void:
 		b.add_child(hp)
 		hp_labels.append(hp)
 	var sidebar := PanelContainer.new()
-	sidebar.custom_minimum_size = Vector2(460, 0)
+	sidebar.custom_minimum_size = Vector2(405, 0)
 	sidebar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	layout.add_child(sidebar)
 	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color("#191724")
-	panel_style.border_color = Color("#a88750")
-	panel_style.set_border_width_all(2)
-	panel_style.set_content_margin_all(22)
+	panel_style.bg_color = Color("#0b101b")
+	panel_style.border_color = Color("#705a42")
+	panel_style.set_border_width_all(1)
+	panel_style.set_corner_radius_all(18)
+	panel_style.set_content_margin_all(14)
 	sidebar.add_theme_stylebox_override("panel", panel_style)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -145,24 +153,24 @@ func _ready() -> void:
 	sidebar.add_child(scroll)
 	var ui := VBoxContainer.new()
 	ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	ui.add_theme_constant_override("separation", 12)
+	ui.add_theme_constant_override("separation", 8)
 	scroll.add_child(ui)
 	var heading := Label.new()
-	heading.text = "⚔  ВОЙНА КОРОЛЕВСТВ"
-	heading.add_theme_font_size_override("font_size", 28)
+	heading.text = "♛  KINGDOM CHESS"
+	heading.add_theme_font_size_override("font_size", 26)
 	heading.add_theme_color_override("font_color", Color("#f1d49c"))
 	ui.add_child(heading)
 	var subtitle := Label.new()
-	subtitle.text = "ХРОНИКИ ПАДШЕГО ТРОНА"
+	subtitle.text = "ВОЙНА КОРОЛЕВСТВ • ТАКТИЧЕСКАЯ RPG"
 	subtitle.add_theme_font_size_override("font_size", 16)
 	subtitle.add_theme_color_override("font_color", Color("#b8a4ba"))
 	ui.add_child(subtitle)
 	status = Label.new()
-	status.add_theme_font_size_override("font_size", 25)
+	status.add_theme_font_size_override("font_size", 21)
 	ui.add_child(status)
 	boss_portrait = TextureRect.new()
 	boss_portrait.texture = preload("res://assets/backgrounds/fallen_king.svg")
-	boss_portrait.custom_minimum_size = Vector2(0, 120)
+	boss_portrait.custom_minimum_size = Vector2(0, 92)
 	boss_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	boss_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	ui.add_child(boss_portrait)
@@ -179,14 +187,14 @@ func _ready() -> void:
 	var mode_row := HBoxContainer.new()
 	ui.add_child(mode_row)
 	mode_button = Button.new()
-	mode_button.text = "РЕЖИМ: АРЕНА"
-	mode_button.custom_minimum_size.y = 54
+	mode_button.text = "⚔ АРЕНА"
+	mode_button.custom_minimum_size.y = 43
 	mode_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mode_button.pressed.connect(_switch_mode)
 	mode_row.add_child(mode_button)
 	var raid_button := Button.new()
-	raid_button.text = "РЕЙД"
-	raid_button.custom_minimum_size.y = 54
+	raid_button.text = "♛ РЕЙД"
+	raid_button.custom_minimum_size.y = 43
 	raid_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	raid_button.pressed.connect(_start_raid)
 	mode_row.add_child(raid_button)
@@ -199,93 +207,62 @@ func _ready() -> void:
 	equipment_label.add_theme_color_override("font_color", Color("#c6e3e5"))
 	equipment_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ui.add_child(equipment_label)
-	var inventory_button := Button.new()
-	inventory_button.text = "СУМКА И СНАРЯЖЕНИЕ"
-	inventory_button.custom_minimum_size.y = 52
-	inventory_button.pressed.connect(_open_inventory)
-	ui.add_child(inventory_button)
-	var equip_button := Button.new()
-	equip_button.text = "СНАРЯДИТЬ ЛУЧШИЙ ПРЕДМЕТ"
-	equip_button.custom_minimum_size.y = 52
-	equip_button.pressed.connect(_equip_best)
-	ui.add_child(equip_button)
-	var shop_button := Button.new()
-	shop_button.text = "ЛАВКА АЛХИМИКА"
-	shop_button.custom_minimum_size.y = 52
-	shop_button.pressed.connect(_open_shop)
-	ui.add_child(shop_button)
-	var lan_header := Label.new()
-	lan_header.text = "СОВМЕСТНЫЙ РЕЙД • ОДНА WI-FI СЕТЬ"
-	lan_header.add_theme_font_size_override("font_size", 18)
-	lan_header.add_theme_color_override("font_color", Color("#f1d49c"))
-	ui.add_child(lan_header)
-	var lan_row := HBoxContainer.new()
-	ui.add_child(lan_row)
-	var host_button := Button.new()
-	host_button.text = "СОЗДАТЬ"
-	host_button.custom_minimum_size = Vector2(0, 50)
-	host_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	host_button.pressed.connect(_host_lan)
-	lan_row.add_child(host_button)
-	lan_address = LineEdit.new()
-	lan_address.placeholder_text = "IP хозяина"
-	lan_address.text = "192.168.1."
-	lan_address.custom_minimum_size = Vector2(150, 50)
-	lan_address.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	lan_row.add_child(lan_address)
-	var join_button := Button.new()
-	join_button.text = "ВОЙТИ"
-	join_button.custom_minimum_size = Vector2(0, 50)
-	join_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	join_button.pressed.connect(_join_lan)
-	lan_row.add_child(join_button)
-	lan_status = Label.new()
-	lan_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lan_status.add_theme_font_size_override("font_size", 15)
-	lan_status.text = "Оба телефона должны быть в одной Wi-Fi сети."
-	ui.add_child(lan_status)
-	var leave_button := Button.new()
-	leave_button.text = "ОТКЛЮЧИТЬ СЕТЬ"
-	leave_button.custom_minimum_size.y = 45
-	leave_button.pressed.connect(_leave_lan)
-	ui.add_child(leave_button)
-	var guide := Label.new()
-	guide.text = "Выбери героя и клетку назначения.\n2 действия на ход • Тактический бой"
-	guide.add_theme_font_size_override("font_size", 18)
-	ui.add_child(guide)
-	skill_button = Button.new()
-	skill_button.text = "✦ БЛАГОСЛОВЕНИЕ (+20 HP)"
-	skill_button.custom_minimum_size.y = 58
-	skill_button.pressed.connect(_heal_selected)
-	ui.add_child(skill_button)
-	var fire := Button.new()
-	fire.text = "🔥 ПРОКЛЯТИЕ — ВЫБРАТЬ ЦЕЛЬ"
-	fire.custom_minimum_size.y = 58
-	fire.pressed.connect(_curse_selected)
-	ui.add_child(fire)
-	var potion := Button.new()
-	potion.text = "ЗЕЛЬЕ: ЛЕЧЕНИЕ (+40 HP)"
-	potion.custom_minimum_size.y = 58
-	potion.pressed.connect(_use_potion)
-	ui.add_child(potion)
+	var action_bar := HBoxContainer.new()
+	action_bar.add_theme_constant_override("separation", 8)
+	ui.add_child(action_bar)
+	var heal := _make_action_button("✦ ЛЕЧЕНИЕ", _heal_selected, action_bar)
+	heal.tooltip_text = "Восстановить 20 HP выбранному герою"
+	var curse := _make_action_button("☄ ПРОКЛЯТИЕ", _curse_selected, action_bar)
+	curse.tooltip_text = "Выбери ферзя или слона, затем цель"
+	var potion := _make_action_button("♥ ЗЕЛЬЕ", _use_potion, action_bar)
+	potion.tooltip_text = "Восстановить 40 HP"
+	var end := _make_action_button("➤ ЗАВЕРШИТЬ ХОД", _end_turn, ui)
+	end.custom_minimum_size.y = 56
 	info = Label.new()
 	info.add_theme_font_size_override("font_size", 17)
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.add_theme_color_override("font_color", Color("#d8d6df"))
 	ui.add_child(info)
-	var end := Button.new()
-	end.text = "ЗАВЕРШИТЬ ХОД"
-	end.custom_minimum_size.y = 65
-	end.pressed.connect(_end_turn)
-	ui.add_child(end)
-	var restart := Button.new()
-	restart.text = "НОВАЯ БИТВА"
-	restart.custom_minimum_size.y = 60
-	restart.pressed.connect(_reset)
-	ui.add_child(restart)
-	var note := Label.new()
-	note.text = "Одиночный рейд, локальная арена и экспериментальный Wi-Fi кооператив.\n3D и онлайн-серверы ещё не готовы."
-	note.add_theme_font_size_override("font_size", 15)
-	ui.add_child(note)
+	var quick := HBoxContainer.new()
+	quick.add_theme_constant_override("separation", 7)
+	ui.add_child(quick)
+	_make_action_button("🎒 СНАРЯЖЕНИЕ", _open_inventory, quick)
+	_make_action_button("⚗ ЛАВКА", _open_shop, quick)
+	_make_action_button("☰ МЕНЮ", _show_main_menu, quick)
+	var network := Button.new()
+	network.text = "◈  КООПЕРАТИВ ПО WI-FI"
+	network.custom_minimum_size.y = 45
+	network.pressed.connect(_show_network)
+	ui.add_child(network)
+	var network_dialog := AcceptDialog.new()
+	network_dialog.name = "NetworkLobby"
+	network_dialog.title = "КОМНАТА СОВМЕСТНОГО РЕЙДА"
+	network_dialog.min_size = Vector2i(750, 360)
+	add_child(network_dialog)
+	var network_box := VBoxContainer.new()
+	network_box.add_theme_constant_override("separation", 14)
+	network_dialog.add_child(network_box)
+	var network_caption := Label.new()
+	network_caption.text = "Подключите оба телефона к одной Wi-Fi сети."
+	network_caption.add_theme_font_size_override("font_size", 20)
+	network_box.add_child(network_caption)
+	var lan_row := HBoxContainer.new()
+	lan_row.add_theme_constant_override("separation", 12)
+	network_box.add_child(lan_row)
+	_make_action_button("СОЗДАТЬ КОМНАТУ", _host_lan, lan_row)
+	lan_address = LineEdit.new()
+	lan_address.placeholder_text = "IP первого телефона"
+	lan_address.custom_minimum_size = Vector2(220, 56)
+	lan_address.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lan_row.add_child(lan_address)
+	_make_action_button("ПОДКЛЮЧИТЬСЯ", _join_lan, lan_row)
+	lan_status = Label.new()
+	lan_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lan_status.add_theme_font_size_override("font_size", 20)
+	lan_status.text = "Создайте комнату на первом телефоне."
+	network_box.add_child(lan_status)
+	_make_action_button("ОТКЛЮЧИТЬСЯ", _leave_lan, network_box)
+	_create_main_menu()
 	multiplayer.peer_connected.connect(_on_peer_connected)
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	multiplayer.connected_to_server.connect(_on_lan_connected)
@@ -295,6 +272,111 @@ func _ready() -> void:
 	_create_shop_popup()
 	_create_result_popup()
 	_reset()
+
+func _apply_global_theme() -> void:
+	var theme := Theme.new()
+	var base := StyleBoxFlat.new()
+	base.bg_color = Color("#243346")
+	base.border_color = Color("#7d674f")
+	base.set_border_width_all(1)
+	base.set_corner_radius_all(10)
+	base.set_content_margin_all(9)
+	theme.set_stylebox("normal", "Button", base)
+	var over := base.duplicate()
+	over.bg_color = Color("#354f65")
+	theme.set_stylebox("hover", "Button", over)
+	theme.set_stylebox("pressed", "Button", over)
+	theme.set_color("font_color", "Button", Color("#f2e6d2"))
+	theme.set_color("font_hover_color", "Button", Color.WHITE)
+	theme.set_color("font_color", "Label", Color("#f2e6d2"))
+	self.theme = theme
+
+func _make_action_button(label: String, callback: Callable, parent: Control) -> Button:
+	var button := Button.new()
+	button.text = label
+	button.custom_minimum_size.y = 50
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.add_theme_font_size_override("font_size", 17)
+	button.pressed.connect(callback)
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color("#233040")
+	normal.border_color = Color("#665d5b")
+	normal.set_border_width_all(1)
+	normal.set_corner_radius_all(11)
+	normal.set_content_margin_all(8)
+	var hover := normal.duplicate()
+	hover.bg_color = Color("#354c61")
+	var pressed := normal.duplicate()
+	pressed.bg_color = Color("#6a4a3e")
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_color_override("font_color", Color("#f2e7d4"))
+	parent.add_child(button)
+	return button
+
+func _create_main_menu() -> void:
+	main_menu = PanelContainer.new()
+	main_menu.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	main_menu.mouse_filter = Control.MOUSE_FILTER_STOP
+	var backdrop := StyleBoxFlat.new()
+	backdrop.bg_color = Color(0.025, 0.038, 0.07, 0.96)
+	main_menu.add_theme_stylebox_override("panel", backdrop)
+	add_child(main_menu)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	main_menu.add_child(center)
+	var column := VBoxContainer.new()
+	column.custom_minimum_size.x = 440
+	column.add_theme_constant_override("separation", 14)
+	center.add_child(column)
+	menu_title = Label.new()
+	menu_title.text = "♛"
+	menu_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	menu_title.add_theme_font_size_override("font_size", 88)
+	menu_title.add_theme_color_override("font_color", Color("#d9b97e"))
+	column.add_child(menu_title)
+	var game_title := Label.new()
+	game_title.text = "ВОЙНА КОРОЛЕВСТВ"
+	game_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	game_title.add_theme_font_size_override("font_size", 38)
+	game_title.add_theme_color_override("font_color", Color("#f6e6c7"))
+	column.add_child(game_title)
+	var game_subtitle := Label.new()
+	game_subtitle.text = "ХРОНИКИ ПАДШЕГО ТРОНА"
+	game_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	game_subtitle.add_theme_font_size_override("font_size", 18)
+	game_subtitle.add_theme_color_override("font_color", Color("#adbbc6"))
+	column.add_child(game_subtitle)
+	_make_action_button("⚔  НАЧАТЬ РЕЙД", _menu_start_raid, column)
+	_make_action_button("♜  АРЕНА ДЛЯ ДВОИХ", _menu_start_arena, column)
+	_make_action_button("◈  КООПЕРАТИВ ПО WI-FI", _menu_start_coop, column)
+	_make_action_button("🎒  СНАРЯЖЕНИЕ", _open_inventory, column)
+	_make_action_button("ПРОДОЛЖИТЬ БИТВУ", _menu_continue, column)
+	main_menu.visible = true
+
+func _show_main_menu() -> void:
+	main_menu.visible = true
+
+func _menu_continue() -> void:
+	main_menu.visible = false
+
+func _menu_start_raid() -> void:
+	_start_raid()
+	main_menu.visible = false
+
+func _menu_start_arena() -> void:
+	if lan_connected: _leave_lan()
+	mode = "arena"
+	_reset()
+	main_menu.visible = false
+
+func _menu_start_coop() -> void:
+	main_menu.visible = false
+	_show_network()
+
+func _show_network() -> void:
+	get_node("NetworkLobby").popup_centered()
 
 func _create_inventory_popup() -> void:
 	inventory_popup = AcceptDialog.new()
