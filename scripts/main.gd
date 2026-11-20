@@ -1208,6 +1208,7 @@ func _apply_curse(target: int) -> void:
 		return
 	if _team(pieces[target]) != -turn: return
 	var source: int = selected
+	if battlefield_3d != null: battlefield_3d.attack(source, target, true)
 	_deal_damage(target, 30 + (_attack_bonus() if mode == "raid" else 0), turn == 1)
 	_flash_square(target, Color("#e99fff"))
 	if mode == "raid" and target == 4:
@@ -1453,6 +1454,7 @@ func _tap(i: int) -> void:
 			var damage: int = DAMAGE[attacker.to_upper()]
 			if mode == "raid" and turn == 1: damage += (player_level - 1) * 2 + _attack_bonus()
 			_attack_trail(selected, i)
+			if battlefield_3d != null: battlefield_3d.attack(selected, i)
 			_deal_damage(i, damage, turn == 1)
 			_flash_square(i, Color("#ff897b"))
 			if mode == "raid" and i == 4:
