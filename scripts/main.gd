@@ -443,6 +443,30 @@ func _create_main_menu() -> void:
 	backdrop.bg_color = Color(0.025, 0.038, 0.07, 0.87)
 	main_menu.add_theme_stylebox_override("panel", backdrop)
 	add_child(main_menu)
+	var atmosphere := ColorRect.new()
+	atmosphere.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	atmosphere.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var atmosphere_shader := Shader.new()
+	atmosphere_shader.code = """
+shader_type canvas_item;
+void fragment() {
+	vec2 uv = UV;
+	float distance_to_center = length((uv - vec2(0.5, 0.46)) * vec2(1.0, 0.8));
+	vec3 color = mix(vec3(0.012, 0.022, 0.043), vec3(0.14, 0.085, 0.073), smoothstep(0.78, 0.12, distance_to_center));
+	float mist = sin(uv.y * 12.0 + TIME * 0.17 + sin(uv.x * 8.0)) * 0.5 + 0.5;
+	color += vec3(0.055, 0.027, 0.015) * mist * smoothstep(0.85, 0.2, uv.y);
+	vec2 ember_grid = floor(vec2(uv.x * 16.0, uv.y * 28.0 + TIME * 0.3));
+	vec2 ember_local = fract(vec2(uv.x * 16.0, uv.y * 28.0 + TIME * 0.3));
+	float random_value = fract(sin(dot(ember_grid, vec2(127.1, 311.7))) * 43758.5453);
+	float ember = (1.0 - smoothstep(0.015, 0.075, length(ember_local - vec2(random_value, 0.5)))) * step(0.93, random_value);
+	color += vec3(0.8, 0.34, 0.1) * ember * 0.52;
+	COLOR = vec4(color, 1.0);
+}
+"""
+	var atmosphere_material := ShaderMaterial.new()
+	atmosphere_material.shader = atmosphere_shader
+	atmosphere.material = atmosphere_material
+	main_menu.add_child(atmosphere)
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	main_menu.add_child(center)
