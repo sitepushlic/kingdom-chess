@@ -107,9 +107,9 @@ func _ready() -> void:
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.size = 12.7
 	camera.position = Vector3(0, 11.8, 8.7)
+	add_child(camera)
 	camera.look_at(Vector3(0, 0, 0))
 	camera.current = true
-	add_child(camera)
 
 func _square_position(index: int) -> Vector3:
 	return Vector3(float(index % 8) - 3.5, 0.11, float(index / 8) - 3.5)
