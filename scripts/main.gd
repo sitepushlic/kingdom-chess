@@ -886,15 +886,15 @@ func _deal_damage(target: int, raw_damage: int, attacker_is_hero: bool) -> int:
 			var crit_chance: int = _item_stat("crit")
 			if randi_range(1, 100) <= crit_chance:
 				amount = int(ceil(amount * 1.5))
-				battle_log = "КРИТИЧЕСКИЙ УДАР! "
+				battle_log = "КРИТИЧЕСКИЙ УДАР!"
 		else:
 			amount = maxi(1, amount - _armor_bonus())
-	health[target] -= amount
+	health[target] = maxi(0, health[target] - amount)
 	_damage_popup(target, amount)
 	if attacker_is_hero and mode == "raid":
 		var lifesteal: int = _item_stat("lifesteal")
 		if lifesteal > 0 and selected >= 0 and selected < 64 and pieces[selected] != "":
-			var restored: int = mini(int(ceil(amount * lifesteal / 100.0)), maxi(0, _max_hp(pieces[selected]) - health[selected]))
+			var restored: int = mini(int(ceil(amount * lifesteal / 100.0)), maxi(0, _max_hp(pieces[selected], _team(pieces[selected]) == 1) - health[selected]))
 			if restored > 0:
 				health[selected] += restored
 				_damage_popup(selected, restored, true)
@@ -907,11 +907,15 @@ func _equip_best() -> void:
 		return
 	var best := 0
 	for i in range(1, equipment.size()):
-		if int(equipment[i].get("attack", 0)) > int(equipment[best].get("attack", 0)):
+		if player_level >= int(equipment[i].get("level", 1)) and int(equipment[i].get("attack", 0)) > int(equipment[best].get("attack", 0)):
 			best = i
+	if player_level < int(equipment[best].get("level", 1)):
+		battle_log = "Пока нет экипировки доступного уровня."
+		_draw()
+		return
 	var best_slot: String = str(equipment[best].get("slot", "Оружие"))
 	equipped_slots[best_slot] = best
-	equipped = best
+	equipped = best if best_slot == "Оружие" else int(equipped_slots.get("Оружие", -1))
 	battle_log = "Экипировано: " + str(equipment[best].get("name", "Артефакт"))
 	_save_profile()
 	_draw()
@@ -1155,7 +1159,7 @@ func _tap(i: int) -> void:
 		var attacker: String = pieces[selected]
 		if pieces[i] != "":
 			var damage: int = DAMAGE[attacker.to_upper()]
-			if mode == "raid": damage += (player_level - 1) * 2 + _attack_bonus()
+			if mode == "raid" and turn == 1: damage += (player_level - 1) * 2 + _attack_bonus()
 			_deal_damage(i, damage, turn == 1)
 			_flash_square(i, Color("#ff897b"))
 			if mode == "raid" and i == 4:
@@ -1218,7 +1222,7 @@ func _heal_selected() -> void:
 	if winner != "" or heal_used or ap < 1 or selected < 0: return
 	if _team(pieces[selected]) != turn or acted.has(selected): return
 	var p: String = pieces[selected].to_upper()
-	if health[selected] >= HP[p]: return
+	if health[selected] >= _max_hp(p, _team(pieces[selected]) == 1): return
 	var restored: int = mini(20, _max_hp(p, _team(pieces[selected]) == 1) - health[selected])
 	health[selected] += restored
 	_damage_popup(selected, restored, true)
