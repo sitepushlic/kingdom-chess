@@ -1758,7 +1758,7 @@ func _boss_action() -> void:
 	if raid_encounter == "Разлом" and raid_round % 4 == 0:
 		for hero_index in range(64):
 			if _team(pieces[hero_index]) == 1 and hero_index % 8 == 4:
-				_deal_damage(hero_index, 12 + raid_stage * 5, false)
+				_boss_aoe_hit(hero_index, 12 + raid_stage * 5)
 				battle_log += "\nРазлом обжигает центральную линию!"
 	_apply_mission_modifier()
 	if winner != "":
@@ -1864,6 +1864,12 @@ func _draw() -> void:
 		battlefield_3d.set_hero_gear(equipment, equipped_slots)
 		var forecast: Array[int] = Progression.hazard_cells(str(raid_mission.get("modifier", "none")), raid_round + 1) if mode == "raid" and winner == "" else []
 		var boss_forecast: Array[int] = Progression.boss_hazard_cells(raid_stage, raid_round + 1, raid_encounter) if mode == "raid" and winner == "" else []
+		if mode == "raid" and winner == "" and raid_stage == 3 and (raid_round + 1) % 3 == 0:
+			var weakest := -1
+			for hero_index in range(64):
+				if _team(pieces[hero_index]) == 1 and (weakest < 0 or health[hero_index] < health[weakest]):
+					weakest = hero_index
+			if weakest >= 0 and not boss_forecast.has(weakest): boss_forecast.append(weakest)
 		for square in boss_forecast:
 			if not forecast.has(square): forecast.append(square)
 		var warning_type: String = str(raid_mission.get("modifier", "none"))
