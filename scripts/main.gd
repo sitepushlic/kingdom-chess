@@ -1056,7 +1056,7 @@ func _minion_loot() -> void:
 	if equipment.size() >= 100:
 		battle_log += "\nСумка заполнена (100/100)."
 		return
-	if randi_range(1, 100) > mini(75, 18 + dry_loot_streak * 5):
+	if dry_loot_streak < 15 and randi_range(1, 100) > mini(75, 18 + dry_loot_streak * 5):
 		dry_loot_streak += 1
 		_save_profile()
 		return
