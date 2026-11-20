@@ -17,6 +17,8 @@ func _run() -> void:
 	_assert_ok(game.buttons.size() == 64, "Board creates 64 interactive buttons")
 	_assert_ok(game.unit_images.size() == 64, "Board creates 64 illustrated units")
 	_assert_ok(game.inventory_popup != null, "Inventory dialog exists")
+	_assert_ok(game.shop_popup != null, "Alchemist shop exists")
+	_assert_ok(game.battle_result_dialog != null, "Battle result dialog exists")
 	_assert_ok(game.boss_portrait != null, "Boss portrait exists")
 	game.pieces.resize(64)
 	game.health.resize(64)
@@ -41,6 +43,17 @@ func _run() -> void:
 		_assert_ok(int(item["level"]) >= 1 and int(item["level"]) <= 50, "Level bounds")
 		_assert_ok(int(item["attack"]) > 0, "Attack bonus")
 	_assert_ok(Progression.experience_needed(2) > Progression.experience_needed(1), "Increasing XP")
+	var old_gold: int = game.gold
+	var old_potions: int = game.potions
+	game.gold = 0
+	game._buy_potions(1, 50)
+	_assert_ok(game.potions == old_potions, "Cannot buy without gold")
+	game.gold = 100
+	game._buy_potions(1, 50)
+	_assert_ok(game.gold == 50 and game.potions == old_potions + 1, "Shop purchase costs gold and grants potion")
+	game.gold = old_gold
+	game.potions = old_potions
+	game._save_profile()
 	print("KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED")
 	game.queue_free()
 	quit(0)
