@@ -88,6 +88,12 @@ func _run() -> void:
 	_assert_ok(boss_drop.has("penetration") and boss_drop.has("block") and boss_drop.has("bleed"), "Advanced equipment stats generated")
 	_assert_ok(Progression.sell_price(boss_drop) > 10, "Loot has scaling sell value")
 	_assert_ok(Progression.REGIONS.size() == 6 and Progression.ENCOUNTERS.size() == 5, "Six regions and five different encounters")
+	_assert_ok(Progression.TRAITS.size() == 6 and Progression.TRAIT_DESCRIPTIONS.size() == 6, "Six named legendary traits with player explanations")
+	for chapter in range(1, 7):
+		var reward: Dictionary = Progression.first_clear_reward(chapter * 3)
+		_assert_ok(not reward.is_empty() and int(reward["trait_id"]) == chapter - 1, "Unique deterministic chapter reward %d" % chapter)
+	_assert_ok(Progression.first_clear_reward(19).is_empty(), "No duplicate chapter reward after campaign")
+	_assert_ok(Progression.first_clear_reward(2).is_empty(), "No chapter reward before boss milestone")
 	_assert_ok(Progression.region_for_run(0) != Progression.region_for_run(9), "Campaign advances to new regions")
 	_assert_ok(Progression.encounter_for_run(0) != Progression.encounter_for_run(1), "Campaign rotates encounter mechanics")
 	var upgraded: Dictionary = Progression.upgrade_item(boss_drop)
