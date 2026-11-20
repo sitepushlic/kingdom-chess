@@ -651,6 +651,9 @@ func _inventory_select(index: int) -> void:
 	var item: Dictionary = equipment[index]
 	var rarity: int = clampi(int(item.get("rarity", 0)), 0, 6)
 	inventory_details.text = "%s • %s • Ур. %d • Усиление +%d/12\nАтака +%d  Защита +%d  HP +%d\nКрит %d%%  Вампиризм %d%%\nПробитие %d  Блок %d%%  Кровотечение %d%%\nСила %d • Цена усиления %d" % [item.get("name", "Артефакт"), Progression.RARITIES[rarity], int(item.get("level", 1)), int(item.get("upgrade", 0)), int(item.get("attack", 0)), int(item.get("armor", 0)), int(item.get("hp", 0)), int(item.get("crit", 0)), int(item.get("lifesteal", 0)), int(item.get("penetration", 0)), int(item.get("block", 0)), int(item.get("bleed", 0)), Progression.item_score(item), Progression.upgrade_cost(item)]
+	var trait_id: int = int(item.get("trait_id", -1))
+	if trait_id >= 0 and trait_id < Progression.TRAITS.size():
+		inventory_details.text += "\nОСОБОЕ СВОЙСТВО: " + Progression.TRAITS[trait_id] + "\n" + Progression.TRAIT_DESCRIPTIONS[trait_id]
 
 func _inventory_equip() -> void:
 	if inventory_selected < 0 or inventory_selected >= equipment.size(): return
@@ -1042,7 +1045,8 @@ func _deal_damage(target: int, raw_damage: int, attacker_is_hero: bool) -> int:
 			if _has_trait(0) and combat_hits % 3 == 0:
 				amount += maxi(8, int(ceil(float(amount) * 0.35)))
 				battle_log += "\nОГНЕННЫЙ УДАР!"
-			if _has_trait(5) and health[target] < _max_hp(pieces[target], false) * 0.35:
+			var execution_max: int = (240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35) if target == 4 else _max_hp(pieces[target], false)
+			if _has_trait(5) and health[target] < execution_max * 0.35:
 				amount = int(ceil(float(amount) * 1.35))
 				battle_log += "\nКАЗНЬ!"
 			if _has_trait(4):
@@ -1053,21 +1057,30 @@ func _deal_damage(target: int, raw_damage: int, attacker_is_hero: bool) -> int:
 			if randi_range(1, 100) <= crit_chance:
 				amount = int(ceil(amount * 1.5))
 				battle_log = "КРИТИЧЕСКИЙ УДАР!"
+				if _has_trait(2):
+					for other in range(64):
+						if other != target and _team(pieces[other]) == -1:
+							var arc_damage := maxi(1, int(ceil(float(amount) * 0.28)))
+							health[other] = maxi(0, health[other] - arc_damage)
+							_damage_popup(other, arc_damage)
+							if other == 4: boss_hp = health[other]
+							battle_log += "\nГРОЗОВОЙ РАЗРЯД: %d урона" % arc_damage
+							break
 		else:
 			if _has_trait(1) and not frost_guard_used:
 				amount = maxi(1, int(ceil(float(amount) * 0.55)))
 				frost_guard_used = true
 				battle_log += "\nЛЕДЯНОЙ ЩИТ!"
+			amount = Progression.damage_after_armor(amount, _armor_bonus())
+			if randi_range(1, 100) <= mini(60, _item_stat("block")):
+				amount = maxi(1, int(ceil(amount * 0.5)))
+				battle_log = "БЛОК! Урон снижен вдвое."
 			if _has_trait(3) and not phoenix_used and amount >= health[target] and _team(pieces[target]) == 1:
 				phoenix_used = true
 				health[target] = maxi(1, int(ceil(float(_max_hp(pieces[target], true)) * 0.25)))
 				_damage_popup(target, health[target], true)
 				battle_log += "\nВОЗРОЖДЕНИЕ!"
 				return 0
-			amount = Progression.damage_after_armor(amount, _armor_bonus())
-			if randi_range(1, 100) <= mini(60, _item_stat("block")):
-				amount = maxi(1, int(ceil(amount * 0.5)))
-				battle_log = "БЛОК! Урон снижен вдвое."
 	health[target] = maxi(0, health[target] - amount)
 	_damage_popup(target, amount)
 	if attacker_is_hero and mode == "raid":
