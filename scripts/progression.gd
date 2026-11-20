@@ -162,7 +162,7 @@ static func mission_for_run(wins: int) -> Dictionary:
 	# Post-campaign expeditions are generated from independent modifiers, not a fixed five-stage loop.
 	var expedition := maxi(0, wins - CAMPAIGN.size())
 	var seed := (expedition * 1103515245 + 12345) & 0x7fffffff
-	var encounter := ENCOUNTERS[seed % ENCOUNTERS.size()]
+	var encounter: String = str(ENCOUNTERS[seed % ENCOUNTERS.size()])
 	var modifier_names := ["fury", "frost", "poison", "fortified", "rift", "ambush"]
 	var modifier: String = modifier_names[int(seed / 7) % modifier_names.size()]
 	return {"title":"Экспедиция №%d" % (expedition + 1), "type":encounter,
