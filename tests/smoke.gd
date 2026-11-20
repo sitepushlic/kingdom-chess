@@ -88,6 +88,14 @@ func _run() -> void:
 	_assert_ok(boss_drop.has("penetration") and boss_drop.has("block") and boss_drop.has("bleed"), "Advanced equipment stats generated")
 	_assert_ok(Progression.sell_price(boss_drop) > 10, "Loot has scaling sell value")
 	_assert_ok(Progression.REGIONS.size() == 6 and Progression.ENCOUNTERS.size() == 5, "Six regions and five different encounters")
+	_assert_ok(Progression.CAMPAIGN.size() == 18, "Complete 18-mission story campaign")
+	var mission_titles: Dictionary = {}
+	for mission in Progression.CAMPAIGN:
+		mission_titles[str(mission["title"])] = true
+		_assert_ok(str(mission["goal"]) != "" and str(mission["modifier"]) != "", "Story mission has objective and gameplay modifier")
+	_assert_ok(mission_titles.size() == 18, "Every story mission has a unique title")
+	_assert_ok(str(Progression.mission_for_run(18)["title"]) == "Экспедиция №1", "Post-campaign expedition unlocks after final boss")
+	_assert_ok(str(Progression.mission_for_run(19)["title"]) == "Экспедиция №2", "Endgame expedition advances without repeating story")
 	_assert_ok(Progression.TRAITS.size() == 6 and Progression.TRAIT_DESCRIPTIONS.size() == 6, "Six named legendary traits with player explanations")
 	for chapter in range(1, 7):
 		var reward: Dictionary = Progression.first_clear_reward(chapter * 3)
