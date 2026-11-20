@@ -130,6 +130,11 @@ func _run() -> void:
 	game.health[28] = 200
 	game._apply_mission_modifier()
 	_assert_ok(int(game.health[28]) < 200, "Frost damages exposed hero on scheduled turn")
+	_assert_ok(Progression.boss_hazard_cells(2, 3, "Осада").size() == 32, "Ice boss forecasts four rows")
+	_assert_ok(Progression.boss_hazard_cells(5, 3, "Охота").size() == 16, "Sky boss forecasts two columns")
+	_assert_ok(Progression.boss_hazard_cells(6, 3, "Засада").size() == 64, "Final boss warns of board-wide darkness")
+	_assert_ok(Progression.boss_hazard_cells(1, 4, "Разлом").size() == 8, "Rift encounter warns of central strike")
+	_assert_ok(Progression.boss_hazard_cells(5, 2, "Охота").is_empty(), "Boss warnings disappear between attack rounds")
 	_assert_ok(Progression.hazard_cells("frost", 3).size() == 40, "Frost forecasts five complete board rows")
 	_assert_ok(Progression.hazard_cells("poison", 3).size() == 16, "Poison forecasts two side columns")
 	_assert_ok(Progression.hazard_cells("rift", 3).size() == 16, "Rift forecasts two center columns")
