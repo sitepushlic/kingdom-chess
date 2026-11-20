@@ -747,6 +747,7 @@ func _apply_curse(target: int) -> void:
 	if _team(pieces[target]) != -turn: return
 	var source: int = selected
 	health[target] -= 30
+	_damage_popup(target, 30)
 	_flash_square(target, Color("#e99fff"))
 	if mode == "raid" and target == 4:
 		boss_hp = maxi(0, health[target])
@@ -852,6 +853,25 @@ func _legal(a: int, b: int) -> bool:
 		c += sc
 	return true
 
+func _damage_popup(index: int, amount: int, healing: bool = false) -> void:
+	if index < 0 or index >= buttons.size(): return
+	var number := Label.new()
+	number.text = ("+" if healing else "−") + str(amount)
+	number.add_theme_font_size_override("font_size", 30)
+	number.add_theme_color_override("font_color", Color("#92f3c5") if healing else Color("#ffb36e"))
+	number.add_theme_color_override("font_shadow_color", Color("#090e16"))
+	number.add_theme_constant_override("shadow_offset_x", 2)
+	number.add_theme_constant_override("shadow_offset_y", 3)
+	number.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	number.position = Vector2(13, 0)
+	number.z_index = 30
+	buttons[index].add_child(number)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(number, "position:y", -46.0, 0.65).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(number, "modulate:a", 0.0, 0.65)
+	tween.chain().tween_callback(number.queue_free)
+
 func _flash_square(index: int, tint: Color) -> void:
 	if index < 0 or index >= buttons.size(): return
 	var cell: Button = buttons[index]
@@ -881,6 +901,7 @@ func _tap(i: int) -> void:
 			var damage: int = DAMAGE[attacker.to_upper()]
 			if mode == "raid": damage += (player_level - 1) * 2 + _attack_bonus()
 			health[i] -= damage
+			_damage_popup(i, damage)
 			_flash_square(i, Color("#ff897b"))
 			if mode == "raid" and i == 4:
 				boss_hp = maxi(0,health[i])
@@ -916,7 +937,9 @@ func _heal_selected() -> void:
 	if _team(pieces[selected]) != turn or acted.has(selected): return
 	var p: String = pieces[selected].to_upper()
 	if health[selected] >= HP[p]: return
-	health[selected] = mini(HP[p], health[selected] + 20)
+	var restored: int = mini(20, HP[p] - health[selected])
+	health[selected] += restored
+	_damage_popup(selected, restored, true)
 	acted.append(selected)
 	heal_used = true
 	selected = -1
@@ -967,6 +990,7 @@ func _minion_actions() -> void:
 					attack_target = target
 		if attack_target >= 0:
 			health[attack_target] -= DAMAGE[pieces[source].to_upper()]
+			_damage_popup(attack_target, DAMAGE[pieces[source].to_upper()])
 			_flash_square(attack_target, Color("#ff8a77"))
 			if health[attack_target] <= 0:
 				if pieces[attack_target] == "K":
@@ -1005,6 +1029,7 @@ func _boss_action() -> void:
 	if boss_target >= 0 and _team(pieces[boss_target]) == 1:
 		var damage := (25 if raid_round % 3 != 0 else 45) + (raid_stage - 1) * 10 + (15 if boss_phase == 2 else 0)
 		health[boss_target] -= damage
+		_damage_popup(boss_target, damage)
 		_flash_square(boss_target, Color("#ff5e72"))
 		battle_log = "Падший король наносит %d урона по отмеченной клетке!" % damage
 		if health[boss_target] <= 0:
