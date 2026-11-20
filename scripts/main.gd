@@ -60,6 +60,14 @@ var battle_result_shown := false
 var battle_result_dialog: AcceptDialog
 var boss_phase := 1
 var phase_label: Label
+const LAN_PORT := 27545
+var lan_status: Label
+var lan_address: LineEdit
+var lan_connected := false
+var lan_host := false
+var lan_joined := false
+var lan_raid := false
+var sync_revision := 0
 
 func _ready() -> void:
 	_load_profile()
@@ -206,6 +214,41 @@ func _ready() -> void:
 	shop_button.custom_minimum_size.y = 52
 	shop_button.pressed.connect(_open_shop)
 	ui.add_child(shop_button)
+	var lan_header := Label.new()
+	lan_header.text = "СОВМЕСТНЫЙ РЕЙД • ОДНА WI-FI СЕТЬ"
+	lan_header.add_theme_font_size_override("font_size", 18)
+	lan_header.add_theme_color_override("font_color", Color("#f1d49c"))
+	ui.add_child(lan_header)
+	var lan_row := HBoxContainer.new()
+	ui.add_child(lan_row)
+	var host_button := Button.new()
+	host_button.text = "СОЗДАТЬ"
+	host_button.custom_minimum_size = Vector2(0, 50)
+	host_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host_button.pressed.connect(_host_lan)
+	lan_row.add_child(host_button)
+	lan_address = LineEdit.new()
+	lan_address.placeholder_text = "IP хозяина"
+	lan_address.text = "192.168.1."
+	lan_address.custom_minimum_size = Vector2(150, 50)
+	lan_address.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lan_row.add_child(lan_address)
+	var join_button := Button.new()
+	join_button.text = "ВОЙТИ"
+	join_button.custom_minimum_size = Vector2(0, 50)
+	join_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	join_button.pressed.connect(_join_lan)
+	lan_row.add_child(join_button)
+	lan_status = Label.new()
+	lan_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lan_status.add_theme_font_size_override("font_size", 15)
+	lan_status.text = "Оба телефона должны быть в одной Wi-Fi сети."
+	ui.add_child(lan_status)
+	var leave_button := Button.new()
+	leave_button.text = "ОТКЛЮЧИТЬ СЕТЬ"
+	leave_button.custom_minimum_size.y = 45
+	leave_button.pressed.connect(_leave_lan)
+	ui.add_child(leave_button)
 	var guide := Label.new()
 	guide.text = "Выбери героя и клетку назначения.\n2 действия на ход • Тактический бой"
 	guide.add_theme_font_size_override("font_size", 18)
@@ -243,6 +286,11 @@ func _ready() -> void:
 	note.text = "Одиночный рейд и локальная арена.\nСеть, 3D и кооператив ещё не готовы."
 	note.add_theme_font_size_override("font_size", 15)
 	ui.add_child(note)
+	multiplayer.peer_connected.connect(_on_peer_connected)
+	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+	multiplayer.connected_to_server.connect(_on_lan_connected)
+	multiplayer.connection_failed.connect(_on_lan_failed)
+	multiplayer.server_disconnected.connect(_on_lan_disconnected)
 	_create_inventory_popup()
 	_create_shop_popup()
 	_create_result_popup()
@@ -389,11 +437,138 @@ func _show_result() -> void:
 	battle_result_dialog.dialog_text = "%s\n\n%s\n\nУровень: %d  •  Золото: %d  •  Трофеи: %d" % [winner, battle_log, player_level, gold, equipment.size()]
 	battle_result_dialog.popup_centered()
 
+func _host_lan() -> void:
+	_leave_lan()
+	var peer := ENetMultiplayerPeer.new()
+	var result: Error = peer.create_server(LAN_PORT, 1)
+	if result != OK:
+		lan_status.text = "Не удалось создать сервер: " + str(result)
+		return
+	multiplayer.multiplayer_peer = peer
+	lan_connected = true
+	lan_host = true
+	lan_raid = true
+	mode = "raid"
+	_reset()
+	var ips: Array[String] = IP.get_local_addresses()
+	var addresses: Array[String] = []
+	for ip in ips:
+		if ip.contains(".") and not ip.begins_with("127.") and not ip.begins_with("169.254."):
+			addresses.append(ip)
+	lan_status.text = "Сервер готов, порт %d. IP: %s" % [LAN_PORT, ", ".join(addresses)]
+
+func _join_lan() -> void:
+	_leave_lan()
+	var address := lan_address.text.strip_edges()
+	if not address.is_valid_ip_address():
+		lan_status.text = "Введи IP телефона-хозяина, например 192.168.1.10"
+		return
+	var peer := ENetMultiplayerPeer.new()
+	var result: Error = peer.create_client(address, LAN_PORT)
+	if result != OK:
+		lan_status.text = "Ошибка подключения: " + str(result)
+		return
+	multiplayer.multiplayer_peer = peer
+	lan_connected = true
+	lan_host = false
+	lan_raid = true
+	lan_status.text = "Подключаемся к " + address + "…"
+
+func _leave_lan() -> void:
+	if multiplayer.multiplayer_peer != null:
+		multiplayer.multiplayer_peer.close()
+		multiplayer.multiplayer_peer = null
+	lan_connected = false
+	lan_host = false
+	lan_joined = false
+	lan_raid = false
+	if lan_status != null:
+		lan_status.text = "Сеть отключена."
+
+func _on_peer_connected(id: int) -> void:
+	if not lan_host: return
+	lan_status.text = "Напарник подключён. Совместный рейд начался!"
+	_send_snapshot.rpc_id(id, _snapshot())
+
+func _on_peer_disconnected(_id: int) -> void:
+	if lan_host:
+		lan_status.text = "Напарник отключился. Можно продолжать одному."
+
+func _on_lan_connected() -> void:
+	lan_joined = true
+	lan_status.text = "Подключено. Ожидаем состояние рейда…"
+
+func _on_lan_failed() -> void:
+	_leave_lan()
+	lan_status.text = "Не удалось подключиться. Проверь Wi-Fi и IP."
+
+func _on_lan_disconnected() -> void:
+	_leave_lan()
+	lan_status.text = "Соединение с хозяином потеряно."
+
+func _snapshot() -> Dictionary:
+	return {
+		"pieces": pieces.duplicate(), "health": health.duplicate(),
+		"ap": ap, "turn": turn, "winner": winner,
+		"boss_hp": boss_hp, "boss_phase": boss_phase,
+		"raid_round": raid_round, "raid_stage": raid_stage,
+		"boss_target": boss_target, "battle_log": battle_log,
+		"acted": acted.duplicate(), "enemy_wave": enemy_wave
+	}
+
+func _broadcast_snapshot() -> void:
+	if not lan_host or multiplayer.multiplayer_peer == null: return
+	sync_revision += 1
+	_send_snapshot.rpc(_snapshot())
+
+@rpc("authority", "call_remote", "reliable")
+func _send_snapshot(data: Dictionary) -> void:
+	if lan_host or not lan_connected: return
+	if typeof(data.get("pieces")) != TYPE_ARRAY or data["pieces"].size() != 64: return
+	if typeof(data.get("health")) != TYPE_ARRAY or data["health"].size() != 64: return
+	pieces = data["pieces"].duplicate()
+	health = data["health"].duplicate()
+	ap = int(data["ap"])
+	turn = int(data["turn"])
+	winner = str(data["winner"])
+	boss_hp = int(data["boss_hp"])
+	boss_phase = int(data["boss_phase"])
+	raid_round = int(data["raid_round"])
+	raid_stage = int(data["raid_stage"])
+	boss_target = int(data["boss_target"])
+	battle_log = str(data["battle_log"])
+	acted = data["acted"].duplicate()
+	enemy_wave = int(data["enemy_wave"])
+	mode = "raid"
+	selected = -1
+	curse_mode = false
+	_draw()
+
+@rpc("any_peer", "call_remote", "reliable")
+func _request_action(action: String, square: int = -1) -> void:
+	if not lan_host or not lan_raid: return
+	if multiplayer.get_remote_sender_id() <= 1: return
+	if action == "tap" and square >= 0 and square < 64:
+		_tap(square)
+	elif action == "end":
+		_end_turn()
+	elif action == "heal":
+		_heal_selected()
+	elif action == "potion":
+		_use_potion()
+	elif action == "curse":
+		_curse_selected()
+	_broadcast_snapshot()
+
 func _switch_mode() -> void:
+	if lan_connected:
+		lan_status.text = "Отключи сеть перед сменой режима."
+		return
 	mode = "arena"
 	_reset()
 
 func _start_raid() -> void:
+	if lan_connected and not lan_host: return
 	mode = "raid"
 	_reset()
 
@@ -455,6 +630,9 @@ func _raid_victory() -> void:
 	_save_profile()
 
 func _use_potion() -> void:
+	if lan_connected and not lan_host:
+		_request_action.rpc_id(1, "potion")
+		return
 	if winner != "" or potions <= 0 or selected < 0 or ap < 1 or acted.has(selected): return
 	if _team(pieces[selected]) != turn: return
 	var p: String = pieces[selected].to_upper()
@@ -467,6 +645,9 @@ func _use_potion() -> void:
 	_draw()
 
 func _curse_selected() -> void:
+	if lan_connected and not lan_host:
+		_request_action.rpc_id(1, "curse")
+		return
 	if winner != "" or selected < 0 or ap < 1 or acted.has(selected): return
 	if pieces[selected].to_upper() != "Q" and pieces[selected].to_upper() != "B":
 		battle_log = "Проклятие доступно только ферзю и слону."
@@ -507,6 +688,7 @@ func _spend_action(index: int) -> void:
 		_end_turn()
 
 func _reset() -> void:
+	if lan_connected and not lan_host: return
 	pieces.clear()
 	health.clear()
 	for r in range(8):
@@ -549,6 +731,7 @@ func _reset() -> void:
 	acted.clear()
 	heal_used = false
 	_draw()
+	_broadcast_snapshot()
 
 func _team(p: String) -> int:
 	if p == "": return 0
@@ -593,6 +776,9 @@ func _flash_square(index: int, tint: Color) -> void:
 	tween.tween_property(cell, "modulate", Color.WHITE, 0.35).set_trans(Tween.TRANS_SINE)
 
 func _tap(i: int) -> void:
+	if lan_connected and not lan_host:
+		_request_action.rpc_id(1, "tap", i)
+		return
 	if winner != "" or enemy_turn or (mode == "raid" and turn == -1): return
 	if curse_mode:
 		if selected >= 0 and pieces[i] != "" and _team(pieces[i]) == -turn and _legal(selected,i):
@@ -639,6 +825,9 @@ func _move(a: int,b: int) -> void:
 	acted.append(b)
 
 func _heal_selected() -> void:
+	if lan_connected and not lan_host:
+		_request_action.rpc_id(1, "heal")
+		return
 	if winner != "" or heal_used or ap < 1 or selected < 0: return
 	if _team(pieces[selected]) != turn or acted.has(selected): return
 	var p: String = pieces[selected].to_upper()
@@ -654,6 +843,9 @@ func _heal_selected() -> void:
 		_draw()
 
 func _end_turn() -> void:
+	if lan_connected and not lan_host:
+		_request_action.rpc_id(1, "end")
+		return
 	if winner != "": return
 	if mode == "raid" and turn == 1:
 		_boss_action()
@@ -806,3 +998,5 @@ func _draw() -> void:
 		b.add_theme_color_override("font_color",Color("#fff3dd") if _team(p) == 1 else Color("#201824"))
 	if winner != "" and not battle_result_shown:
 		call_deferred("_show_result")
+	if lan_host and lan_connected:
+		call_deferred("_broadcast_snapshot")
