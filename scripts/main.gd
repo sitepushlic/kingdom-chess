@@ -58,6 +58,8 @@ var shop_popup: AcceptDialog
 var shop_label: Label
 var battle_result_shown := false
 var battle_result_dialog: AcceptDialog
+var boss_phase := 1
+var phase_label: Label
 
 func _ready() -> void:
 	_load_profile()
@@ -162,6 +164,10 @@ func _ready() -> void:
 	boss_bar.show_percentage = false
 	boss_bar.custom_minimum_size.y = 16
 	ui.add_child(boss_bar)
+	phase_label = Label.new()
+	phase_label.add_theme_font_size_override("font_size", 18)
+	phase_label.add_theme_color_override("font_color", Color("#e9a6a0"))
+	ui.add_child(phase_label)
 	var mode_row := HBoxContainer.new()
 	ui.add_child(mode_row)
 	mode_button = Button.new()
@@ -521,6 +527,7 @@ func _reset() -> void:
 	battle_result_shown = false
 	raid_stage = mini(3, 1 + int(raid_wins / 3))
 	boss_hp = 240 + (raid_stage - 1) * 100
+	boss_phase = 1
 	raid_round = 0
 	boss_target = -1
 	battle_log = "Рейд: уничтожь тёмного короля!" if mode == "raid" else "Арена: два игрока на одном устройстве."
@@ -710,13 +717,17 @@ func _boss_action() -> void:
 	enemy_turn = true
 	raid_round += 1
 	turn_count += 1
+	var boss_max_hp: int = 240 + (raid_stage - 1) * 100
+	if boss_phase == 1 and boss_hp <= int(boss_max_hp / 2.0):
+		boss_phase = 2
+		battle_log = "ПАДШИЙ КОРОЛЬ В ЯРОСТИ! Его удары усиливаются."
 	_minion_actions()
 	if winner != "":
 		enemy_turn = false
 		_draw()
 		return
 	if boss_target >= 0 and _team(pieces[boss_target]) == 1:
-		var damage := (25 if raid_round % 3 != 0 else 45) + (raid_stage - 1) * 10
+		var damage := (25 if raid_round % 3 != 0 else 45) + (raid_stage - 1) * 10 + (15 if boss_phase == 2 else 0)
 		health[boss_target] -= damage
 		_flash_square(boss_target, Color("#ff5e72"))
 		battle_log = "Падший король наносит %d урона по отмеченной клетке!" % damage
@@ -726,7 +737,7 @@ func _boss_action() -> void:
 			health[boss_target] = 0
 	else:
 		battle_log = "Герои уклонились от удара Падшего короля!"
-	if raid_round % 4 == 0 and boss_hp > 0:
+	if raid_round % (3 if boss_phase == 2 else 4) == 0 and boss_hp > 0:
 		var spawn := -1
 		for cell in [8, 9, 10, 13, 14, 15]:
 			if pieces[cell] == "":
@@ -756,6 +767,8 @@ func _draw() -> void:
 	boss_bar.visible = mode == "raid"
 	boss_bar.max_value = 240 + (raid_stage - 1) * 100
 	boss_bar.value = boss_hp
+	phase_label.visible = mode == "raid"
+	phase_label.text = "ФАЗА II • ЯРОСТЬ ПАДШЕГО" if boss_phase == 2 else "ФАЗА I • ПРОБУЖДЕНИЕ"
 	inventory_label.text = "Ур. %d  •  Опыт: %d/%d  •  Золото: %d  •  Зелья: %d" % [player_level,experience,Progression.experience_needed(player_level),gold,potions]
 	var equipped_name := "нет"
 	if equipped >= 0 and equipped < equipment.size():
