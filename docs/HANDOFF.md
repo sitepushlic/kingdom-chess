@@ -61,6 +61,11 @@ Portrait-first Android commercial-quality **3D tactical chess RPG**, with intuit
 - Latest workflow: check https://github.com/sitepushlic/kingdom-chess/actions . Do not assume CI success until completed.
 - Limitations: boss warning prioritization uses one color for overlapping hazards; ghost target can change as HP changes (forecast refreshes on redraw); mobile and network QA remain undone.
 
+## CI regression and fix (2026-11-21)
+- CI #162 **failed** during Godot gameplay smoke tests: runtime error `Trying to assign an array of type "Array" to a variable of type "Array[int]"` in `_draw()`, caused by ternary `else []` in typed hazard forecast variables. Debug APK export was skipped.
+- Commit `b9a1d46` (`scripts/main.gd`): initialize `Array[int]` explicitly and populate only within the raid branch; eliminates the typed-array assignment error.
+- Verify the newest CI before claiming this fix works. Link: https://github.com/sitepushlic/kingdom-chess/actions
+
 ## Recent earlier milestones
 - CI #137 passed: procedural 3D arena, visual equipment, attack trails, phase VFX and associated smoke tests.
 - CI #143 passed: 18 authored missions, variable enemy modifiers, campaign finale, HUD mission text, save and LAN sync; fixed a Godot 4.3 type-inference parse error in the mission generator.
