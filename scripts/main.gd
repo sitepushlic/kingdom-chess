@@ -76,6 +76,8 @@ var ui_camp: VBoxContainer
 var ui_network: VBoxContainer
 var battle_save_path := "user://battle_autosave.json"
 var initializing := true
+var tutorial_popup: AcceptDialog
+var tutorial_seen_path := "user://tutorial_seen.flag"
 var last_saved_turn := -1
 var last_saved_round := -1
 var shield_active := false
@@ -236,6 +238,8 @@ func _ready() -> void:
 	_make_action_button("🎒 СНАРЯЖЕНИЕ", _open_inventory, quick)
 	_make_action_button("⚗ ЛАВКА", _open_shop, quick)
 	_make_action_button("☰ МЕНЮ", _show_main_menu, quick)
+		var tutorial := _make_action_button("❔ ПРАВИЛА И СПОСОБНОСТИ", _show_tutorial, ui)
+	tutorial.custom_minimum_size.y = 38
 	var network := Button.new()
 	network.text = "◈  КООПЕРАТИВ ПО WI-FI"
 	network.custom_minimum_size.y = 45
@@ -278,10 +282,13 @@ func _ready() -> void:
 	_create_inventory_popup()
 	_create_shop_popup()
 	_create_result_popup()
+	_create_tutorial()
 	_reset()
 	initializing = false
 	if not _restore_battle():
 		_save_battle()
+	if not FileAccess.file_exists(tutorial_seen_path):
+		call_deferred("_show_tutorial")
 
 func _apply_global_theme() -> void:
 	var theme := Theme.new()
@@ -324,6 +331,25 @@ func _make_action_button(label: String, callback: Callable, parent: Control) -> 
 	button.add_theme_color_override("font_color", Color("#f2e7d4"))
 	parent.add_child(button)
 	return button
+
+func _create_tutorial() -> void:
+	tutorial_popup = AcceptDialog.new()
+	tutorial_popup.title = "КАК ИГРАТЬ"
+	tutorial_popup.min_size = Vector2i(690, 460)
+	tutorial_popup.dialog_text = "ЦЕЛЬ: победить Падшего короля.\n\n1. Нажми на своего героя на доске.\n2. Зелёные клетки — доступные ходы.\n3. Нажми на зелёную клетку для перемещения.\n4. Красная клетка — будущий удар босса: уйди с неё.\n5. У тебя 2 действия за ход.\n\nСПОСОБНОСТИ\n✦ Лечение — восстановить здоровье героя.\n☄ Проклятие — удар ферзя или слона.\n⛨ Щит — защита ладьи от атаки босса.\n♥ Зелье — лечение из запасов.\n\nСнаряжение и добыча сохраняются после рейда."
+	add_child(tutorial_popup)
+	tutorial_popup.confirmed.connect(_tutorial_complete)
+	tutorial_popup.canceled.connect(_tutorial_complete)
+
+func _show_tutorial() -> void:
+	if tutorial_popup != null:
+		tutorial_popup.popup_centered()
+
+func _tutorial_complete() -> void:
+	var file := FileAccess.open(tutorial_seen_path, FileAccess.WRITE)
+	if file != null:
+		file.store_string("1")
+		file.close()
 
 func _create_main_menu() -> void:
 	main_menu = PanelContainer.new()
@@ -368,6 +394,7 @@ func _create_main_menu() -> void:
 	_make_action_button("♜  АРЕНА ДЛЯ ДВОИХ", _menu_start_arena, column)
 	_make_action_button("◈  КООПЕРАТИВ ПО WI-FI", _menu_start_coop, column)
 	_make_action_button("🎒  СНАРЯЖЕНИЕ", _open_inventory, column)
+	_make_action_button("❔  КАК ИГРАТЬ", _show_tutorial, column)
 	_make_action_button("ПРОДОЛЖИТЬ БИТВУ", _menu_continue, column)
 	main_menu.visible = true
 
