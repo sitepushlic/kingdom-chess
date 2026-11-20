@@ -22,6 +22,7 @@ var hp_bars: Array = []
 var hp_bar_friendly_style: StyleBoxFlat
 var hp_bar_enemy_style: StyleBoxFlat
 var hazard_overlays: Array = []
+var equipment_auras: Array = []
 var visual_clock := 0.0
 var selected := -1
 var turn := 1
@@ -164,6 +165,22 @@ func _ready() -> void:
 		emblem.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(emblem)
 		unit_images.append(emblem)
+		var aura := Panel.new()
+		aura.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		aura.offset_left = 4
+		aura.offset_top = 4
+		aura.offset_right = -4
+		aura.offset_bottom = -4
+		aura.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var aura_style := StyleBoxFlat.new()
+		aura_style.bg_color = Color(0, 0, 0, 0)
+		aura_style.border_color = Color("#eac27b")
+		aura_style.set_border_width_all(2)
+		aura_style.set_corner_radius_all(13)
+		aura.add_theme_stylebox_override("panel", aura_style)
+		aura.visible = false
+		b.add_child(aura)
+		equipment_auras.append(aura)
 		var hp := Label.new()
 		hp.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 		hp.offset_top = -27
@@ -369,6 +386,10 @@ func _process(delta: float) -> void:
 			emblem.pivot_offset = emblem.size * 0.5
 			emblem.scale = Vector2.ONE * (1.0 + breath * 0.025)
 			emblem.modulate.a = 0.94 + breath * 0.06
+		if i < equipment_auras.size():
+			var aura: Panel = equipment_auras[i]
+			if aura.visible:
+				aura.modulate.a = 0.55 + 0.35 * (0.5 + 0.5 * sin(visual_clock * 2.5 + float(i)))
 		if i < hazard_overlays.size():
 			var warning: ColorRect = hazard_overlays[i]
 			if warning.visible:
@@ -1456,6 +1477,8 @@ func _draw() -> void:
 		var image_node: TextureRect = unit_images[i]
 		image_node.texture = UNIT_TEXTURES.get(p.to_upper()) if p != "" else null
 		image_node.modulate = Color("#fff2dc") if _team(p) == 1 else Color("#db9ba5")
+		var aura: Panel = equipment_auras[i]
+		aura.visible = mode == "raid" and _team(p) == 1 and _attack_bonus() > 0
 		var hp_node: Label = hp_labels[i]
 		hp_node.text = str(health[i]) if p != "" else ""
 		var life: ProgressBar = hp_bars[i]
