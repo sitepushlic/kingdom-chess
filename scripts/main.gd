@@ -1611,7 +1611,7 @@ func _draw() -> void:
 	phase_label.text = "ФАЗА II • ЯРОСТЬ ПАДШЕГО" if boss_phase == 2 else "ФАЗА I • ПРОБУЖДЕНИЕ"
 	inventory_label.text = "Ур. %d  •  Опыт: %d/%d  •  Золото: %d  •  Зелья: %d" % [player_level,experience,Progression.experience_needed(player_level),gold,potions]
 	equipment_label.text = "⚔ +%d  ⛨ +%d  ♥ +%d  ✦ %d%%  ☽ %d%%\nТрофеи: %d  •  Побед: %d" % [_attack_bonus(),_armor_bonus(),_item_stat("hp"),_item_stat("crit"),_item_stat("lifesteal"),equipment.size(),raid_wins]
-	info.text = ("⛨ ЩИТ АКТИВЕН\n" if shield_active else "") + ("ГЛАВА %d • БОСС: %d/%d HP • Раунд %d\n" % [raid_stage, boss_hp, 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35, raid_round] if mode == "raid" else "") + battle_log
+	info.text = ("⛨ ЩИТ АКТИВЕН\n" if shield_active else "") + ("ГЛАВА %d • %s • %s\nЦЕЛЬ: защити своего короля, победи босса.\nБОСС: %d/%d HP • Раунд %d\n" % [raid_stage, raid_region, raid_encounter, boss_hp, 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35, raid_round] if mode == "raid" else "") + battle_log
 	if selected >= 0 and selected < 64 and pieces[selected] != "":
 		var hero: String = pieces[selected]
 		var hero_attack: int = DAMAGE[hero.to_upper()] + ((_attack_bonus() + (_effective_level() - 1) * 2) if mode == "raid" and _team(hero) == 1 else 0)
@@ -1668,6 +1668,7 @@ func _draw() -> void:
 		for index in range(64):
 			var piece: String = pieces[index]
 			max_health.append((240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35) if mode == "raid" and index == 4 else (_max_hp(piece, _team(piece) == 1) if piece != "" else 1))
+		battlefield_3d.set_region(clampi(raid_stage - 1, 0, 5) if mode == "raid" else 0)
 		battlefield_3d.sync_board(pieces, selected, legal_targets, boss_target if mode == "raid" and winner == "" else -1, health, max_health)
 	if winner != "" and not battle_result_shown:
 		call_deferred("_show_result")
