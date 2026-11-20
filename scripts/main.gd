@@ -1148,7 +1148,7 @@ func _minion_loot() -> void:
 
 func _raid_victory() -> void:
 	if winner != "": return
-	winner = "ПОБЕДА! БОСС ПОВЕРЖЕН!"
+	winner = "ФИНАЛ КАМПАНИИ! КОРОЛЕВСТВО ОСВОБОЖДЕНО!" if raid_wins == 17 else "ПОБЕДА! БОСС ПОВЕРЖЕН!"
 	raid_wins += 1
 	_reward(100)
 	var item: Dictionary = Progression.first_clear_reward(raid_wins)
@@ -1161,6 +1161,8 @@ func _raid_victory() -> void:
 		return
 	equipment.append(item)
 	battle_log = "НАГРАДА ГЛАВЫ: %s!" % item["name"] if raid_wins % 3 == 0 and raid_wins <= 18 else "Добыча: %s (%s), +%d к атаке" % [item["name"], Progression.RARITIES[int(item["rarity"])], int(item["attack"])]
+	if raid_wins == 18:
+		battle_log += "\nСЮЖЕТ ЗАВЕРШЁН: все шесть регионов освобождены. Открыты бесконечные экспедиции с новыми сочетаниями противников."
 	_save_profile()
 
 func _use_potion() -> void:
