@@ -167,7 +167,7 @@ func _gear_material(slot: String) -> Material:
 	var palette := [Color("#b9c6d5"), Color("#62c7b6"), Color("#548dea"), Color("#aa78f5"), Color("#efac57"), Color("#e96d86"), Color("#fff0a4")]
 	return _material(palette[rarity], 0.82, 0.23, palette[rarity] * (0.18 + float(int(item.get("upgrade", 0))) * 0.04))
 
-func _build_piece(letter: String) -> Node3D:
+func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	var unit := Node3D.new()
 	var white := letter == letter.to_upper()
 	var material := hero_material if white else enemy_material
@@ -204,6 +204,17 @@ func _build_piece(letter: String) -> Node3D:
 		_cylinder(0.27, 0.12, accent, unit, Vector3(0, 1.12, 0))
 		_box(Vector3(0.12, 0.47, 0.12), gold_material, unit, Vector3(0, 1.41, 0))
 		_box(Vector3(0.37, 0.10, 0.12), gold_material, unit, Vector3(0, 1.48, 0))
+	if is_boss:
+		var dark_crown := _cylinder(0.33, 0.20, boss_crown, unit, Vector3(0, 1.23, 0))
+		dark_crown.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		for n in range(7):
+			var angle := float(n) * TAU / 7.0
+			var horn := _cylinder(0.065, 0.34, boss_crown, unit, Vector3(cos(angle) * 0.28, 1.47, sin(angle) * 0.28), 0.0)
+			horn.rotation.z = sin(angle) * 0.28
+			horn.rotation.x = cos(angle) * 0.28
+		for side in [-1.0, 1.0]:
+			_sphere(0.11, boss_crown, unit, Vector3(side * 0.29, 0.93, -0.16))
+		unit.scale = Vector3.ONE * 1.17
 	var bar_back := _box(Vector3(0.73, 0.085, 0.085), dark_material, unit, Vector3(0, 1.76, 0))
 	bar_back.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var bar_fill := _box(Vector3(0.69, 0.055, 0.10), _material(Color("#4edca4") if white else Color("#f26a76"), 0.15, 0.28, Color("#194735") if white else Color("#48121c")), unit, Vector3(0, 1.76, 0.02))
@@ -235,7 +246,7 @@ func _build_piece(letter: String) -> Node3D:
 			var aura_mat := _gear_material("Оружие") if hero_gear.has("Оружие") else gold_material
 			var ring := _cylinder(0.39, 0.025, aura_mat, unit, Vector3(0, 0.12, 0))
 			ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	unit.scale = Vector3.ONE * 0.84
+	unit.scale = Vector3.ONE * (1.12 if is_boss else 0.84)
 	board_root.add_child(unit)
 	return unit
 
@@ -269,7 +280,7 @@ func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int,
 		elif not piece_nodes.has(index) or str(piece_types.get(index, "")) != piece:
 			if piece_nodes.has(index):
 				(piece_nodes[index] as Node3D).queue_free()
-			var node := _build_piece(piece)
+			var node := _build_piece(piece, index == 4 and piece == "k")
 			node.position = _square_position(index)
 			piece_nodes[index] = node
 			piece_types[index] = piece
