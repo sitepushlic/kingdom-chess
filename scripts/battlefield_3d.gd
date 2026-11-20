@@ -20,6 +20,8 @@ var current_region := -1
 var gear_signature := ""
 var hero_gear: Dictionary = {}
 var boss_crown: Material
+var attack_effects: Array[Node3D] = []
+var base_camera_position := Vector3(0, 11.8, 8.7)
 
 func _material(color: Color, metallic: float = 0.0, roughness: float = 0.42, emission: Color = Color.BLACK) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -133,7 +135,7 @@ func _ready() -> void:
 	camera = Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.size = 12.7
-	camera.position = Vector3(0, 11.8, 8.7)
+	camera.position = base_camera_position
 	add_child(camera)
 	camera.look_at(Vector3(0, 0, 0))
 	camera.current = true
@@ -318,6 +320,40 @@ func animate_move(source: int, target: int) -> void:
 	tween.tween_property(actor, "position", destination + Vector3(0, 0.9, 0), 0.19).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(actor, "position", destination, 0.22).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(func(): moving_nodes.erase(target))
+
+func attack(source: int, target: int, magical: bool = false) -> void:
+	if not piece_nodes.has(source): return
+	var attacker: Node3D = piece_nodes[source]
+	var start: Vector3 = _square_position(source)
+	var end: Vector3 = _square_position(target)
+	var direction: Vector3 = (end - start).normalized()
+	var anticipation := create_tween()
+	anticipation.tween_property(attacker, "position", start - direction * 0.16 + Vector3(0, 0.10, 0), 0.11).set_trans(Tween.TRANS_CUBIC)
+	anticipation.tween_property(attacker, "position", start + direction * 0.25 + Vector3(0, 0.19, 0), 0.12).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+	anticipation.tween_property(attacker, "position", start, 0.17).set_trans(Tween.TRANS_BACK)
+	var beam := MeshInstance3D.new()
+	var beam_mesh := CylinderMesh.new()
+	beam_mesh.top_radius = 0.045 if magical else 0.075
+	beam_mesh.bottom_radius = 0.09 if magical else 0.13
+	beam_mesh.height = maxi(0.1, start.distance_to(end))
+	beam_mesh.radial_segments = 10
+	beam.mesh = beam_mesh
+	var color := Color("#a978ff") if magical else Color("#ffd08a")
+	var mat := _material(color, 0.15, 0.18, color)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	beam.material_override = mat
+	beam.position = (start + end) * 0.5 + Vector3(0, 0.8, 0)
+	beam.quaternion = Quaternion(Vector3.UP, (end - start).normalized())
+	beam.scale = Vector3(0.01, 0.01, 0.01)
+	board_root.add_child(beam)
+	var slash := create_tween()
+	slash.tween_property(beam, "scale", Vector3(1, 1, 1), 0.10).set_trans(Tween.TRANS_CUBIC)
+	slash.tween_property(beam, "transparency", 1.0, 0.24)
+	slash.tween_callback(beam.queue_free)
+	var camera_shake := create_tween()
+	camera_shake.tween_property(camera, "position", base_camera_position + Vector3(0.09, -0.06, 0), 0.045)
+	camera_shake.tween_property(camera, "position", base_camera_position + Vector3(-0.07, 0.04, 0), 0.055)
+	camera_shake.tween_property(camera, "position", base_camera_position, 0.11)
 
 func hit(index: int, healing: bool = false) -> void:
 	if not piece_nodes.has(index): return
