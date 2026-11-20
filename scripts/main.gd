@@ -312,6 +312,7 @@ func _apply_curse(target: int) -> void:
 	if _team(pieces[target]) != -turn: return
 	var source: int = selected
 	health[target] -= 30
+	_flash_square(target, Color("#e99fff"))
 	if mode == "raid" and target == 4:
 		boss_hp = maxi(0, health[target])
 	if health[target] <= 0:
@@ -411,6 +412,13 @@ func _legal(a: int, b: int) -> bool:
 		c += sc
 	return true
 
+func _flash_square(index: int, tint: Color) -> void:
+	if index < 0 or index >= buttons.size(): return
+	var cell: Button = buttons[index]
+	cell.modulate = tint
+	var tween := create_tween()
+	tween.tween_property(cell, "modulate", Color.WHITE, 0.35).set_trans(Tween.TRANS_SINE)
+
 func _tap(i: int) -> void:
 	if winner != "" or enemy_turn or (mode == "raid" and turn == -1): return
 	if curse_mode:
@@ -430,6 +438,7 @@ func _tap(i: int) -> void:
 			var damage: int = DAMAGE[attacker.to_upper()]
 			if mode == "raid": damage += (player_level - 1) * 2 + _attack_bonus()
 			health[i] -= damage
+			_flash_square(i, Color("#ff897b"))
 			if mode == "raid" and i == 4:
 				boss_hp = maxi(0,health[i])
 			if health[i] > 0:
@@ -441,6 +450,7 @@ func _tap(i: int) -> void:
 				_move(selected,i)
 		else:
 			_move(selected,i)
+			_flash_square(i, Color("#f6e5b0"))
 		selected = -1
 		ap -= 1
 		if ap <= 0 and winner == "": _end_turn()
@@ -508,6 +518,7 @@ func _minion_actions() -> void:
 					attack_target = target
 		if attack_target >= 0:
 			health[attack_target] -= DAMAGE[pieces[source].to_upper()]
+			_flash_square(attack_target, Color("#ff8a77"))
 			if health[attack_target] <= 0:
 				if pieces[attack_target] == "K":
 					winner = "ПОРАЖЕНИЕ"
@@ -541,6 +552,7 @@ func _boss_action() -> void:
 	if boss_target >= 0 and _team(pieces[boss_target]) == 1:
 		var damage := 25 if raid_round % 3 != 0 else 45
 		health[boss_target] -= damage
+		_flash_square(boss_target, Color("#ff5e72"))
 		battle_log = "Падший король наносит %d урона по отмеченной клетке!" % damage
 		if health[boss_target] <= 0:
 			if pieces[boss_target] == "K": winner = "ПОРАЖЕНИЕ"
