@@ -77,7 +77,7 @@ func _ready() -> void:
 	status.add_theme_font_size_override("font_size", 25)
 	ui.add_child(status)
 	var guide := Label.new()
-	guide.text = "Выбери фигуру, затем клетку.\\nДва действия за ход.\\nКаждая фигура атакует по шахматным правилам."
+	guide.text = "Выбери фигуру, затем клетку.\nДва действия за ход.\nКаждая фигура атакует по шахматным правилам."
 	guide.add_theme_font_size_override("font_size", 18)
 	ui.add_child(guide)
 	var skill := Button.new()
@@ -96,7 +96,7 @@ func _ready() -> void:
 	restart.pressed.connect(_reset)
 	ui.add_child(restart)
 	var note := Label.new()
-	note.text = "Первая версия: локальный бой на одном телефоне.\\nОнлайн, 3D, рейды и инвентарь — в разработке."
+	note.text = "Первая версия: локальный бой на одном телефоне.\nОнлайн, 3D, рейды и инвентарь — в разработке."
 	note.add_theme_font_size_override("font_size", 15)
 	ui.add_child(note)
 	_reset()
