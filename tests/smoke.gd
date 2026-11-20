@@ -115,6 +115,12 @@ func _run() -> void:
 	_assert_ok(game.battlefield_3d.hero_gear.size() == 3, "All three RPG gear slots change 3D character visuals")
 	game.battlefield_3d.sync_board(game.pieces, -1, [], -1)
 	_assert_ok(game.battlefield_3d.piece_nodes.size() > 0, "3D chess models rebuild with equipped cosmetic gear")
+	game.battlefield_3d.set_boss_phase(2)
+	_assert_ok(game.battlefield_3d.boss_enraged, "Boss enrage switches on cinematic 3D transformation")
+	game.battlefield_3d.set_boss_phase(1)
+	_assert_ok(not game.battlefield_3d.boss_enraged, "Boss enrage state resets correctly")
+	game.battlefield_3d.attack(60, 52)
+	_assert_ok(game.battlefield_3d.piece_nodes.has(60), "3D attack animation preserves board state")
 	game.equipment = [
 		{"name":"Test sword","slot":"Оружие","level":1,"attack":12,"crit":0},
 		{"name":"Test armor","slot":"Тело","level":1,"attack":2,"armor":8,"hp":30},
