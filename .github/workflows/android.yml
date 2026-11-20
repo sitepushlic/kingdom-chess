@@ -1,0 +1,37 @@
+name: Build Android APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Android SDK
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+      - name: Godot and templates
+        run: |
+          curl -fL -o godot.zip https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          unzip -q godot.zip
+          chmod +x Godot_v4.3-stable_linux.x86_64
+          curl -fL -o templates.tpz https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
+          unzip -q templates.tpz
+          cp templates/* "$HOME/.local/share/godot/export_templates/4.3.stable/"
+      - name: Import assets
+        run: ./Godot_v4.3-stable_linux.x86_64 --headless --path . --editor --quit
+      - name: Export debug APK
+        run: |
+          mkdir -p build
+          ./Godot_v4.3-stable_linux.x86_64 --headless --path . --export-debug Android build/kingdom-chess-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kingdom-chess-android
+          path: build/kingdom-chess-debug.apk
+          if-no-files-found: error
