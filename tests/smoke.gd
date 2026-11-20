@@ -56,6 +56,7 @@ func _run() -> void:
 	_assert_ok(state["health"].size() == 64, "Co-op state has 64 health values")
 	_assert_ok(state.has("selected") and state.has("curse_mode"), "Co-op sync includes targeting state")
 	_assert_ok(state.has("shield_active"), "Co-op sync includes shield protection")
+	_assert_ok(state.has("raid_stats") and state["raid_stats"].has("attack"), "Co-op state includes RPG combat bonuses")
 	game.mode = "arena"
 	game._save_battle()
 	_assert_ok(FileAccess.file_exists(game.battle_save_path), "Battle autosave exists")
@@ -86,6 +87,13 @@ func _run() -> void:
 		{"name":"Test relic","slot":"Реликвия","level":1,"attack":1,"lifesteal":10}
 	]
 	game.equipped_slots = {"Оружие":0,"Тело":1,"Реликвия":2}
+	game.shared_raid_stats = {"level": 9, "attack": 44, "armor": 12, "hp": 75, "crit": 8, "lifesteal": 4}
+	game.lan_connected = true
+	game.lan_host = false
+	_assert_ok(game._attack_bonus() == 44 and game._armor_bonus() == 12, "Co-op client uses host equipment stats")
+	_assert_ok(game._effective_level() == 9 and game._max_hp("K") == 255, "Co-op client displays host level and HP bonus")
+	game.lan_connected = false
+	game.shared_raid_stats.clear()
 	_assert_ok(game._attack_bonus() == 15, "Equipped slots aggregate attack")
 	_assert_ok(game._armor_bonus() == 8, "Equipped armor mitigates incoming damage")
 	_assert_ok(game._max_hp("K") == 210, "Equipped armor raises hero maximum HP")
