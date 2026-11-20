@@ -87,6 +87,20 @@ func _run() -> void:
 	game.health[60] = 180
 	var damage_dealt: int = game._deal_damage(60, 30, false)
 	_assert_ok(damage_dealt == 22 and game.health[60] == 158, "Armor reduces actual chess-piece damage")
+	game._reset()
+	game.health[60] = 180
+	game.selected = 60
+	game._heal_selected()
+	_assert_ok(game.health[60] == 200, "Healing works above base HP when armor raises maximum HP")
+	game.selected = 60
+	game.heal_used = false
+	game.acted.clear()
+	game.ap = 2
+	game.health[60] = 205
+	game._heal_selected()
+	_assert_ok(game.health[60] == 210, "Healing clamps to equipment-enhanced maximum HP")
+	game.health[60] = 5
+	_assert_ok(game._deal_damage(60, 100, false) > 0 and game.health[60] == 0, "Damage cannot produce negative HP")
 	game.equipment = []
 	game.equipped_slots = {"Оружие":-1,"Тело":-1,"Реликвия":-1}
 	_assert_ok(Progression.experience_needed(2) > Progression.experience_needed(1), "Increasing XP")
