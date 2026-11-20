@@ -75,6 +75,7 @@ var lan_host := false
 var lan_joined := false
 var lan_raid := false
 var sync_revision := 0
+var shared_raid_stats: Dictionary = {}
 var main_menu: PanelContainer
 var menu_title: Label
 var sidebar_tabs: TabContainer
@@ -635,6 +636,9 @@ func _inventory_equip() -> void:
 	_draw()
 
 func _inventory_sell() -> void:
+	if lan_connected and not lan_host:
+		inventory_details.text = "Во время сетевого рейда снаряжение меняет хозяин комнаты."
+		return
 	if inventory_selected < 0 or inventory_selected >= equipment.size(): return
 	var item: Dictionary = equipment[inventory_selected]
 	var price: int = 10 + int(item.get("level", 1)) * 5 + int(item.get("rarity", 0)) * 25
@@ -755,6 +759,7 @@ func _leave_lan() -> void:
 	lan_host = false
 	lan_joined = false
 	lan_raid = false
+	shared_raid_stats.clear()
 	if lan_status != null:
 		lan_status.text = "Сеть отключена."
 
@@ -788,7 +793,12 @@ func _snapshot() -> Dictionary:
 		"boss_target": boss_target, "battle_log": battle_log,
 		"acted": acted.duplicate(), "enemy_wave": enemy_wave,
 		"selected": selected, "curse_mode": curse_mode, "heal_used": heal_used,
-		"shield_active": shield_active
+		"shield_active": shield_active,
+		"raid_stats": {
+			"level": player_level, "attack": _attack_bonus(),
+			"armor": _armor_bonus(), "hp": _item_stat("hp"),
+			"crit": _item_stat("crit"), "lifesteal": _item_stat("lifesteal")
+		}
 	}
 
 func _broadcast_snapshot() -> void:
@@ -819,6 +829,11 @@ func _send_snapshot(data: Dictionary) -> void:
 	curse_mode = bool(data.get("curse_mode", false))
 	heal_used = bool(data.get("heal_used", false))
 	shield_active = bool(data.get("shield_active", false))
+	var incoming_stats: Variant = data.get("raid_stats", {})
+	if typeof(incoming_stats) == TYPE_DICTIONARY:
+		shared_raid_stats.clear()
+		for stat in ["level", "attack", "armor", "hp", "crit", "lifesteal"]:
+			shared_raid_stats[stat] = clampi(int(incoming_stats.get(stat, 0)), 0, 10000)
 	_draw()
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -927,12 +942,19 @@ func _save_profile() -> void:
 	})
 
 func _item_stat(stat: String) -> int:
+	if lan_connected and not lan_host and shared_raid_stats.has(stat):
+		return int(shared_raid_stats[stat])
 	var total := 0
 	for slot in Progression.ITEM_SLOTS:
 		var index: int = int(equipped_slots.get(slot, -1))
 		if index >= 0 and index < equipment.size():
 			total += maxi(0, int(equipment[index].get(stat, 0)))
 	return total
+
+func _effective_level() -> int:
+	if lan_connected and not lan_host and shared_raid_stats.has("level"):
+		return maxi(1, int(shared_raid_stats["level"]))
+	return player_level
 
 func _attack_bonus() -> int:
 	return _item_stat("attack")
@@ -1466,7 +1488,7 @@ func _draw() -> void:
 	info.text = ("⛨ ЩИТ АКТИВЕН\n" if shield_active else "") + ("ГЛАВА %d • БОСС: %d/%d HP • Раунд %d\n" % [raid_stage, boss_hp, 240 + (raid_stage - 1) * 100, raid_round] if mode == "raid" else "") + battle_log
 	if selected >= 0 and selected < 64 and pieces[selected] != "":
 		var hero: String = pieces[selected]
-		var hero_attack: int = DAMAGE[hero.to_upper()] + ((_attack_bonus() + (player_level - 1) * 2) if mode == "raid" and _team(hero) == 1 else 0)
+		var hero_attack: int = DAMAGE[hero.to_upper()] + ((_attack_bonus() + (_effective_level() - 1) * 2) if mode == "raid" and _team(hero) == 1 else 0)
 		var hero_hp: int = _max_hp(hero, _team(hero) == 1)
 		info.text = "ВЫБРАН: %s • HP %d/%d • УРОН %d\n" % [GLYPHS[hero], health[selected], hero_hp, hero_attack] + info.text
 	for i in range(64):
