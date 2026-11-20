@@ -90,6 +90,13 @@ Portrait-first Android commercial-quality **3D tactical chess RPG**, with intuit
 - CI #170/#171 were pending/in progress at writing time; verify latest after handoff commit and fix any failures. The latest passing APK is not proof that these changes pass yet.
 - Known limits: item validator currently checks structural integrity and range, not cryptographic tamper-proofing or complete save-file migration. Next: persistent status effects, genuinely unique mission objectives, visual and real-device QA.
 
+## Automated development — numeric equipment integrity (2026-11-21)
+- Confirmed CI **#175 success** before this session's edits: Godot smoke tests and Android debug APK: https://github.com/sitepushlic/kingdom-chess/actions/runs/44823263285 .
+- Commit `c99b59a` in `scripts/progression.gd`: reject fractional, non-finite, >1,000,000 absolute-value equipment fields and chance stats above 100%; previously values like level 1.5 could silently truncate, while oversized stats could distort combat. This is save-file integrity hardening, not cheat-proof authentication.
+- Commit `f807382` in `tests/smoke.gd`: regression cases for fractional level, oversized attack, impossible crit, plus acceptance of valid generated equipment.
+- CI #176 was running when handoff was written. **Do not claim this patch passes** until newest Actions run completes successfully and APK artifact is present. Repair any Godot parser/test failure before moving on.
+- Next: meaningful campaign objective variants and persistent statuses, then 3D authored art, UX and Android device QA. Do not confuse CI run count with game completion.
+
 ## Required next steps (prioritized)
 1. **Verify latest CI** and fix failed tests immediately. Ensure APK artifact exists; inspect headless test output, not just a green commit.
 2. Implement genuinely unique mission **win conditions** and scripted objectives, boss-specific behavior, environmental hazard telegraphs, persistent status effects and campaign storytelling. Six modifiers now affect combat but are not yet visually telegraphed.
