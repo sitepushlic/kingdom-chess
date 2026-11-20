@@ -19,6 +19,8 @@ var buttons: Array = []
 var unit_images: Array = []
 var hp_labels: Array = []
 var hp_bars: Array = []
+var hp_bar_friendly_style: StyleBoxFlat
+var hp_bar_enemy_style: StyleBoxFlat
 var hazard_overlays: Array = []
 var visual_clock := 0.0
 var selected := -1
@@ -90,6 +92,12 @@ var battle_board: MarginContainer
 var battle_layout: VBoxContainer
 
 func _ready() -> void:
+	hp_bar_friendly_style = StyleBoxFlat.new()
+	hp_bar_friendly_style.bg_color = Color("#82d5ad")
+	hp_bar_friendly_style.set_corner_radius_all(3)
+	hp_bar_enemy_style = StyleBoxFlat.new()
+	hp_bar_enemy_style.bg_color = Color("#d8838d")
+	hp_bar_enemy_style.set_corner_radius_all(3)
 	_load_profile()
 	_apply_global_theme()
 	var bg := TextureRect.new()
@@ -176,11 +184,8 @@ func _ready() -> void:
 		var life_bg := StyleBoxFlat.new()
 		life_bg.bg_color = Color("#251d25")
 		life_bg.set_corner_radius_all(3)
-		var life_fill := StyleBoxFlat.new()
-		life_fill.bg_color = Color("#82d5ad")
-		life_fill.set_corner_radius_all(3)
 		life.add_theme_stylebox_override("background", life_bg)
-		life.add_theme_stylebox_override("fill", life_fill)
+		life.add_theme_stylebox_override("fill", hp_bar_friendly_style)
 		b.add_child(life)
 		hp_bars.append(life)
 		var warning := ColorRect.new()
@@ -1406,7 +1411,7 @@ func _draw() -> void:
 		if p != "":
 			life.max_value = maxi(1, (240 + (raid_stage - 1) * 100) if mode == "raid" and i == 4 else _max_hp(p, _team(p) == 1))
 			life.value = maxi(0, health[i])
-			
+			life.add_theme_stylebox_override("fill", hp_bar_friendly_style if _team(p) == 1 else hp_bar_enemy_style)
 		hp_node.add_theme_color_override("font_color", Color("#ffe9ad") if _team(p) == 1 else Color("#ffbdc5"))
 		var style := StyleBoxFlat.new()
 		var row: int = i / 8
