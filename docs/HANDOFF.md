@@ -83,6 +83,13 @@ Portrait-first Android commercial-quality **3D tactical chess RPG**, with intuit
 - Latest CI after these commits is **not yet verified** at handoff-writing time; inspect Actions, repair any failure and confirm APK upload. The project remains a prototype, not commercial-ready.
 - Next: strengthen inventory item schema validation, implement unique objectives and persistent poison/status effects; real-device testing, authored 3D art, release signing and co-op QA remain outstanding.
 
+## Automated development — inventory schema hardening (2026-11-20)
+- Verified **CI #169 success** (prior code): https://github.com/sitepushlic/kingdom-chess/actions/runs/44801466232 . This is the last confirmed passing APK at session start.
+- Commit `5c039ec` (`scripts/progression.gd`): new `is_valid_equipment_item()` validates item slot, numeric fields, level 1–50, rarity 0–6, upgrade 0–12, set/trait IDs, and nonnegative combat stats. `sanitize_equipment_slots()` rejects corrupted equipped items; `set_bonus()` safely ignores malformed inventory entries rather than crashing or counting invalid sets.
+- Commit `147af5d` (`tests/smoke.gd`): regressions for negative attack, nonnumeric level, impossible set ID, corrupt saved slots and malformed set-bonus inventory.
+- CI #170/#171 were pending/in progress at writing time; verify latest after handoff commit and fix any failures. The latest passing APK is not proof that these changes pass yet.
+- Known limits: item validator currently checks structural integrity and range, not cryptographic tamper-proofing or complete save-file migration. Next: persistent status effects, genuinely unique mission objectives, visual and real-device QA.
+
 ## Required next steps (prioritized)
 1. **Verify latest CI** and fix failed tests immediately. Ensure APK artifact exists; inspect headless test output, not just a green commit.
 2. Implement genuinely unique mission **win conditions** and scripted objectives, boss-specific behavior, environmental hazard telegraphs, persistent status effects and campaign storytelling. Six modifiers now affect combat but are not yet visually telegraphed.
