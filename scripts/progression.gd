@@ -83,10 +83,32 @@ static func sanitize_equipment_slots(items: Array, slots: Dictionary, level: int
 		if typeof(items[index]) != TYPE_DICTIONARY:
 			continue
 		var item: Dictionary = items[index]
-		if str(item.get("slot", "")) != slot or int(item.get("level", 1)) > level:
+		if not is_valid_equipment_item(item) or str(item["slot"]) != slot or int(item["level"]) > level:
 			continue
 		valid[slot] = index
 	return valid
+
+static func is_valid_equipment_item(item: Dictionary) -> bool:
+	# Treat loaded inventory as untrusted JSON: invalid equipment must not grant combat bonuses.
+	if not ITEM_SLOTS.has(item.get("slot", null)):
+		return false
+	for field in ["level", "rarity", "power", "upgrade", "set_id", "trait_id", "attack", "armor", "hp", "crit", "lifesteal", "penetration", "block", "bleed"]:
+		if typeof(item.get(field)) != TYPE_INT and typeof(item.get(field)) != TYPE_FLOAT:
+			return false
+	if int(item["level"]) < 1 or int(item["level"]) > 50:
+		return false
+	if int(item["rarity"]) < 0 or int(item["rarity"]) >= RARITIES.size():
+		return false
+	if int(item["upgrade"]) < 0 or int(item["upgrade"]) > 12:
+		return false
+	if int(item["set_id"]) < -1 or int(item["set_id"]) >= SET_NAMES.size():
+		return false
+	if int(item["trait_id"]) < -1 or int(item["trait_id"]) >= TRAITS.size():
+		return false
+	for stat in ["power", "attack", "armor", "hp", "crit", "lifesteal", "penetration", "block", "bleed"]:
+		if int(item[stat]) < 0:
+			return false
+	return true
 
 static func default_profile() -> Dictionary:
 	return {"level":1, "xp":0, "gold":0, "potions":2, "items":[], "equipped":-1, "slots":{"Оружие":-1,"Тело":-1,"Реликвия":-1}, "wins":0, "dry_streak":0}
@@ -247,7 +269,7 @@ static func set_bonus(items: Array, slots: Dictionary) -> Dictionary:
 		var index: int = int(slots.get(slot, -1))
 		if index < 0 or index >= items.size():
 			continue
-		var set_id: int = int(items[index].get("set_id", -1))
+		if typeof(items[index]) != TYPE_DICTIONARY:\n\t\t\tcontinue\n\t\tvar item: Dictionary = items[index]\n\t\tif not is_valid_equipment_item(item) or str(item["slot"]) != slot:\n\t\t\tcontinue\n\t\tvar set_id: int = int(item["set_id"])
 		if set_id >= 0:
 			counts[set_id] = int(counts.get(set_id, 0)) + 1
 	var bonus := {"attack": 0, "armor": 0, "hp": 0, "crit": 0, "lifesteal": 0}
