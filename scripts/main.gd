@@ -1,6 +1,7 @@
 extends Control
 
 const Progression = preload("res://scripts/progression.gd")
+const Battlefield3D = preload("res://scripts/battlefield_3d.gd")
 
 const UNIT_TEXTURES = {
 	"K": preload("res://assets/units/k.svg"),
@@ -92,6 +93,9 @@ var shield_active := false
 var menu_toggle: Button
 var battle_board: MarginContainer
 var battle_layout: VBoxContainer
+var battlefield_3d: Node3D
+var battlefield_viewport: SubViewport
+var battlefield_container: SubViewportContainer
 
 func _ready() -> void:
 	hp_bar_friendly_style = StyleBoxFlat.new()
@@ -140,13 +144,31 @@ func _ready() -> void:
 	square.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	square.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	board_frame.add_child(square)
+	var board_stack := Control.new()
+	board_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	board_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	square.add_child(board_stack)
+	battlefield_container = SubViewportContainer.new()
+	battlefield_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	battlefield_container.stretch = true
+	battlefield_container.mouse_filter = Control.MOUSE_FILTER_STOP
+	board_stack.add_child(battlefield_container)
+	battlefield_viewport = SubViewport.new()
+	battlefield_viewport.size = Vector2i(900, 900)
+	battlefield_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	battlefield_viewport.gui_disable_input = true
+	battlefield_container.add_child(battlefield_viewport)
+	battlefield_3d = Battlefield3D.new()
+	battlefield_viewport.add_child(battlefield_3d)
+	battlefield_container.gui_input.connect(_on_3d_board_input)
 	var grid := GridContainer.new()
 	grid.columns = 8
 	grid.add_theme_constant_override("h_separation", 1)
 	grid.add_theme_constant_override("v_separation", 1)
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	square.add_child(grid)
+	board_stack.add_child(grid)
+	grid.visible = false
 	for i in range(64):
 		var b := Button.new()
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1252,6 +1274,9 @@ func _impact_effect(index: int, healing: bool = false) -> void:
 	tween.chain().tween_callback(ring.queue_free)
 
 func _damage_popup(index: int, amount: int, healing: bool = false) -> void:
+	if battlefield_3d != null:
+		battlefield_3d.hit(index, healing)
+
 	if index < 0 or index >= buttons.size(): return
 	_impact_effect(index, healing)
 	_animate_hit(index, healing)
@@ -1278,6 +1303,13 @@ func _flash_square(index: int, tint: Color) -> void:
 	cell.modulate = tint
 	var tween := create_tween()
 	tween.tween_property(cell, "modulate", Color.WHITE, 0.35).set_trans(Tween.TRANS_SINE)
+
+func _on_3d_board_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		var scale_factor := Vector2(battlefield_viewport.size) / battlefield_container.size
+		var square_index: int = battlefield_3d.pick_square(event.position * scale_factor)
+		if square_index >= 0:
+			_tap(square_index)
 
 func _tap(i: int) -> void:
 	if lan_connected and not lan_host:
@@ -1326,6 +1358,7 @@ func _tap(i: int) -> void:
 	_draw()
 
 func _move(a: int,b: int) -> void:
+	if battlefield_3d != null: battlefield_3d.animate_move(a, b)
 	_animate_move(a, b)
 	pieces[b] = pieces[a]
 	health[b] = health[a]
@@ -1549,6 +1582,13 @@ func _draw() -> void:
 		b.add_theme_stylebox_override("pressed",style)
 		b.add_theme_stylebox_override("focus",StyleBoxEmpty.new())
 		b.add_theme_color_override("font_color",Color("#fff3dd") if _team(p) == 1 else Color("#201824"))
+	if battlefield_3d != null and pieces.size() == 64:
+		var legal_targets: Array = []
+		if selected >= 0 and selected < 64:
+			for square_index in range(64):
+				if _legal(selected, square_index):
+					legal_targets.append(square_index)
+		battlefield_3d.sync_board(pieces, selected, legal_targets, boss_target if mode == "raid" and winner == "" else -1)
 	if winner != "" and not battle_result_shown:
 		call_deferred("_show_result")
 	if lan_host and lan_connected:
