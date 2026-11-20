@@ -48,6 +48,12 @@ var boss_bar: ProgressBar
 var curse_mode := false
 var turn_count := 0
 var enemy_wave := 0
+var inventory_popup: AcceptDialog
+var inventory_list: ItemList
+var inventory_details: Label
+var inventory_selected := -1
+var raid_stage := 1
+var damage_numbers: Array[Label] = []
 
 func _ready() -> void:
 	_load_profile()
@@ -175,6 +181,11 @@ func _ready() -> void:
 	equipment_label.add_theme_color_override("font_color", Color("#c6e3e5"))
 	equipment_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ui.add_child(equipment_label)
+	var inventory_button := Button.new()
+	inventory_button.text = "СУМКА И СНАРЯЖЕНИЕ"
+	inventory_button.custom_minimum_size.y = 52
+	inventory_button.pressed.connect(_open_inventory)
+	ui.add_child(inventory_button)
 	var equip_button := Button.new()
 	equip_button.text = "СНАРЯДИТЬ ЛУЧШИЙ ПРЕДМЕТ"
 	equip_button.custom_minimum_size.y = 52
@@ -217,7 +228,89 @@ func _ready() -> void:
 	note.text = "Одиночный рейд и локальная арена.\nСеть, 3D и кооператив ещё не готовы."
 	note.add_theme_font_size_override("font_size", 15)
 	ui.add_child(note)
+	_create_inventory_popup()
 	_reset()
+
+func _create_inventory_popup() -> void:
+	inventory_popup = AcceptDialog.new()
+	inventory_popup.title = "ХРАНИЛИЩЕ РЕЛИКВИЙ"
+	inventory_popup.dialog_text = ""
+	inventory_popup.min_size = Vector2i(700, 480)
+	add_child(inventory_popup)
+	var contents := VBoxContainer.new()
+	contents.add_theme_constant_override("separation", 12)
+	inventory_popup.add_child(contents)
+	inventory_details = Label.new()
+	inventory_details.text = "Выбери предмет."
+	inventory_details.add_theme_font_size_override("font_size", 19)
+	contents.add_child(inventory_details)
+	inventory_list = ItemList.new()
+	inventory_list.custom_minimum_size = Vector2(650, 285)
+	inventory_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	inventory_list.item_selected.connect(_inventory_select)
+	contents.add_child(inventory_list)
+	var actions := HBoxContainer.new()
+	contents.add_child(actions)
+	var equip := Button.new()
+	equip.text = "ЭКИПИРОВАТЬ"
+	equip.custom_minimum_size = Vector2(250, 55)
+	equip.pressed.connect(_inventory_equip)
+	actions.add_child(equip)
+	var sell := Button.new()
+	sell.text = "ПРОДАТЬ ЗА ЗОЛОТО"
+	sell.custom_minimum_size = Vector2(250, 55)
+	sell.pressed.connect(_inventory_sell)
+	actions.add_child(sell)
+
+func _open_inventory() -> void:
+	inventory_selected = -1
+	_refresh_inventory()
+	inventory_popup.popup_centered()
+
+func _refresh_inventory() -> void:
+	inventory_list.clear()
+	for i in range(equipment.size()):
+		var item: Dictionary = equipment[i]
+		var rarity: int = clampi(int(item.get("rarity", 0)), 0, 6)
+		var name: String = str(item.get("name", "Артефакт"))
+		var mark := " [ЭКИПИРОВАНО]" if i == equipped else ""
+		inventory_list.add_item("%s • %s • +%d атаки%s" % [name, Progression.RARITIES[rarity], int(item.get("attack", 0)), mark])
+		inventory_list.set_item_custom_fg_color(i, _rarity_color(rarity))
+	if equipment.is_empty():
+		inventory_details.text = "Сумка пуста. Реликвии выпадают с боссов."
+	else:
+		inventory_details.text = "Предметов: %d • Золото: %d" % [equipment.size(), gold]
+
+func _rarity_color(rarity: int) -> Color:
+	var colors := ["#b6b6b6", "#75d69b", "#6daaff", "#c189f4", "#e9bd69", "#ff858e", "#fff1b4"]
+	return Color(colors[clampi(rarity, 0, colors.size()-1)])
+
+func _inventory_select(index: int) -> void:
+	inventory_selected = index
+	if index < 0 or index >= equipment.size(): return
+	var item: Dictionary = equipment[index]
+	var rarity: int = clampi(int(item.get("rarity", 0)), 0, 6)
+	inventory_details.text = "%s • %s • Ур. %d • +%d к атаке" % [item.get("name", "Артефакт"), Progression.RARITIES[rarity], int(item.get("level", 1)), int(item.get("attack", 0))]
+
+func _inventory_equip() -> void:
+	if inventory_selected < 0 or inventory_selected >= equipment.size(): return
+	equipped = inventory_selected
+	_save_profile()
+	_refresh_inventory()
+	_draw()
+
+func _inventory_sell() -> void:
+	if inventory_selected < 0 or inventory_selected >= equipment.size(): return
+	var item: Dictionary = equipment[inventory_selected]
+	var price: int = 10 + int(item.get("level", 1)) * 5 + int(item.get("rarity", 0)) * 25
+	gold += price
+	equipment.remove_at(inventory_selected)
+	if equipped == inventory_selected: equipped = -1
+	elif equipped > inventory_selected: equipped -= 1
+	inventory_selected = -1
+	_save_profile()
+	_refresh_inventory()
+	_draw()
 
 func _switch_mode() -> void:
 	mode = "arena"
@@ -354,7 +447,8 @@ func _reset() -> void:
 	curse_mode = false
 	turn_count = 0
 	enemy_wave = 0
-	boss_hp = 240
+	raid_stage = mini(3, 1 + int(raid_wins / 3))
+	boss_hp = 240 + (raid_stage - 1) * 100
 	raid_round = 0
 	boss_target = -1
 	battle_log = "Рейд: уничтожь тёмного короля!" if mode == "raid" else "Арена: два игрока на одном устройстве."
@@ -550,7 +644,7 @@ func _boss_action() -> void:
 		_draw()
 		return
 	if boss_target >= 0 and _team(pieces[boss_target]) == 1:
-		var damage := 25 if raid_round % 3 != 0 else 45
+		var damage := (25 if raid_round % 3 != 0 else 45) + (raid_stage - 1) * 10
 		health[boss_target] -= damage
 		_flash_square(boss_target, Color("#ff5e72"))
 		battle_log = "Падший король наносит %d урона по отмеченной клетке!" % damage
@@ -588,13 +682,14 @@ func _draw() -> void:
 	mode_button.text = "РЕЖИМ: АРЕНА" if mode == "arena" else "РЕЖИМ: РЕЙД"
 	boss_portrait.visible = mode == "raid"
 	boss_bar.visible = mode == "raid"
+	boss_bar.max_value = 240 + (raid_stage - 1) * 100
 	boss_bar.value = boss_hp
 	inventory_label.text = "Ур. %d  •  Опыт: %d/%d  •  Золото: %d  •  Зелья: %d" % [player_level,experience,Progression.experience_needed(player_level),gold,potions]
 	var equipped_name := "нет"
 	if equipped >= 0 and equipped < equipment.size():
 		equipped_name = str(equipment[equipped].get("name", "Артефакт")) + " (+" + str(_attack_bonus()) + ")"
 	equipment_label.text = "Снаряжение: %s\nТрофеи: %d  •  Побед в рейдах: %d" % [equipped_name,equipment.size(),raid_wins]
-	info.text = ("БОСС: %d/240 HP • Раунд %d\n" % [boss_hp, raid_round] if mode == "raid" else "") + battle_log
+	info.text = ("ГЛАВА %d • БОСС: %d/%d HP • Раунд %d\n" % [raid_stage, boss_hp, 240 + (raid_stage - 1) * 100, raid_round] if mode == "raid" else "") + battle_log
 	for i in range(64):
 		var b: Button = buttons[i]
 		var p: String = pieces[i]
