@@ -81,6 +81,9 @@ var tutorial_seen_path := "user://tutorial_seen.flag"
 var last_saved_turn := -1
 var last_saved_round := -1
 var shield_active := false
+var menu_toggle: Button
+var battle_board: MarginContainer
+var battle_layout: VBoxContainer
 
 func _ready() -> void:
 	_load_profile()
@@ -92,16 +95,31 @@ func _ready() -> void:
 	bg.stretch_mode = TextureRect.STRETCH_SCALE
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
-	var layout := HBoxContainer.new()
+	var layout := VBoxContainer.new()
+	battle_layout = layout
 	layout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	layout.add_theme_constant_override("separation", 12)
+	layout.add_theme_constant_override("separation", 5)
 	add_child(layout)
+	var top_bar := HBoxContainer.new()
+	top_bar.custom_minimum_size.y = 76
+	top_bar.add_theme_constant_override("separation", 10)
+	layout.add_child(top_bar)
+	var top_brand := Label.new()
+	top_brand.text = "♛  ВОЙНА КОРОЛЕВСТВ"
+	top_brand.add_theme_font_size_override("font_size", 26)
+	top_brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_brand.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	top_bar.add_child(top_brand)
+	menu_toggle = _make_action_button("☰ МЕНЮ", _show_main_menu, top_bar)
+	menu_toggle.custom_minimum_size = Vector2(145, 65)
 	var board_frame := MarginContainer.new()
+	battle_board = board_frame
+	board_frame.custom_minimum_size.y = 710
 	board_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	board_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	board_frame.add_theme_constant_override("margin_left", 18)
-	board_frame.add_theme_constant_override("margin_top", 18)
-	board_frame.add_theme_constant_override("margin_bottom", 18)
+	board_frame.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	board_frame.add_theme_constant_override("margin_left", 6)
+	board_frame.add_theme_constant_override("margin_top", 4)
+	board_frame.add_theme_constant_override("margin_bottom", 4)
 	layout.add_child(board_frame)
 	var square := AspectRatioContainer.new()
 	square.ratio = 1.0
@@ -144,15 +162,16 @@ func _ready() -> void:
 		b.add_child(hp)
 		hp_labels.append(hp)
 	var sidebar := PanelContainer.new()
-	sidebar.custom_minimum_size = Vector2(405, 0)
+	sidebar.custom_minimum_size = Vector2(0, 0)
 	sidebar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sidebar.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	layout.add_child(sidebar)
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color("#0b101b")
 	panel_style.border_color = Color("#705a42")
 	panel_style.set_border_width_all(1)
-	panel_style.set_corner_radius_all(18)
-	panel_style.set_content_margin_all(14)
+	panel_style.set_corner_radius_all(16)
+	panel_style.set_content_margin_all(10)
 	sidebar.add_theme_stylebox_override("panel", panel_style)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -164,20 +183,20 @@ func _ready() -> void:
 	scroll.add_child(ui)
 	var heading := Label.new()
 	heading.text = "♛  KINGDOM CHESS"
-	heading.add_theme_font_size_override("font_size", 26)
+	heading.add_theme_font_size_override("font_size", 19)
 	heading.add_theme_color_override("font_color", Color("#f1d49c"))
 	ui.add_child(heading)
 	var subtitle := Label.new()
 	subtitle.text = "ВОЙНА КОРОЛЕВСТВ • ТАКТИЧЕСКАЯ RPG"
-	subtitle.add_theme_font_size_override("font_size", 16)
+	subtitle.add_theme_font_size_override("font_size", 13)
 	subtitle.add_theme_color_override("font_color", Color("#b8a4ba"))
 	ui.add_child(subtitle)
 	status = Label.new()
-	status.add_theme_font_size_override("font_size", 21)
+	status.add_theme_font_size_override("font_size", 20)
 	ui.add_child(status)
 	boss_portrait = TextureRect.new()
 	boss_portrait.texture = preload("res://assets/backgrounds/fallen_king.svg")
-	boss_portrait.custom_minimum_size = Vector2(0, 85)
+	boss_portrait.custom_minimum_size = Vector2(0, 62)
 	boss_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	boss_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	ui.add_child(boss_portrait)
@@ -188,7 +207,7 @@ func _ready() -> void:
 	boss_bar.custom_minimum_size.y = 16
 	ui.add_child(boss_bar)
 	phase_label = Label.new()
-	phase_label.add_theme_font_size_override("font_size", 18)
+	phase_label.add_theme_font_size_override("font_size", 15)
 	phase_label.add_theme_color_override("font_color", Color("#e9a6a0"))
 	ui.add_child(phase_label)
 	var mode_row := HBoxContainer.new()
@@ -206,15 +225,16 @@ func _ready() -> void:
 	raid_button.pressed.connect(_start_raid)
 	mode_row.add_child(raid_button)
 	inventory_label = Label.new()
-	inventory_label.add_theme_font_size_override("font_size", 18)
+	inventory_label.add_theme_font_size_override("font_size", 16)
 	inventory_label.add_theme_color_override("font_color", Color("#e5c58c"))
 	ui.add_child(inventory_label)
 	equipment_label = Label.new()
-	equipment_label.add_theme_font_size_override("font_size", 17)
+	equipment_label.add_theme_font_size_override("font_size", 15)
 	equipment_label.add_theme_color_override("font_color", Color("#c6e3e5"))
 	equipment_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	ui.add_child(equipment_label)
-	var action_bar := HBoxContainer.new()
+	var action_bar := GridContainer.new()
+	action_bar.columns = 2
 	action_bar.add_theme_constant_override("separation", 8)
 	ui.add_child(action_bar)
 	var heal := _make_action_button("✦ ЛЕЧЕНИЕ", _heal_selected, action_bar)
@@ -248,7 +268,7 @@ func _ready() -> void:
 	var network_dialog := AcceptDialog.new()
 	network_dialog.name = "NetworkLobby"
 	network_dialog.title = "КОМНАТА СОВМЕСТНОГО РЕЙДА"
-	network_dialog.min_size = Vector2i(750, 360)
+	network_dialog.min_size = Vector2i(640, 450)
 	add_child(network_dialog)
 	var network_box := VBoxContainer.new()
 	network_box.add_theme_constant_override("separation", 14)
@@ -257,13 +277,13 @@ func _ready() -> void:
 	network_caption.text = "Подключите оба телефона к одной Wi-Fi сети."
 	network_caption.add_theme_font_size_override("font_size", 20)
 	network_box.add_child(network_caption)
-	var lan_row := HBoxContainer.new()
+	var lan_row := VBoxContainer.new()
 	lan_row.add_theme_constant_override("separation", 12)
 	network_box.add_child(lan_row)
 	_make_action_button("СОЗДАТЬ КОМНАТУ", _host_lan, lan_row)
 	lan_address = LineEdit.new()
 	lan_address.placeholder_text = "IP первого телефона"
-	lan_address.custom_minimum_size = Vector2(220, 56)
+	lan_address.custom_minimum_size = Vector2(560, 56)
 	lan_address.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lan_row.add_child(lan_address)
 	_make_action_button("ПОДКЛЮЧИТЬСЯ", _join_lan, lan_row)
@@ -335,7 +355,7 @@ func _make_action_button(label: String, callback: Callable, parent: Control) -> 
 func _create_tutorial() -> void:
 	tutorial_popup = AcceptDialog.new()
 	tutorial_popup.title = "КАК ИГРАТЬ"
-	tutorial_popup.min_size = Vector2i(690, 460)
+	tutorial_popup.min_size = Vector2i(640, 620)
 	tutorial_popup.dialog_text = "ЦЕЛЬ: победить Падшего короля.\n\n1. Нажми на своего героя на доске.\n2. Зелёные клетки — доступные ходы.\n3. Нажми на зелёную клетку для перемещения.\n4. Красная клетка — будущий удар босса: уйди с неё.\n5. У тебя 2 действия за ход.\n\nСПОСОБНОСТИ\n✦ Лечение — восстановить здоровье героя.\n☄ Проклятие — удар ферзя или слона.\n⛨ Щит — защита ладьи от атаки босса.\n♥ Зелье — лечение из запасов.\n\nСнаряжение и добыча сохраняются после рейда."
 	add_child(tutorial_popup)
 	tutorial_popup.confirmed.connect(_tutorial_complete)
@@ -363,7 +383,7 @@ func _create_main_menu() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	main_menu.add_child(center)
 	var column := VBoxContainer.new()
-	column.custom_minimum_size.x = 440
+	column.custom_minimum_size.x = 520
 	column.add_theme_constant_override("separation", 8)
 	center.add_child(column)
 	menu_title = Label.new()
@@ -375,7 +395,7 @@ func _create_main_menu() -> void:
 	var game_title := Label.new()
 	game_title.text = "ВОЙНА КОРОЛЕВСТВ"
 	game_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	game_title.add_theme_font_size_override("font_size", 34)
+	game_title.add_theme_font_size_override("font_size", 32)
 	game_title.add_theme_color_override("font_color", Color("#f6e6c7"))
 	column.add_child(game_title)
 	var game_subtitle := Label.new()
@@ -386,7 +406,7 @@ func _create_main_menu() -> void:
 	column.add_child(game_subtitle)
 	var menu_art := TextureRect.new()
 	menu_art.texture = preload("res://assets/backgrounds/fallen_king.svg")
-	menu_art.custom_minimum_size = Vector2(440, 110)
+	menu_art.custom_minimum_size = Vector2(520, 185)
 	menu_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	menu_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	column.add_child(menu_art)
@@ -430,7 +450,7 @@ func _create_inventory_popup() -> void:
 	inventory_popup = AcceptDialog.new()
 	inventory_popup.title = "ХРАНИЛИЩЕ РЕЛИКВИЙ"
 	inventory_popup.dialog_text = ""
-	inventory_popup.min_size = Vector2i(700, 480)
+	inventory_popup.min_size = Vector2i(650, 580)
 	add_child(inventory_popup)
 	var contents := VBoxContainer.new()
 	contents.add_theme_constant_override("separation", 12)
@@ -440,7 +460,7 @@ func _create_inventory_popup() -> void:
 	inventory_details.add_theme_font_size_override("font_size", 19)
 	contents.add_child(inventory_details)
 	inventory_list = ItemList.new()
-	inventory_list.custom_minimum_size = Vector2(650, 285)
+	inventory_list.custom_minimum_size = Vector2(590, 285)
 	inventory_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	inventory_list.item_selected.connect(_inventory_select)
 	contents.add_child(inventory_list)
@@ -448,12 +468,12 @@ func _create_inventory_popup() -> void:
 	contents.add_child(actions)
 	var equip := Button.new()
 	equip.text = "ЭКИПИРОВАТЬ"
-	equip.custom_minimum_size = Vector2(250, 55)
+	equip.custom_minimum_size = Vector2(220, 55)
 	equip.pressed.connect(_inventory_equip)
 	actions.add_child(equip)
 	var sell := Button.new()
 	sell.text = "ПРОДАТЬ ЗА ЗОЛОТО"
-	sell.custom_minimum_size = Vector2(250, 55)
+	sell.custom_minimum_size = Vector2(220, 55)
 	sell.pressed.connect(_inventory_sell)
 	actions.add_child(sell)
 
