@@ -556,6 +556,9 @@ func _inventory_select(index: int) -> void:
 func _inventory_equip() -> void:
 	if inventory_selected < 0 or inventory_selected >= equipment.size(): return
 	var item: Dictionary = equipment[inventory_selected]
+	if lan_connected and not lan_host:
+		inventory_details.text = "В сетевом рейде экипировку меняет создатель комнаты."
+		return
 	if player_level < int(item.get("level", 1)):
 		inventory_details.text = "Нужен уровень %d для экипировки." % int(item.get("level", 1))
 		return
@@ -923,12 +926,28 @@ func _reward(amount: int) -> void:
 		battle_log = "Новый уровень! Получено зелье."
 	_save_profile()
 
+func _minion_loot() -> void:
+	if mode != "raid": return
+	if equipment.size() >= 100:
+		battle_log += "\nСумка заполнена (100/100)."
+		return
+	if randi_range(1, 100) > 18: return
+	var item: Dictionary = Progression.roll_item(player_level)
+	equipment.append(item)
+	battle_log += "\nТРОФЕЙ: %s [%s]" % [item["name"], Progression.RARITIES[int(item["rarity"])]]
+	_save_profile()
+
 func _raid_victory() -> void:
 	if winner != "": return
 	winner = "ПОБЕДА! БОСС ПОВЕРЖЕН!"
 	raid_wins += 1
 	_reward(100)
 	var item: Dictionary = Progression.roll_item(player_level)
+	if equipment.size() >= 100:
+		gold += 100
+		battle_log = "Сумка полна! Вместо реликвии получено 100 золота."
+		_save_profile()
+		return
 	equipment.append(item)
 	battle_log = "Добыча: %s (%s), +%d к атаке" % [item["name"], Progression.RARITIES[int(item["rarity"])], int(item["attack"])]
 	_save_profile()
@@ -995,6 +1014,7 @@ func _apply_curse(target: int) -> void:
 			else: winner = "ПОБЕДА!"
 		elif mode == "raid":
 			_reward(20)
+			_minion_loot()
 	curse_mode = false
 	_spend_action(source)
 	if winner == "": battle_log = "Проклятие наносит 30 урона."
@@ -1148,6 +1168,7 @@ func _tap(i: int) -> void:
 					else: winner = "ПОБЕДА СВЕТЛЫХ!" if turn == 1 else "ПОБЕДА ТЁМНЫХ!"
 				elif mode == "raid":
 					_reward(20)
+					_minion_loot()
 				_move(selected,i)
 		else:
 			_move(selected,i)
