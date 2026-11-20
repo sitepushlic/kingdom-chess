@@ -3,6 +3,7 @@ extends Node3D
 const TILE := 1.0
 var piece_nodes: Dictionary = {}
 var piece_types: Dictionary = {}
+var health_fills: Dictionary = {}
 var moving_nodes: Dictionary = {}
 var clock := 0.0
 var camera: Camera3D
@@ -151,11 +152,16 @@ func _build_piece(letter: String) -> Node3D:
 		_cylinder(0.27, 0.12, accent, unit, Vector3(0, 1.12, 0))
 		_box(Vector3(0.12, 0.47, 0.12), gold_material, unit, Vector3(0, 1.41, 0))
 		_box(Vector3(0.37, 0.10, 0.12), gold_material, unit, Vector3(0, 1.48, 0))
+	var bar_back := _box(Vector3(0.73, 0.085, 0.085), dark_material, unit, Vector3(0, 1.76, 0))
+	bar_back.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var bar_fill := _box(Vector3(0.69, 0.055, 0.10), _material(Color("#4edca4") if white else Color("#f26a76"), 0.15, 0.28, Color("#194735") if white else Color("#48121c")), unit, Vector3(0, 1.76, 0.02))
+	bar_fill.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	unit.set_meta("health_fill", bar_fill)
 	unit.scale = Vector3.ONE * 0.84
 	board_root.add_child(unit)
 	return unit
 
-func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int) -> void:
+func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int, health: Array = [], max_health: Array = []) -> void:
 	for index in range(64):
 		var piece: String = str(pieces[index])
 		if piece == "":
@@ -171,6 +177,12 @@ func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int)
 			node.position = _square_position(index)
 			piece_nodes[index] = node
 			piece_types[index] = piece
+		if piece != "" and piece_nodes.has(index) and health.size() == 64 and max_health.size() == 64:
+			var piece_node: Node3D = piece_nodes[index]
+			var fill: MeshInstance3D = piece_node.get_meta("health_fill")
+			var ratio := clampf(float(health[index]) / float(maxi(1, int(max_health[index]))), 0.0, 1.0)
+			fill.scale.x = maxi(0.001, ratio)
+			fill.position.x = -0.345 * (1.0 - ratio)
 		highlights[index].visible = index == selected or legal_squares.has(index) or index == danger
 		if highlights[index].visible:
 			highlights[index].material_override = _material(Color("#f6c76b") if index == selected else (Color("#ed5c65") if index == danger else Color("#61d7b6")), 0.2, 0.3, Color("#9d5732"))
