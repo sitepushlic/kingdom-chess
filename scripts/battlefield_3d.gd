@@ -214,6 +214,24 @@ func animate_move(source: int, target: int) -> void:
 
 func hit(index: int, healing: bool = false) -> void:
 	if not piece_nodes.has(index): return
+	var shock := MeshInstance3D.new()
+	var shock_mesh := TorusMesh.new()
+	shock_mesh.inner_radius = 0.23
+	shock_mesh.outer_radius = 0.33
+	shock_mesh.rings = 12
+	shock_mesh.ring_segments = 20
+	shock.mesh = shock_mesh
+	var flash_material := _material(Color("#6ef7c2") if healing else Color("#ff855d"), 0.0, 0.3, Color("#4de6a8") if healing else Color("#ff431e"))
+	flash_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	shock.material_override = flash_material
+	shock.position = _square_position(index) + Vector3(0, 0.10, 0)
+	shock.scale = Vector3.ONE * 0.2
+	board_root.add_child(shock)
+	var shock_tween := create_tween()
+	shock_tween.set_parallel(true)
+	shock_tween.tween_property(shock, "scale", Vector3.ONE * 2.3, 0.42).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	shock_tween.tween_property(shock, "transparency", 1.0, 0.42)
+	shock_tween.chain().tween_callback(shock.queue_free)
 	var actor: Node3D = piece_nodes[index]
 	var start_scale: Vector3 = actor.scale
 	var tween := create_tween()
