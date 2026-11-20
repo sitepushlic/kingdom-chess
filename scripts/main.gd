@@ -74,6 +74,9 @@ var sidebar_tabs: TabContainer
 var ui_combat: VBoxContainer
 var ui_camp: VBoxContainer
 var ui_network: VBoxContainer
+var battle_save_path := "user://battle_autosave.json"
+var last_saved_turn := -1
+var last_saved_round := -1
 
 func _ready() -> void:
 	_load_profile()
@@ -356,9 +359,14 @@ func _create_main_menu() -> void:
 	main_menu.visible = true
 
 func _show_main_menu() -> void:
+	if not lan_connected:
+		_save_battle()
 	main_menu.visible = true
 
 func _menu_continue() -> void:
+	if not _restore_battle():
+		battle_log = "Сохранённой битвы нет. Выбери рейд или арену."
+		_draw()
 	main_menu.visible = false
 
 func _menu_start_raid() -> void:
@@ -643,6 +651,55 @@ func _request_action(action: String, square: int = -1) -> void:
 	elif action == "curse":
 		_curse_selected()
 	_broadcast_snapshot()
+
+func _save_battle() -> void:
+	if lan_connected or pieces.size() != 64: return
+	var payload := _snapshot()
+	payload["mode"] = mode
+	payload["saved_at"] = Time.get_unix_time_from_system()
+	var file := FileAccess.open(battle_save_path, FileAccess.WRITE)
+	if file == null: return
+	file.store_string(JSON.stringify(payload))
+	file.close()
+
+func _restore_battle() -> bool:
+	if lan_connected or not FileAccess.file_exists(battle_save_path): return false
+	var file := FileAccess.open(battle_save_path, FileAccess.READ)
+	if file == null: return false
+	var parsed = JSON.parse_string(file.get_as_text())
+	if typeof(parsed) != TYPE_DICTIONARY: return false
+	if typeof(parsed.get("pieces")) != TYPE_ARRAY or parsed["pieces"].size() != 64: return false
+	if typeof(parsed.get("health")) != TYPE_ARRAY or parsed["health"].size() != 64: return false
+	var new_mode: String = str(parsed.get("mode", "arena"))
+	if new_mode != "arena" and new_mode != "raid": return false
+	for item in parsed["pieces"]:
+		if typeof(item) != TYPE_STRING or (item != "" and not GLYPHS.has(item)): return false
+	for value in parsed["health"]:
+		if typeof(value) != TYPE_FLOAT and typeof(value) != TYPE_INT: return false
+	pieces = parsed["pieces"].duplicate()
+	health = parsed["health"].duplicate()
+	mode = new_mode
+	ap = clampi(int(parsed.get("ap", 2)), 0, 2)
+	turn = 1 if int(parsed.get("turn", 1)) == 1 else -1
+	winner = str(parsed.get("winner", ""))
+	boss_hp = maxi(0, int(parsed.get("boss_hp", 240)))
+	boss_phase = clampi(int(parsed.get("boss_phase", 1)), 1, 2)
+	raid_round = maxi(0, int(parsed.get("raid_round", 0)))
+	raid_stage = clampi(int(parsed.get("raid_stage", 1)), 1, 3)
+	boss_target = clampi(int(parsed.get("boss_target", -1)), -1, 63)
+	battle_log = str(parsed.get("battle_log", "Битва продолжается."))
+	acted = parsed.get("acted", []).duplicate()
+	enemy_wave = maxi(0, int(parsed.get("enemy_wave", 0)))
+	selected = -1
+	curse_mode = false
+	heal_used = bool(parsed.get("heal_used", false))
+	battle_result_shown = false
+	_draw()
+	return true
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
+		_save_battle()
 
 func _switch_mode() -> void:
 	if lan_connected:
@@ -1086,6 +1143,10 @@ func _boss_action() -> void:
 	_draw()
 
 func _draw() -> void:
+	if not lan_connected and pieces.size() == 64 and (turn != last_saved_turn or raid_round != last_saved_round):
+		last_saved_turn = turn
+		last_saved_round = raid_round
+		_save_battle()
 	status.text = winner if winner != "" else ("ГЕРОИ" if mode == "raid" else ("СВЕТЛЫЕ" if turn == 1 else "ТЁМНЫЕ")) + " • ОД: " + str(ap)
 	mode_button.text = "⚔ АРЕНА" if mode == "arena" else "⚔ РЕЙД"
 	boss_portrait.visible = mode == "raid"
