@@ -100,6 +100,15 @@ func _run() -> void:
 	_assert_ok(int(set_bonus["attack"]) > 0 and int(set_bonus["armor"]) > 0, "Three-piece set activates two and three piece bonuses")
 	_assert_ok(game.battlefield_3d != null and game.battlefield_3d.tiles.size() == 64, "Actual 3D arena contains 64 modeled squares")
 	_assert_ok(game.battlefield_3d.pick_square(Vector2(450, 450)) >= 0, "3D camera ray picks battlefield square")
+	var visual_gear: Array = [
+		{"rarity":5,"upgrade":8,"set_id":2,"slot":"Оружие"},
+		{"rarity":4,"upgrade":4,"set_id":2,"slot":"Тело"},
+		{"rarity":3,"upgrade":1,"set_id":2,"slot":"Реликвия"}
+	]
+	game.battlefield_3d.set_hero_gear(visual_gear, {"Оружие":0,"Тело":1,"Реликвия":2})
+	_assert_ok(game.battlefield_3d.hero_gear.size() == 3, "All three RPG gear slots change 3D character visuals")
+	game.battlefield_3d.sync_board(game.pieces, -1, [], -1)
+	_assert_ok(game.battlefield_3d.piece_nodes.size() > 0, "3D chess models rebuild with equipped cosmetic gear")
 	game.equipment = [
 		{"name":"Test sword","slot":"Оружие","level":1,"attack":12,"crit":0},
 		{"name":"Test armor","slot":"Тело","level":1,"attack":2,"armor":8,"hp":30},
