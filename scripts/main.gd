@@ -1352,7 +1352,7 @@ func _draw() -> void:
 		var life: ProgressBar = hp_bars[i]
 		life.visible = p != ""
 		if p != "":
-			life.max_value = maxi(1, boss_hp if mode == "raid" and i == 4 else _max_hp(p, _team(p) == 1))
+			life.max_value = maxi(1, (240 + (raid_stage - 1) * 100) if mode == "raid" and i == 4 else _max_hp(p, _team(p) == 1))
 			life.value = maxi(0, health[i])
 			var life_fill := StyleBoxFlat.new()
 			life_fill.bg_color = Color("#81d3a8") if _team(p) == 1 else Color("#d8838d")
