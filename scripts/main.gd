@@ -1669,6 +1669,7 @@ func _draw() -> void:
 			var piece: String = pieces[index]
 			max_health.append((240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35) if mode == "raid" and index == 4 else (_max_hp(piece, _team(piece) == 1) if piece != "" else 1))
 		battlefield_3d.set_region(clampi(raid_stage - 1, 0, 5) if mode == "raid" else 0)
+		battlefield_3d.set_hero_gear(equipment, equipped_slots)
 		battlefield_3d.sync_board(pieces, selected, legal_targets, boss_target if mode == "raid" and winner == "" else -1, health, max_health)
 	if winner != "" and not battle_result_shown:
 		call_deferred("_show_result")
