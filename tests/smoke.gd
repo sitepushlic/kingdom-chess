@@ -122,6 +122,16 @@ func _run() -> void:
 	var impossible_item: Dictionary = weak_weapon.duplicate(true)
 	impossible_item["set_id"] = 999
 	_assert_ok(not Progression.is_valid_equipment_item(impossible_item), "Unknown set ID is invalid")
+	var fractional_item: Dictionary = weak_weapon.duplicate(true)
+	fractional_item["level"] = 1.5
+	_assert_ok(not Progression.is_valid_equipment_item(fractional_item), "Fractional equipment level is rejected rather than truncated")
+	var overpowered_item: Dictionary = weak_weapon.duplicate(true)
+	overpowered_item["attack"] = 1000001
+	_assert_ok(not Progression.is_valid_equipment_item(overpowered_item), "Implausibly large combat stats are rejected")
+	var invalid_crit_item: Dictionary = weak_weapon.duplicate(true)
+	invalid_crit_item["crit"] = 101
+	_assert_ok(not Progression.is_valid_equipment_item(invalid_crit_item), "Chance stats cannot exceed 100 percent")
+	_assert_ok(Progression.is_valid_equipment_item(weak_weapon), "Normal generated equipment remains valid")
 	var validated_slots: Dictionary = Progression.sanitize_equipment_slots(
 		[corrupt_item, malformed_item, impossible_item, weak_weapon],
 		{"Оружие":0, "Тело":1, "Реликвия":2}, 1)
