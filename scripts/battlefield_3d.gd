@@ -22,6 +22,7 @@ var hero_gear: Dictionary = {}
 var boss_crown: Material
 var attack_effects: Array[Node3D] = []
 var base_camera_position := Vector3(0, 11.8, 8.7)
+var boss_enraged := false
 
 func _material(color: Color, metallic: float = 0.0, roughness: float = 0.42, emission: Color = Color.BLACK) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -207,6 +208,8 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 		_box(Vector3(0.12, 0.47, 0.12), gold_material, unit, Vector3(0, 1.41, 0))
 		_box(Vector3(0.37, 0.10, 0.12), gold_material, unit, Vector3(0, 1.48, 0))
 	if is_boss:
+		var shadow_ring := _cylinder(0.43, 0.035, boss_crown, unit, Vector3(0, 0.12, 0))
+		shadow_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		var dark_crown := _cylinder(0.33, 0.20, boss_crown, unit, Vector3(0, 1.23, 0))
 		dark_crown.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		for n in range(7):
@@ -251,6 +254,17 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	unit.scale = Vector3.ONE * (1.12 if is_boss else 0.84)
 	board_root.add_child(unit)
 	return unit
+
+func set_boss_phase(phase: int) -> void:
+	var enraged := phase >= 2
+	if boss_enraged == enraged: return
+	boss_enraged = enraged
+	if piece_nodes.has(4) and piece_types.get(4, "") == "k":
+		var boss: Node3D = piece_nodes[4]
+		var burst := create_tween()
+		burst.tween_property(boss, "scale", Vector3.ONE * (1.42 if enraged else 1.12), 0.24).set_trans(Tween.TRANS_BACK)
+		boss_crown.albedo_color = Color("#ff2c5f") if enraged else Color("#e56587")
+		boss_crown.emission_energy_multiplier = 2.8 if enraged else 0.6
 
 func set_region(region_index: int) -> void:
 	if current_region == region_index: return
@@ -403,4 +417,6 @@ func _process(delta: float) -> void:
 		if moving_nodes.has(index): continue
 		var actor: Node3D = piece_nodes[index]
 		if is_instance_valid(actor):
-			actor.rotation.y = sin(clock * 0.6 + float(index)) * 0.035
+			actor.rotation.y = sin(clock * 0.6 + float(index)) * (0.09 if index == 4 and boss_enraged else 0.035)
+			if index == 4 and boss_enraged:
+				actor.position.y = 0.11 + sin(clock * 3.0) * 0.07
