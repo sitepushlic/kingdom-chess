@@ -152,7 +152,7 @@ func _run() -> void:
 	game.battlefield_3d.set_hazards(Progression.hazard_cells("rift", 3), "rift")
 	_assert_ok(game.battlefield_3d.hazard_markers.size() == 64, "3D battlefield has hazard marker for every square")
 	_assert_ok(game.battlefield_3d.hazard_markers[3].visible and not game.battlefield_3d.hazard_markers[0].visible, "3D hazard markers match forecasted squares")
-	game.battlefield_3d.set_hazards([], "none")
+	game.battlefield_3d.set_hazards(Progression.hazard_cells("none", 1), "none")
 	_assert_ok(not game.battlefield_3d.hazard_markers[3].visible, "3D hazard markers clear after danger")
 	_assert_ok(Progression.CAMPAIGN.size() == 18, "Complete 18-mission story campaign")
 	var mission_titles: Dictionary = {}
