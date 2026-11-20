@@ -87,7 +87,7 @@ func _ready() -> void:
 	selection_material = _material(Color("#f6c76b"), 0.2, 0.3, Color("#9d5732"))
 	danger_material = _material(Color("#ed5c65"), 0.2, 0.3, Color("#9d5732"))
 	move_material = _material(Color("#61d7b6"), 0.2, 0.3, Color("#9d5732"))
-	hazard_materials = {"frost": _material(Color("#68d6ff"), 0.15, 0.24, Color("#2a8acb")), "poison": _material(Color("#a9e967"), 0.15, 0.24, Color("#5d9c2b")), "rift": _material(Color("#d78aff"), 0.15, 0.24, Color("#903bd2"))}
+	hazard_materials = {"frost": _material(Color("#68d6ff"), 0.15, 0.24, Color("#2a8acb")), "poison": _material(Color("#a9e967"), 0.15, 0.24, Color("#5d9c2b")), "rift": _material(Color("#d78aff"), 0.15, 0.24, Color("#903bd2")), "boss": _material(Color("#ff6c77"), 0.18, 0.22, Color("#cf3346"))}
 	var world := WorldEnvironment.new()
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
