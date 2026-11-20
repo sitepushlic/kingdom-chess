@@ -39,6 +39,7 @@ var skill_button: Button
 var battle_log := "Битва начинается."
 var equipment: Array = []
 var equipped := -1
+var equipped_slots: Dictionary = {"Оружие":-1, "Тело":-1, "Реликвия":-1}
 var raid_wins := 0
 var boss_target := -1
 var raid_round := 0
@@ -488,8 +489,9 @@ func _refresh_inventory() -> void:
 		var item: Dictionary = equipment[i]
 		var rarity: int = clampi(int(item.get("rarity", 0)), 0, 6)
 		var name: String = str(item.get("name", "Артефакт"))
-		var mark := " [ЭКИПИРОВАНО]" if i == equipped else ""
-		inventory_list.add_item("%s • %s • +%d атаки%s" % [name, Progression.RARITIES[rarity], int(item.get("attack", 0)), mark])
+		var slot: String = str(item.get("slot", "Оружие"))
+		var mark := " [НАДЕТО]" if int(equipped_slots.get(slot, -1)) == i else ""
+		inventory_list.add_item("%s • %s • %s • +%d атаки%s" % [name, slot, Progression.RARITIES[rarity], int(item.get("attack", 0)), mark])
 		inventory_list.set_item_custom_fg_color(i, _rarity_color(rarity))
 	if equipment.is_empty():
 		inventory_details.text = "Сумка пуста. Реликвии выпадают с боссов."
@@ -505,11 +507,18 @@ func _inventory_select(index: int) -> void:
 	if index < 0 or index >= equipment.size(): return
 	var item: Dictionary = equipment[index]
 	var rarity: int = clampi(int(item.get("rarity", 0)), 0, 6)
-	inventory_details.text = "%s • %s • Ур. %d • +%d к атаке" % [item.get("name", "Артефакт"), Progression.RARITIES[rarity], int(item.get("level", 1)), int(item.get("attack", 0))]
+	inventory_details.text = "%s • %s • Ур. %d\nАтака +%d  Защита +%d  HP +%d\nКрит %d%%  Вампиризм %d%%" % [item.get("name", "Артефакт"), Progression.RARITIES[rarity], int(item.get("level", 1)), int(item.get("attack", 0)), int(item.get("armor", 0)), int(item.get("hp", 0)), int(item.get("crit", 0)), int(item.get("lifesteal", 0))]
 
 func _inventory_equip() -> void:
 	if inventory_selected < 0 or inventory_selected >= equipment.size(): return
-	equipped = inventory_selected
+	var item: Dictionary = equipment[inventory_selected]
+	if player_level < int(item.get("level", 1)):
+		inventory_details.text = "Нужен уровень %d для экипировки." % int(item.get("level", 1))
+		return
+	var slot: String = str(item.get("slot", "Оружие"))
+	if not Progression.ITEM_SLOTS.has(slot): slot = "Оружие"
+	equipped_slots[slot] = inventory_selected
+	equipped = inventory_selected if slot == "Оружие" else int(equipped_slots.get("Оружие", -1))
 	_save_profile()
 	_refresh_inventory()
 	_draw()
@@ -520,8 +529,11 @@ func _inventory_sell() -> void:
 	var price: int = 10 + int(item.get("level", 1)) * 5 + int(item.get("rarity", 0)) * 25
 	gold += price
 	equipment.remove_at(inventory_selected)
-	if equipped == inventory_selected: equipped = -1
-	elif equipped > inventory_selected: equipped -= 1
+	for slot in Progression.ITEM_SLOTS:
+		var index: int = int(equipped_slots.get(slot, -1))
+		if index == inventory_selected: equipped_slots[slot] = -1
+		elif index > inventory_selected: equipped_slots[slot] = index - 1
+	equipped = int(equipped_slots.get("Оружие", -1))
 	inventory_selected = -1
 	_save_profile()
 	_refresh_inventory()
@@ -786,20 +798,60 @@ func _load_profile() -> void:
 	potions = int(profile["potions"])
 	equipment = profile["items"]
 	equipped = int(profile["equipped"])
+	equipped_slots = profile.get("slots", {"Оружие":-1, "Тело":-1, "Реликвия":-1}).duplicate()
+	if equipped >= 0 and int(equipped_slots.get("Оружие", -1)) < 0:
+		equipped_slots["Оружие"] = equipped
 	raid_wins = int(profile["wins"])
 	if equipped < 0 or equipped >= equipment.size():
 		equipped = -1
+	for slot in Progression.ITEM_SLOTS:
+		var index: int = int(equipped_slots.get(slot, -1))
+		if index < 0 or index >= equipment.size(): equipped_slots[slot] = -1
 
 func _save_profile() -> void:
 	Progression.save_profile({
 		"level": player_level, "xp": experience, "gold": gold,
 		"potions": potions, "items": equipment,
-		"equipped": equipped, "wins": raid_wins
+		"equipped": equipped, "slots": equipped_slots, "wins": raid_wins
 	})
 
+func _item_stat(stat: String) -> int:
+	var total := 0
+	for slot in Progression.ITEM_SLOTS:
+		var index: int = int(equipped_slots.get(slot, -1))
+		if index >= 0 and index < equipment.size():
+			total += maxi(0, int(equipment[index].get(stat, 0)))
+	return total
+
 func _attack_bonus() -> int:
-	if equipped < 0 or equipped >= equipment.size(): return 0
-	return int(equipment[equipped].get("attack", 0))
+	return _item_stat("attack")
+
+func _armor_bonus() -> int:
+	return _item_stat("armor")
+
+func _max_hp(piece: String, friendly: bool = true) -> int:
+	return HP[piece.to_upper()] + (_item_stat("hp") if friendly and mode == "raid" else 0)
+
+func _deal_damage(target: int, raw_damage: int, attacker_is_hero: bool) -> int:
+	var amount := maxi(1, raw_damage)
+	if mode == "raid":
+		if attacker_is_hero:
+			var crit_chance: int = _item_stat("crit")
+			if randi_range(1, 100) <= crit_chance:
+				amount = int(ceil(amount * 1.5))
+				battle_log = "КРИТИЧЕСКИЙ УДАР! "
+		else:
+			amount = maxi(1, amount - _armor_bonus())
+	health[target] -= amount
+	_damage_popup(target, amount)
+	if attacker_is_hero and mode == "raid":
+		var lifesteal: int = _item_stat("lifesteal")
+		if lifesteal > 0 and selected >= 0 and selected < 64 and pieces[selected] != "":
+			var restored: int = mini(int(ceil(amount * lifesteal / 100.0)), maxi(0, _max_hp(pieces[selected]) - health[selected]))
+			if restored > 0:
+				health[selected] += restored
+				_damage_popup(selected, restored, true)
+	return amount
 
 func _equip_best() -> void:
 	if equipment.is_empty():
@@ -810,6 +862,8 @@ func _equip_best() -> void:
 	for i in range(1, equipment.size()):
 		if int(equipment[i].get("attack", 0)) > int(equipment[best].get("attack", 0)):
 			best = i
+	var best_slot: String = str(equipment[best].get("slot", "Оружие"))
+	equipped_slots[best_slot] = best
 	equipped = best
 	battle_log = "Экипировано: " + str(equipment[best].get("name", "Артефакт"))
 	_save_profile()
@@ -1242,7 +1296,7 @@ func _draw() -> void:
 	var equipped_name := "нет"
 	if equipped >= 0 and equipped < equipment.size():
 		equipped_name = str(equipment[equipped].get("name", "Артефакт")) + " (+" + str(_attack_bonus()) + ")"
-	equipment_label.text = "Снаряжение: %s\nТрофеи: %d  •  Побед в рейдах: %d" % [equipped_name,equipment.size(),raid_wins]
+	equipment_label.text = "⚔ +%d  ⛨ +%d  ♥ +%d  ✦ %d%%  ☽ %d%%\nТрофеи: %d  •  Побед: %d" % [_attack_bonus(),_armor_bonus(),_item_stat("hp"),_item_stat("crit"),_item_stat("lifesteal"),equipment.size(),raid_wins]
 	info.text = ("⛨ ЩИТ АКТИВЕН\n" if shield_active else "") + ("ГЛАВА %d • БОСС: %d/%d HP • Раунд %d\n" % [raid_stage, boss_hp, 240 + (raid_stage - 1) * 100, raid_round] if mode == "raid" else "") + battle_log
 	for i in range(64):
 		var b: Button = buttons[i]
