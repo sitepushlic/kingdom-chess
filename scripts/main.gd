@@ -923,11 +923,35 @@ func _tap(i: int) -> void:
 	_draw()
 
 func _move(a: int,b: int) -> void:
+	_animate_move(a, b)
 	pieces[b] = pieces[a]
 	health[b] = health[a]
 	pieces[a] = ""
 	health[a] = 0
 	acted.append(b)
+
+func _animate_move(source: int, destination: int) -> void:
+	if source < 0 or source >= unit_images.size(): return
+	if destination < 0 or destination >= unit_images.size(): return
+	if pieces[source] == "": return
+	var sprite := TextureRect.new()
+	sprite.texture = UNIT_TEXTURES.get(pieces[source].to_upper())
+	sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sprite.modulate = Color("#fff1c7") if _team(pieces[source]) == 1 else Color("#ff9ea8")
+	sprite.z_index = 100
+	var from_rect: Rect2 = buttons[source].get_global_rect()
+	var to_rect: Rect2 = buttons[destination].get_global_rect()
+	sprite.size = from_rect.size
+	sprite.global_position = from_rect.position
+	add_child(sprite)
+	sprite.global_position = from_rect.position
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(sprite, "global_position", to_rect.position, 0.24).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(sprite, "modulate:a", 0.0, 0.24)
+	tween.chain().tween_callback(sprite.queue_free)
 
 func _heal_selected() -> void:
 	if lan_connected and not lan_host:
