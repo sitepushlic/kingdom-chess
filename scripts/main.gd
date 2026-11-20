@@ -1106,18 +1106,23 @@ func _equip_best() -> void:
 		battle_log = "Предметы выпадают после победы в рейде."
 		_draw()
 		return
-	var best := 0
-	for i in range(1, equipment.size()):
-		if player_level >= int(equipment[i].get("level", 1)) and Progression.item_score(equipment[i]) > Progression.item_score(equipment[best]):
-			best = i
-	if player_level < int(equipment[best].get("level", 1)):
-		battle_log = "Пока нет экипировки доступного уровня."
-		_draw()
-		return
-	var best_slot: String = str(equipment[best].get("slot", "Оружие"))
-	equipped_slots[best_slot] = best
-	equipped = best if best_slot == "Оружие" else int(equipped_slots.get("Оружие", -1))
-	battle_log = "Экипировано: " + str(equipment[best].get("name", "Артефакт"))
+	var changed: Array[String] = []
+	for slot in Progression.ITEM_SLOTS:
+		var best := -1
+		var best_score := -1
+		for i in range(equipment.size()):
+			var item: Dictionary = equipment[i]
+			if str(item.get("slot", "")) != slot: continue
+			if player_level < int(item.get("level", 1)): continue
+			var score: int = Progression.item_score(item)
+			if score > best_score:
+				best_score = score
+				best = i
+		if best >= 0:
+			equipped_slots[slot] = best
+			changed.append(slot + ": " + str(equipment[best].get("name", "Артефакт")))
+	equipped = int(equipped_slots.get("Оружие", -1))
+	battle_log = "Автоподбор комплекта:\n" + "\n".join(changed) if not changed.is_empty() else "Пока нет экипировки доступного уровня."
 	_save_profile()
 	_draw()
 
