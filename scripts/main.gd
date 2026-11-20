@@ -1156,6 +1156,19 @@ func _legal(a: int, b: int) -> bool:
 		c += sc
 	return true
 
+func _animate_hit(index: int, healing: bool = false) -> void:
+	if index < 0 or index >= unit_images.size(): return
+	var sprite: TextureRect = unit_images[index]
+	if sprite.texture == null: return
+	var original_position: Vector2 = sprite.position
+	var original_color: Color = Color("#a4ffda") if healing else Color("#ff656e")
+	sprite.modulate = original_color
+	var tween := create_tween()
+	tween.tween_property(sprite, "position:x", original_position.x - 7.0, 0.055)
+	tween.tween_property(sprite, "position:x", original_position.x + 6.0, 0.075)
+	tween.tween_property(sprite, "position:x", original_position.x, 0.10)
+	tween.parallel().tween_property(sprite, "modulate", Color.WHITE, 0.25)
+
 func _impact_effect(index: int, healing: bool = false) -> void:
 	if index < 0 or index >= buttons.size(): return
 	var cell: Button = buttons[index]
@@ -1182,6 +1195,7 @@ func _impact_effect(index: int, healing: bool = false) -> void:
 func _damage_popup(index: int, amount: int, healing: bool = false) -> void:
 	if index < 0 or index >= buttons.size(): return
 	_impact_effect(index, healing)
+	_animate_hit(index, healing)
 	var number := Label.new()
 	number.text = ("+" if healing else "−") + str(amount)
 	number.add_theme_font_size_override("font_size", 30)
