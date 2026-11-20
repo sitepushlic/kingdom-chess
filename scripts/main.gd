@@ -18,6 +18,8 @@ var health: Array = []
 var buttons: Array = []
 var unit_images: Array = []
 var hp_labels: Array = []
+var hazard_overlays: Array = []
+var visual_clock := 0.0
 var selected := -1
 var turn := 1
 var ap := 2
@@ -162,6 +164,13 @@ func _ready() -> void:
 		hp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(hp)
 		hp_labels.append(hp)
+		var warning := ColorRect.new()
+		warning.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		warning.color = Color(1.0, 0.12, 0.14, 0.24)
+		warning.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		warning.visible = false
+		b.add_child(warning)
+		hazard_overlays.append(warning)
 	var sidebar := PanelContainer.new()
 	sidebar.custom_minimum_size = Vector2(0, 0)
 	sidebar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -310,6 +319,20 @@ func _ready() -> void:
 		_save_battle()
 	if not FileAccess.file_exists(tutorial_seen_path):
 		call_deferred("_show_tutorial")
+
+func _process(delta: float) -> void:
+	visual_clock += delta
+	for i in range(unit_images.size()):
+		var emblem: TextureRect = unit_images[i]
+		if i < pieces.size() and pieces[i] != "":
+			var breath := sin(visual_clock * 2.2 + float(i) * 0.55)
+			emblem.pivot_offset = emblem.size * 0.5
+			emblem.scale = Vector2.ONE * (1.0 + breath * 0.025)
+			emblem.modulate.a = 0.94 + breath * 0.06
+		if i < hazard_overlays.size():
+			var warning: ColorRect = hazard_overlays[i]
+			if warning.visible:
+				warning.modulate.a = 0.45 + 0.5 * (0.5 + 0.5 * sin(visual_clock * 6.0))
 
 func _apply_global_theme() -> void:
 	var theme := Theme.new()
@@ -1299,6 +1322,7 @@ func _draw() -> void:
 	for i in range(64):
 		var b: Button = buttons[i]
 		var p: String = pieces[i]
+		hazard_overlays[i].visible = mode == "raid" and boss_target == i and winner == ""
 		b.text = ""
 		var image_node: TextureRect = unit_images[i]
 		image_node.texture = UNIT_TEXTURES.get(p.to_upper()) if p != "" else null
