@@ -471,7 +471,7 @@ func _boss_action() -> void:
 		battle_log = "Герои уклонились от удара Падшего короля!"
 	boss_target = _choose_boss_target()
 	if boss_target >= 0 and winner == "":
-		battle_log += "\nСледующая цель: %s%d" % [char(65 + boss_target % 8), 8 - int(boss_target / 8)]
+		battle_log += "\nСледующая цель: %s%d" % ["ABCDEFGH".substr(boss_target % 8, 1), 8 - int(boss_target / 8)]
 	turn = 1
 	ap = 2
 	acted.clear()
