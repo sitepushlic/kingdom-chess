@@ -120,3 +120,9 @@ For EVERY future implementation session:
 - Commit `60c5b63` strengthens Android CI: after the smoke success marker, reject parser/script errors in smoke.log to avoid a false green build.
 - **Next run must verify** the current latest Actions run and debug APK artifact before claiming recovery. #172 was failed; #169 was the last verified successful APK at session start.
 - Product gaps remain: original production-quality 3D art/animation, authored distinct objectives, persistent status effects, mobile/co-op QA, signing and commercial release readiness.
+
+## Automated development — saved slot index type safety (2026-11-21)
+- Verified CI **#178 success** before edits: https://github.com/sitepushlic/kingdom-chess/actions/runs/44830167615 (headless smoke and Android debug APK workflow).
+- Commit `b68b8fb` changes `Progression.sanitize_equipment_slots()` to reject string, boolean, non-finite and fractional saved slot indices rather than coercing them with `int()`. A malformed saved value like `"0"` must not equip item zero.
+- Commit `09da905` adds smoke regressions for string, boolean and fractional saved slot references. Legitimate integer references still use the existing validation path.
+- CI for these edits must be checked after this handoff commit; **do not claim success until it finishes**. Next: make save-profile scalar loading robust to malformed JSON types; implement unique mission objectives and persistent statuses. Commercial art and device QA remain outstanding.
