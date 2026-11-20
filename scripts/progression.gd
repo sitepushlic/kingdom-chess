@@ -76,8 +76,14 @@ static func sanitize_equipment_slots(items: Array, slots: Dictionary, level: int
 	# Save files can contain stale indices after selling gear, wrong-slot gear or level-locked gear.
 	var valid := {}
 	for slot in ITEM_SLOTS:
-		var index := int(slots.get(slot, -1))
+		var raw_index: Variant = slots.get(slot, -1)
 		valid[slot] = -1
+		# Do not coerce strings, booleans or fractional JSON numbers into valid inventory indices.
+		if typeof(raw_index) != TYPE_INT and typeof(raw_index) != TYPE_FLOAT:
+			continue
+		if not is_finite(float(raw_index)) or float(raw_index) != float(int(raw_index)):
+			continue
+		var index := int(raw_index)
 		if index < 0 or index >= items.size():
 			continue
 		if typeof(items[index]) != TYPE_DICTIONARY:
