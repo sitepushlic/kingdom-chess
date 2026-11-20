@@ -1143,9 +1143,7 @@ func _boss_action() -> void:
 	_draw()
 
 func _draw() -> void:
-	if not lan_connected and pieces.size() == 64 and (turn != last_saved_turn or raid_round != last_saved_round):
-		last_saved_turn = turn
-		last_saved_round = raid_round
+	if not lan_connected and pieces.size() == 64:
 		_save_battle()
 	status.text = winner if winner != "" else ("ГЕРОИ" if mode == "raid" else ("СВЕТЛЫЕ" if turn == 1 else "ТЁМНЫЕ")) + " • ОД: " + str(ap)
 	mode_button.text = "⚔ АРЕНА" if mode == "arena" else "⚔ РЕЙД"
