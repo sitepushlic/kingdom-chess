@@ -1,6 +1,6 @@
 # KINGDOM CHESS — DEVELOPMENT HANDOFF
 
-Updated: 2026-11-20. Repository: https://github.com/sitepushlic/kingdom-chess ; default branch: `main`.
+Updated: 2026-11-21. Repository: https://github.com/sitepushlic/kingdom-chess ; default branch: `main`.
 This file is the persistent handoff for the next development session. Update it after every substantial implementation, with actual commits and CI status; never label the game production-ready without device and playtesting evidence.
 
 ## Product brief — what the finished game MUST become
@@ -25,6 +25,20 @@ Portrait-first Android commercial-quality **3D tactical chess RPG**, with intuit
 - Commit `2389a09aaa60c17cfb1ff14eec8dc0c2ff2b9988`: added regression tests to verify locked weapons are skipped and all three slots are filled.
 - This handoff file is itself another commit; see Git history for its SHA.
 
+## Latest implementation session — 2026-11-21
+- Confirmed CI #146: **success**, smoke tests and Android debug APK exported for commit `5b92343699c571746d619e40e9241a17f6220df4`. URL: https://github.com/sitepushlic/kingdom-chess/actions/runs/44798032045
+- Commit `781909808daf425eb04b905874e4c5c8c42617ba` (`scripts/main.gd`): implemented six **actual turn-triggered** tactical encounter modifiers in `_apply_mission_modifier()`, called from `_boss_action()` before enemy reinforcements:
+  - frost: every 3 rounds damages heroes in forward rows 0–4;
+  - poison: every 3 rounds damages heroes in columns 1 and 6;
+  - fury: every 3 rounds restores minion HP;
+  - fortified: every 4 rounds restores garrison HP;
+  - ambush: every 4 rounds summons a pawn on an available flank entry;
+  - rift: every 3 rounds damages heroes in central columns 3 and 4.
+  Effects are deterministic, depend on mission and round, and reuse the existing damage system; they can defeat the player king. Existing raid-stage mechanics remain active and can stack.
+- Commit `45a6e1b86cc78a05fc8ba8662a30c433f0dddf23` (`tests/smoke.gd`): added tests for campaign modifier coverage, fury healing, ambush spawning and frost damage.
+- **Latest CI**: inspect newest run after this handoff commit. Do not claim success until verified.
+- **Known shortcomings**: environmental effects currently lack **advance visual telegraphs**, poison is instant damage rather than a persistent debuff, and modifiers reuse existing meshes. Combat balancing, touch readability and 3D FX require further work.
+
 ## Recent earlier milestones
 - CI #137 passed: procedural 3D arena, visual equipment, attack trails, phase VFX and associated smoke tests.
 - CI #143 passed: 18 authored missions, variable enemy modifiers, campaign finale, HUD mission text, save and LAN sync; fixed a Godot 4.3 type-inference parse error in the mission generator.
@@ -32,7 +46,7 @@ Portrait-first Android commercial-quality **3D tactical chess RPG**, with intuit
 
 ## Required next steps (prioritized)
 1. **Verify latest CI** and fix failed tests immediately. Ensure APK artifact exists; inspect headless test output, not just a green commit.
-2. Implement actual unique mission *win conditions and mechanics*, not just descriptions and enemy-stat modifiers; include scripted bosses, tactical objectives, environmental hazards and campaign storytelling.
+2. Implement genuinely unique mission **win conditions** and scripted objectives, boss-specific behavior, environmental hazard telegraphs, persistent status effects and campaign storytelling. Six modifiers now affect combat but are not yet visually telegraphed.
 3. Replace primitive chess piece art with licensed or original professionally modeled, rigged 3D assets, animations and textures; optimize for mid-range Android devices. Add character silhouettes and visible equipment rarity/traits.
 4. Expand loot with unique item identities and meaningful build-defining effects, deterministic boss pools, affix synergies, pity/duplicate mitigation, upgrade paths and fair economy; test drop distributions and save compatibility.
 5. Fix remaining UX and combat balance issues; full onboarding, tooltips, responsive touch controls and accessibility.
