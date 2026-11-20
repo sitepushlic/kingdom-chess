@@ -54,6 +54,10 @@ var inventory_details: Label
 var inventory_selected := -1
 var raid_stage := 1
 var damage_numbers: Array[Label] = []
+var shop_popup: AcceptDialog
+var shop_label: Label
+var battle_result_shown := false
+var battle_result_dialog: AcceptDialog
 
 func _ready() -> void:
 	_load_profile()
@@ -191,6 +195,11 @@ func _ready() -> void:
 	equip_button.custom_minimum_size.y = 52
 	equip_button.pressed.connect(_equip_best)
 	ui.add_child(equip_button)
+	var shop_button := Button.new()
+	shop_button.text = "ЛАВКА АЛХИМИКА"
+	shop_button.custom_minimum_size.y = 52
+	shop_button.pressed.connect(_open_shop)
+	ui.add_child(shop_button)
 	var guide := Label.new()
 	guide.text = "Выбери героя и клетку назначения.\n2 действия на ход • Тактический бой"
 	guide.add_theme_font_size_override("font_size", 18)
@@ -229,6 +238,8 @@ func _ready() -> void:
 	note.add_theme_font_size_override("font_size", 15)
 	ui.add_child(note)
 	_create_inventory_popup()
+	_create_shop_popup()
+	_create_result_popup()
 	_reset()
 
 func _create_inventory_popup() -> void:
@@ -311,6 +322,66 @@ func _inventory_sell() -> void:
 	_save_profile()
 	_refresh_inventory()
 	_draw()
+
+func _create_shop_popup() -> void:
+	shop_popup = AcceptDialog.new()
+	shop_popup.title = "ЛАВКА АЛХИМИКА"
+	shop_popup.min_size = Vector2i(530, 300)
+	add_child(shop_popup)
+	var panel := VBoxContainer.new()
+	panel.add_theme_constant_override("separation", 16)
+	shop_popup.add_child(panel)
+	shop_label = Label.new()
+	shop_label.add_theme_font_size_override("font_size", 22)
+	panel.add_child(shop_label)
+	var buy := Button.new()
+	buy.text = "КУПИТЬ ЗЕЛЬЕ • 50 ЗОЛОТА"
+	buy.custom_minimum_size.y = 62
+	buy.pressed.connect(_buy_potion)
+	panel.add_child(buy)
+	var supply := Button.new()
+	supply.text = "НАБОР ПРИПАСОВ • 130 ЗОЛОТА (3 ЗЕЛЬЯ)"
+	supply.custom_minimum_size.y = 62
+	supply.pressed.connect(_buy_supply)
+	panel.add_child(supply)
+
+func _open_shop() -> void:
+	_update_shop()
+	shop_popup.popup_centered()
+
+func _update_shop() -> void:
+	shop_label.text = "Золото: %d    Зелья: %d/99" % [gold, potions]
+
+func _buy_potion() -> void:
+	_buy_potions(1, 50)
+
+func _buy_supply() -> void:
+	_buy_potions(3, 130)
+
+func _buy_potions(count: int, cost: int) -> void:
+	if gold < cost:
+		shop_label.text = "Недостаточно золота! Нужно %d." % cost
+		return
+	if potions + count > 99:
+		shop_label.text = "Сумка с зельями переполнена."
+		return
+	gold -= cost
+	potions += count
+	_save_profile()
+	_update_shop()
+	_draw()
+
+func _create_result_popup() -> void:
+	battle_result_dialog = AcceptDialog.new()
+	battle_result_dialog.title = "ИТОГ БИТВЫ"
+	battle_result_dialog.min_size = Vector2i(620, 250)
+	add_child(battle_result_dialog)
+
+func _show_result() -> void:
+	if winner == "" or battle_result_shown: return
+	battle_result_shown = true
+	battle_result_dialog.dialog_text = "%s\n\n%s\n\nУровень: %d  •  Золото: %d  •  Трофеи: %d" % [winner, battle_log, player_level, gold, equipment.size()]
+	battle_result_dialog.popup_centered()
 
 func _switch_mode() -> void:
 	mode = "arena"
@@ -419,7 +490,7 @@ func _apply_curse(target: int) -> void:
 			_reward(20)
 	curse_mode = false
 	_spend_action(source)
-	battle_log = "Проклятие наносит 30 урона."
+	if winner == "": battle_log = "Проклятие наносит 30 урона."
 	_draw()
 
 func _spend_action(index: int) -> void:
@@ -447,6 +518,7 @@ func _reset() -> void:
 	curse_mode = false
 	turn_count = 0
 	enemy_wave = 0
+	battle_result_shown = false
 	raid_stage = mini(3, 1 + int(raid_wins / 3))
 	boss_hp = 240 + (raid_stage - 1) * 100
 	raid_round = 0
@@ -719,3 +791,5 @@ func _draw() -> void:
 		b.add_theme_stylebox_override("pressed",style)
 		b.add_theme_stylebox_override("focus",StyleBoxEmpty.new())
 		b.add_theme_color_override("font_color",Color("#fff3dd") if _team(p) == 1 else Color("#201824"))
+	if winner != "" and not battle_result_shown:
+		call_deferred("_show_result")
