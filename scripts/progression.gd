@@ -16,6 +16,15 @@ const ENCOUNTERS = ["Штурм", "Осада", "Охота", "Засада", "�
 const SET_NAMES = ["Пепельный легион", "Ледяная стража", "Бездонная бездна", "Золотой рассвет", "Проклятый трон", "Звёздный орден"]
 const BOSS_RARITY_WEIGHTS = [8, 20, 27, 23, 14, 6, 2]
 const ITEM_SLOTS = ["Оружие", "Тело", "Реликвия"]
+const TRAITS = ["Огненный удар", "Ледяной щит", "Грозовой разряд", "Возрождение", "Ядовитое лезвие", "Казнь"]
+const TRAIT_DESCRIPTIONS = [
+	"Каждая третья атака наносит дополнительный огненный урон.",
+	"Первый полученный удар за раунд ослабляется.",
+	"При критическом ударе молния поражает дополнительную цель.",
+	"Один раз за битву спасает героя от смертельного удара.",
+	"Атаки накладывают яд, который срабатывает в конце раунда.",
+	"Урон повышается по врагам с низким запасом здоровья."
+]
 
 static func load_profile() -> Dictionary:
 	if not FileAccess.file_exists(SAVE_PATH):
@@ -74,6 +83,7 @@ static func roll_item(level: int, boss: bool = false, luck: int = 0) -> Dictiona
 	var power := 4 + item_level * 2 + rarity * (4 + int(item_level / 8.0)) + rng.randi_range(0, 5)
 	var affix := rng.randi_range(0, AFFIXES.size() - 1)
 	var set_id := rng.randi_range(0, SET_NAMES.size() - 1) if rarity >= 3 else -1
+	var trait_id := rng.randi_range(0, TRAITS.size() - 1) if rarity >= 4 else -1
 	var name: String = SLOT_NAMES[slot][rng.randi_range(0, SLOT_NAMES[slot].size() - 1)]
 	if rarity >= 2:
 		name = PREFIXES[rarity] + " " + name
@@ -81,6 +91,8 @@ static func roll_item(level: int, boss: bool = false, luck: int = 0) -> Dictiona
 		name += " • " + AFFIXES[affix]
 	if set_id >= 0:
 		name = SET_NAMES[set_id] + ": " + name
+	if trait_id >= 0:
+		name += " • " + TRAITS[trait_id]
 	var attack := power if slot == "Оружие" else int(power * (0.18 if slot == "Тело" else 0.35))
 	var armor := int(power * (0.72 if slot == "Тело" else 0.08))
 	var hp := power * (3 if slot == "Тело" else (1 if slot == "Реликвия" else 0))
@@ -91,10 +103,34 @@ static func roll_item(level: int, boss: bool = false, luck: int = 0) -> Dictiona
 	var bleed := mini(30, (rarity * 2 + int(power / 15.0)) if slot == "Оружие" and affix == 3 else 0)
 	return {
 		"name": name, "slot": slot, "rarity": rarity, "level": item_level,
-		"power": power, "affix": AFFIXES[affix], "set_id": set_id, "upgrade": 0,
+		"power": power, "affix": AFFIXES[affix], "set_id": set_id, "upgrade": 0, "trait_id": trait_id,
 		"attack": attack, "armor": armor, "hp": hp,
 		"crit": crit, "lifesteal": lifesteal,
 		"penetration": penetration, "block": block, "bleed": bleed
+	}
+
+static func first_clear_reward(wins: int) -> Dictionary:
+	# Hand-authored milestone rewards replace repeating random drops at chapter endings.
+	var chapter := int(wins / 3.0)
+	if wins <= 0 or wins % 3 != 0 or chapter > REGIONS.size():
+		return {}
+	var slot: String = ITEM_SLOTS[(chapter - 1) % ITEM_SLOTS.size()]
+	var trait_id := (chapter - 1) % TRAITS.size()
+	var set_id := chapter - 1
+	var rarity := mini(6, 3 + int(chapter / 2.0))
+	var power := 15 + chapter * 12
+	return {
+		"name": "Наследие " + REGIONS[chapter - 1],
+		"slot": slot, "rarity": rarity, "level": maxi(1, chapter * 3 - 2),
+		"power": power, "affix": "Наследие", "set_id": set_id, "upgrade": 0, "trait_id": trait_id,
+		"attack": power if slot == "Оружие" else int(power * 0.25),
+		"armor": power if slot == "Тело" else int(power * 0.12),
+		"hp": power * 3 if slot == "Тело" else power,
+		"crit": 3 + chapter if slot == "Оружие" else 0,
+		"lifesteal": 2 + chapter if slot == "Реликвия" else 0,
+		"penetration": chapter * 3 if slot == "Оружие" else 0,
+		"block": chapter * 3 if slot == "Тело" else 0,
+		"bleed": 0
 	}
 
 static func region_for_run(wins: int) -> String:
