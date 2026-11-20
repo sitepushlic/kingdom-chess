@@ -113,6 +113,23 @@ func _run() -> void:
 	var stale_slots: Dictionary = Progression.sanitize_equipment_slots(
 		[weak_weapon, "invalid item"], {"Оружие":99, "Тело":1, "Реликвия":-1}, 1)
 	_assert_ok(int(stale_slots["Оружие"]) == -1 and int(stale_slots["Тело"]) == -1, "Stale and malformed save references are rejected")
+	var corrupt_item: Dictionary = weak_weapon.duplicate(true)
+	corrupt_item["attack"] = -999
+	_assert_ok(not Progression.is_valid_equipment_item(corrupt_item), "Negative attack in loaded equipment is invalid")
+	var malformed_item: Dictionary = weak_weapon.duplicate(true)
+	malformed_item["level"] = "not a level"
+	_assert_ok(not Progression.is_valid_equipment_item(malformed_item), "Non-numeric equipment level is invalid")
+	var impossible_item: Dictionary = weak_weapon.duplicate(true)
+	impossible_item["set_id"] = 999
+	_assert_ok(not Progression.is_valid_equipment_item(impossible_item), "Unknown set ID is invalid")
+	var validated_slots: Dictionary = Progression.sanitize_equipment_slots(
+		[corrupt_item, malformed_item, impossible_item, weak_weapon],
+		{"Оружие":0, "Тело":1, "Реликвия":2}, 1)
+	_assert_ok(int(validated_slots["Оружие"]) == -1, "Corrupt saved item cannot be equipped")
+	var invalid_set_bonus: Dictionary = Progression.set_bonus(
+		[weak_weapon, "invalid item", corrupt_item],
+		{"Оружие":0, "Тело":1, "Реликвия":2})
+	_assert_ok(int(invalid_set_bonus["attack"]) == 0, "Malformed set inventory does not crash or grant bonuses")
 	_assert_ok(Progression.REGIONS.size() == 6 and Progression.ENCOUNTERS.size() == 5, "Six regions and five different encounters")
 	var available_modifiers: Dictionary = {}
 	for mission in Progression.CAMPAIGN:
