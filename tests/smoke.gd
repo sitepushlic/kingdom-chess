@@ -104,6 +104,15 @@ func _run() -> void:
 	_assert_ok(int(game.equipped_slots["Оружие"]) == 1, "Autofit ignores level-locked stronger weapon")
 	_assert_ok(int(game.equipped_slots["Тело"]) == 2, "Autofit equips armor independently")
 	_assert_ok(int(game.equipped_slots["Реликвия"]) == 3, "Autofit equips relic independently")
+	var corrupted_slots: Dictionary = Progression.sanitize_equipment_slots(
+		[weak_weapon, usable_armor, locked_weapon, usable_relic],
+		{"Оружие":2, "Тело":0, "Реликвия":3}, 1)
+	_assert_ok(int(corrupted_slots["Оружие"]) == -1, "Saved level-locked weapon is unequipped")
+	_assert_ok(int(corrupted_slots["Тело"]) == -1, "Saved wrong-slot gear is unequipped")
+	_assert_ok(int(corrupted_slots["Реликвия"]) == 3, "Valid saved relic remains equipped")
+	var stale_slots: Dictionary = Progression.sanitize_equipment_slots(
+		[weak_weapon, "invalid item"], {"Оружие":99, "Тело":1, "Реликвия":-1}, 1)
+	_assert_ok(int(stale_slots["Оружие"]) == -1 and int(stale_slots["Тело"]) == -1, "Stale and malformed save references are rejected")
 	_assert_ok(Progression.REGIONS.size() == 6 and Progression.ENCOUNTERS.size() == 5, "Six regions and five different encounters")
 	var available_modifiers: Dictionary = {}
 	for mission in Progression.CAMPAIGN:
