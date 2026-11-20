@@ -68,9 +68,25 @@ static func load_profile() -> Dictionary:
 		profile["items"] = []
 	if typeof(profile.get("slots")) != TYPE_DICTIONARY:
 		profile["slots"] = {"Оружие":-1,"Тело":-1,"Реликвия":-1}
-	for slot in ITEM_SLOTS:
-		profile["slots"][slot] = clampi(int(profile["slots"].get(slot, -1)), -1, profile["items"].size()-1)
+	profile["slots"] = sanitize_equipment_slots(profile["items"], profile["slots"], int(profile["level"]))
+	profile["equipped"] = int(profile["slots"]["Оружие"])
 	return profile
+
+static func sanitize_equipment_slots(items: Array, slots: Dictionary, level: int) -> Dictionary:
+	# Save files can contain stale indices after selling gear, wrong-slot gear or level-locked gear.
+	var valid := {}
+	for slot in ITEM_SLOTS:
+		var index := int(slots.get(slot, -1))
+		valid[slot] = -1
+		if index < 0 or index >= items.size():
+			continue
+		if typeof(items[index]) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = items[index]
+		if str(item.get("slot", "")) != slot or int(item.get("level", 1)) > level:
+			continue
+		valid[slot] = index
+	return valid
 
 static func default_profile() -> Dictionary:
 	return {"level":1, "xp":0, "gold":0, "potions":2, "items":[], "equipped":-1, "slots":{"Оружие":-1,"Тело":-1,"Реликвия":-1}, "wins":0, "dry_streak":0}
