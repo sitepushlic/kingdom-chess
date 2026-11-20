@@ -110,6 +110,11 @@ func _run() -> void:
 	_assert_ok(int(corrupted_slots["Оружие"]) == -1, "Saved level-locked weapon is unequipped")
 	_assert_ok(int(corrupted_slots["Тело"]) == -1, "Saved wrong-slot gear is unequipped")
 	_assert_ok(int(corrupted_slots["Реликвия"]) == 3, "Valid saved relic remains equipped")
+	var malformed_slot_values: Dictionary = {"Оружие":"0","Тело":true,"Реликвия":1.5}
+	var rejected_slot_values: Dictionary = Progression.sanitize_equipment_slots([weak_weapon, weak_weapon], malformed_slot_values, 50)
+	_assert_ok(int(rejected_slot_values["Оружие"]) == -1, "Numeric string cannot select saved weapon")
+	_assert_ok(int(rejected_slot_values["Тело"]) == -1, "Boolean cannot select saved armor")
+	_assert_ok(int(rejected_slot_values["Реликвия"]) == -1, "Fractional index cannot select saved relic")
 	var stale_slots: Dictionary = Progression.sanitize_equipment_slots(
 		[weak_weapon, "invalid item"], {"Оружие":99, "Тело":1, "Реликвия":-1}, 1)
 	_assert_ok(int(stale_slots["Оружие"]) == -1 and int(stale_slots["Тело"]) == -1, "Stale and malformed save references are rejected")
