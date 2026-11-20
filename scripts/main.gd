@@ -118,10 +118,10 @@ func _ready() -> void:
 		buttons.append(b)
 		var emblem := TextureRect.new()
 		emblem.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		emblem.offset_left = 4
-		emblem.offset_top = 2
-		emblem.offset_right = -4
-		emblem.offset_bottom = -17
+		emblem.offset_left = 0
+		emblem.offset_top = -3
+		emblem.offset_right = 0
+		emblem.offset_bottom = -15
 		emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		emblem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		emblem.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -170,7 +170,7 @@ func _ready() -> void:
 	ui.add_child(status)
 	boss_portrait = TextureRect.new()
 	boss_portrait.texture = preload("res://assets/backgrounds/fallen_king.svg")
-	boss_portrait.custom_minimum_size = Vector2(0, 92)
+	boss_portrait.custom_minimum_size = Vector2(0, 85)
 	boss_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	boss_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	ui.add_child(boss_portrait)
@@ -1038,7 +1038,7 @@ func _boss_action() -> void:
 
 func _draw() -> void:
 	status.text = winner if winner != "" else ("ГЕРОИ" if mode == "raid" else ("СВЕТЛЫЕ" if turn == 1 else "ТЁМНЫЕ")) + " • ОД: " + str(ap)
-	mode_button.text = "РЕЖИМ: АРЕНА" if mode == "arena" else "РЕЖИМ: РЕЙД"
+	mode_button.text = "⚔ АРЕНА" if mode == "arena" else "⚔ РЕЙД"
 	boss_portrait.visible = mode == "raid"
 	boss_bar.visible = mode == "raid"
 	boss_bar.max_value = 240 + (raid_stage - 1) * 100
@@ -1057,16 +1057,19 @@ func _draw() -> void:
 		b.text = ""
 		var image_node: TextureRect = unit_images[i]
 		image_node.texture = UNIT_TEXTURES.get(p.to_upper()) if p != "" else null
-		image_node.modulate = Color("#f8e3c0") if _team(p) == 1 else Color("#e2a3e9")
+		image_node.modulate = Color("#fff2dc") if _team(p) == 1 else Color("#db9ba5")
 		var hp_node: Label = hp_labels[i]
 		hp_node.text = str(health[i]) if p != "" else ""
-		hp_node.add_theme_color_override("font_color", Color("#f9e8b4") if _team(p) == 1 else Color("#eed0ff"))
+		hp_node.add_theme_color_override("font_color", Color("#ffe9ad") if _team(p) == 1 else Color("#ffbdc5"))
 		var style := StyleBoxFlat.new()
 		var row: int = i / 8
-		style.bg_color = Color("#292536") if (row+i%8)%2 == 0 else Color("#554758")
-		style.border_color = Color("#8b7453") if (row+i%8)%2 == 0 else Color("#6f5a55")
+		style.bg_color = Color("#192a34") if (row+i%8)%2 == 0 else Color("#47505a")
+		style.border_color = Color("#46545d") if (row+i%8)%2 == 0 else Color("#7a7770")
 		style.set_border_width_all(1)
-		style.set_corner_radius_all(4)
+		style.set_corner_radius_all(2)
+		style.shadow_color = Color(0.01, 0.02, 0.04, 0.55)
+		style.shadow_size = 3
+		style.anti_aliasing = true
 		if mode == "raid" and boss_target == i and winner == "":
 			style.bg_color = Color("#8c3440")
 			style.border_color = Color("#ff8c7e")
