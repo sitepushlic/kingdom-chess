@@ -49,6 +49,8 @@ var equipped := -1
 var equipped_slots: Dictionary = {"Оружие":-1, "Тело":-1, "Реликвия":-1}
 var raid_wins := 0
 var dry_loot_streak := 0
+var raid_region := ""
+var raid_encounter := ""
 var boss_target := -1
 var raid_round := 0
 var equipment_label: Label
@@ -609,6 +611,11 @@ func _create_inventory_popup() -> void:
 	sell.custom_minimum_size = Vector2(220, 55)
 	sell.pressed.connect(_inventory_sell)
 	actions.add_child(sell)
+	var upgrade := Button.new()
+	upgrade.text = "УСИЛИТЬ"
+	upgrade.custom_minimum_size = Vector2(140, 55)
+	upgrade.pressed.connect(_inventory_upgrade)
+	actions.add_child(upgrade)
 
 func _open_inventory() -> void:
 	inventory_selected = -1
@@ -639,7 +646,7 @@ func _inventory_select(index: int) -> void:
 	if index < 0 or index >= equipment.size(): return
 	var item: Dictionary = equipment[index]
 	var rarity: int = clampi(int(item.get("rarity", 0)), 0, 6)
-	inventory_details.text = "%s • %s • Ур. %d\nАтака +%d  Защита +%d  HP +%d\nКрит %d%%  Вампиризм %d%%" % [item.get("name", "Артефакт"), Progression.RARITIES[rarity], int(item.get("level", 1)), int(item.get("attack", 0)), int(item.get("armor", 0)), int(item.get("hp", 0)), int(item.get("crit", 0)), int(item.get("lifesteal", 0))]
+	inventory_details.text = "%s • %s • Ур. %d • Усиление +%d/12\nАтака +%d  Защита +%d  HP +%d\nКрит %d%%  Вампиризм %d%%\nПробитие %d  Блок %d%%  Кровотечение %d%%\nСила %d • Цена усиления %d" % [item.get("name", "Артефакт"), Progression.RARITIES[rarity], int(item.get("level", 1)), int(item.get("upgrade", 0)), int(item.get("attack", 0)), int(item.get("armor", 0)), int(item.get("hp", 0)), int(item.get("crit", 0)), int(item.get("lifesteal", 0)), int(item.get("penetration", 0)), int(item.get("block", 0)), int(item.get("bleed", 0)), Progression.item_score(item), Progression.upgrade_cost(item)]
 
 func _inventory_equip() -> void:
 	if inventory_selected < 0 or inventory_selected >= equipment.size(): return
@@ -656,6 +663,26 @@ func _inventory_equip() -> void:
 	equipped = inventory_selected if slot == "Оружие" else int(equipped_slots.get("Оружие", -1))
 	_save_profile()
 	_refresh_inventory()
+	_draw()
+
+func _inventory_upgrade() -> void:
+	if lan_connected and not lan_host:
+		inventory_details.text = "В кооперативе улучшения доступны только создателю комнаты."
+		return
+	if inventory_selected < 0 or inventory_selected >= equipment.size(): return
+	var item: Dictionary = equipment[inventory_selected]
+	if int(item.get("upgrade", 0)) >= 12:
+		inventory_details.text = "Максимальное усиление +12 достигнуто."
+		return
+	var cost: int = Progression.upgrade_cost(item)
+	if gold < cost:
+		inventory_details.text = "Для улучшения нужно %d золота. Сейчас: %d." % [cost, gold]
+		return
+	gold -= cost
+	equipment[inventory_selected] = Progression.upgrade_item(item)
+	_save_profile()
+	_refresh_inventory()
+	_inventory_select(inventory_selected)
 	_draw()
 
 func _inventory_sell() -> void:
@@ -812,7 +839,7 @@ func _snapshot() -> Dictionary:
 		"pieces": pieces.duplicate(), "health": health.duplicate(),
 		"ap": ap, "turn": turn, "winner": winner,
 		"boss_hp": boss_hp, "boss_phase": boss_phase,
-		"raid_round": raid_round, "raid_stage": raid_stage,
+		"raid_round": raid_round, "raid_stage": raid_stage, "raid_encounter": raid_encounter,
 		"boss_target": boss_target, "battle_log": battle_log,
 		"acted": acted.duplicate(), "enemy_wave": enemy_wave,
 		"selected": selected, "curse_mode": curse_mode, "heal_used": heal_used,
@@ -849,6 +876,8 @@ func _send_snapshot(data: Dictionary) -> void:
 	acted = data["acted"].duplicate()
 	enemy_wave = int(data["enemy_wave"])
 	mode = "raid"
+	raid_region = Progression.region_for_run(maxi(0, (raid_stage - 1) * 3))
+	raid_encounter = str(data.get("raid_encounter", ""))
 	selected = int(data.get("selected", -1))
 	curse_mode = bool(data.get("curse_mode", false))
 	heal_used = bool(data.get("heal_used", false))
@@ -911,7 +940,9 @@ func _restore_battle() -> bool:
 	boss_hp = maxi(0, int(parsed.get("boss_hp", 240)))
 	boss_phase = clampi(int(parsed.get("boss_phase", 1)), 1, 2)
 	raid_round = maxi(0, int(parsed.get("raid_round", 0)))
-	raid_stage = clampi(int(parsed.get("raid_stage", 1)), 1, 3)
+	raid_stage = clampi(int(parsed.get("raid_stage", 1)), 1, 6)
+	raid_region = Progression.region_for_run(maxi(0, (raid_stage - 1) * 3))
+	raid_encounter = str(parsed.get("raid_encounter", Progression.encounter_for_run(raid_wins)))
 	boss_target = clampi(int(parsed.get("boss_target", -1)), -1, 63)
 	battle_log = str(parsed.get("battle_log", "Битва продолжается."))
 	acted = parsed.get("acted", []).duplicate()
@@ -974,6 +1005,8 @@ func _item_stat(stat: String) -> int:
 		var index: int = int(equipped_slots.get(slot, -1))
 		if index >= 0 and index < equipment.size():
 			total += maxi(0, int(equipment[index].get(stat, 0)))
+	var set_stats: Dictionary = Progression.set_bonus(equipment, equipped_slots)
+	total += int(set_stats.get(stat, 0))
 	return total
 
 func _effective_level() -> int:
@@ -1176,12 +1209,14 @@ func _reset() -> void:
 	turn_count = 0
 	enemy_wave = 0
 	battle_result_shown = false
-	raid_stage = mini(3, 1 + int(raid_wins / 3))
-	boss_hp = 240 + (raid_stage - 1) * 100
+	raid_stage = mini(6, 1 + int(raid_wins / 3))
+	raid_region = Progression.region_for_run(raid_wins)
+	raid_encounter = Progression.encounter_for_run(raid_wins)
+	boss_hp = 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35 + int(raid_wins / 6.0) * 35
 	boss_phase = 1
 	raid_round = 0
 	boss_target = -1
-	battle_log = "Рейд: уничтожь тёмного короля!" if mode == "raid" else "Арена: два игрока на одном устройстве."
+	battle_log = ("%s • %s. Защити своего короля и победи Падшего короля!\nКаждый ход: 2 действия. Нажми фигуру, затем подсвеченную клетку." % [raid_region, raid_encounter]) if mode == "raid" else "Арена: два игрока на одном устройстве."
 	if mode == "raid":
 		for i in range(8,16):
 			pieces[i] = ""
@@ -1546,7 +1581,7 @@ func _draw() -> void:
 	mode_button.text = "⚔ АРЕНА" if mode == "arena" else "⚔ РЕЙД"
 	boss_portrait.visible = mode == "raid"
 	boss_bar.visible = mode == "raid"
-	boss_bar.max_value = 240 + (raid_stage - 1) * 100
+	boss_bar.max_value = 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35
 	boss_bar.value = boss_hp
 	phase_label.visible = mode == "raid"
 	phase_label.text = "ФАЗА II • ЯРОСТЬ ПАДШЕГО" if boss_phase == 2 else "ФАЗА I • ПРОБУЖДЕНИЕ"
