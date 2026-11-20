@@ -14,8 +14,13 @@ func _assert_ok(condition: bool, description: String) -> void:
 func _run() -> void:
 	var game = MainScene.instantiate()
 	root.add_child(game)
+	_assert_ok(ProjectSettings.get_setting("display/window/size/viewport_width") == 720, "Portrait viewport width")
+	_assert_ok(ProjectSettings.get_setting("display/window/size/viewport_height") == 1280, "Portrait viewport height")
+	_assert_ok(game.battle_layout is VBoxContainer, "Portrait layout stacks battlefield and HUD")
+	_assert_ok(game.menu_toggle != null, "Menu is accessible from top button")
 	_assert_ok(game.buttons.size() == 64, "Board creates 64 interactive buttons")
 	_assert_ok(game.unit_images.size() == 64, "Board creates 64 illustrated units")
+	_assert_ok(game.hazard_overlays.size() == 64, "Animated danger warning on every square")
 	_assert_ok(game.inventory_popup != null, "Inventory dialog exists")
 	_assert_ok(game.shop_popup != null, "Alchemist shop exists")
 	_assert_ok(game.main_menu != null and game.main_menu.visible, "Cinematic start menu visible at launch")
@@ -66,6 +71,24 @@ func _run() -> void:
 		_assert_ok(int(item["rarity"]) >= 0 and int(item["rarity"]) < 7, "Rarity bounds")
 		_assert_ok(int(item["level"]) >= 1 and int(item["level"]) <= 50, "Level bounds")
 		_assert_ok(int(item["attack"]) > 0, "Attack bonus")
+		_assert_ok(Progression.ITEM_SLOTS.has(item["slot"]), "Loot has RPG equipment slot")
+		_assert_ok(item.has("armor") and item.has("hp") and item.has("crit") and item.has("lifesteal"), "Loot has RPG stats")
+	_assert_ok(Progression.experience_needed(2) > Progression.experience_needed(1), "Increasing XP")
+	game.equipment = [
+		{"name":"Test sword","slot":"Оружие","level":1,"attack":12,"crit":0},
+		{"name":"Test armor","slot":"Тело","level":1,"attack":2,"armor":8,"hp":30},
+		{"name":"Test relic","slot":"Реликвия","level":1,"attack":1,"lifesteal":10}
+	]
+	game.equipped_slots = {"Оружие":0,"Тело":1,"Реликвия":2}
+	_assert_ok(game._attack_bonus() == 15, "Equipped slots aggregate attack")
+	_assert_ok(game._armor_bonus() == 8, "Equipped armor mitigates incoming damage")
+	_assert_ok(game._max_hp("K") == 210, "Equipped armor raises hero maximum HP")
+	game.pieces[60] = "K"
+	game.health[60] = 180
+	var damage_dealt: int = game._deal_damage(60, 30, false)
+	_assert_ok(damage_dealt == 22 and game.health[60] == 158, "Armor reduces actual chess-piece damage")
+	game.equipment = []
+	game.equipped_slots = {"Оружие":-1,"Тело":-1,"Реликвия":-1}
 	_assert_ok(Progression.experience_needed(2) > Progression.experience_needed(1), "Increasing XP")
 	var old_gold: int = game.gold
 	var old_potions: int = game.potions
