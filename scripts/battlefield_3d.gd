@@ -23,6 +23,9 @@ var boss_crown: Material
 var attack_effects: Array[Node3D] = []
 var base_camera_position := Vector3(0, 11.8, 8.7)
 var boss_enraged := false
+var selection_material: StandardMaterial3D
+var danger_material: StandardMaterial3D
+var move_material: StandardMaterial3D
 
 func _material(color: Color, metallic: float = 0.0, roughness: float = 0.42, emission: Color = Color.BLACK) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -77,6 +80,9 @@ func _ready() -> void:
 	gold_material = _material(Color("#d9ad57"), 0.78, 0.25)
 	dark_material = _material(Color("#1a2638"), 0.4)
 	boss_crown = _material(Color("#e56587"), 0.65, 0.22, Color("#9a193e"))
+	selection_material = _material(Color("#f6c76b"), 0.2, 0.3, Color("#9d5732"))
+	danger_material = _material(Color("#ed5c65"), 0.2, 0.3, Color("#9d5732"))
+	move_material = _material(Color("#61d7b6"), 0.2, 0.3, Color("#9d5732"))
 	var world := WorldEnvironment.new()
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
@@ -308,7 +314,7 @@ func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int,
 			fill.position.x = -0.345 * (1.0 - ratio)
 		highlights[index].visible = index == selected or legal_squares.has(index) or index == danger
 		if highlights[index].visible:
-			highlights[index].material_override = _material(Color("#f6c76b") if index == selected else (Color("#ed5c65") if index == danger else Color("#61d7b6")), 0.2, 0.3, Color("#9d5732"))
+			highlights[index].material_override = selection_material if index == selected else (danger_material if index == danger else move_material)
 	for index in piece_nodes.keys():
 		if not moving_nodes.has(index):
 			var piece_node: Node3D = piece_nodes[index]
