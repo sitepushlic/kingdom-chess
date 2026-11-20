@@ -49,6 +49,10 @@ var equipped := -1
 var equipped_slots: Dictionary = {"Оружие":-1, "Тело":-1, "Реликвия":-1}
 var raid_wins := 0
 var dry_loot_streak := 0
+var combat_hits := 0
+var frost_guard_used := false
+var phoenix_used := false
+var poison_marks: Dictionary = {}
 var raid_region := ""
 var raid_encounter := ""
 var boss_target := -1
@@ -1009,6 +1013,13 @@ func _item_stat(stat: String) -> int:
 	total += int(set_stats.get(stat, 0))
 	return total
 
+func _has_trait(trait_id: int) -> bool:
+	for slot in Progression.ITEM_SLOTS:
+		var index: int = int(equipped_slots.get(slot, -1))
+		if index >= 0 and index < equipment.size() and int(equipment[index].get("trait_id", -1)) == trait_id:
+			return true
+	return false
+
 func _effective_level() -> int:
 	if lan_connected and not lan_host and shared_raid_stats.has("level"):
 		return maxi(1, int(shared_raid_stats["level"]))
@@ -1027,6 +1038,15 @@ func _deal_damage(target: int, raw_damage: int, attacker_is_hero: bool) -> int:
 	var amount := maxi(1, raw_damage)
 	if mode == "raid":
 		if attacker_is_hero:
+			combat_hits += 1
+			if _has_trait(0) and combat_hits % 3 == 0:
+				amount += maxi(8, int(ceil(float(amount) * 0.35)))
+				battle_log += "\nОГНЕННЫЙ УДАР!"
+			if _has_trait(5) and health[target] < _max_hp(pieces[target], false) * 0.35:
+				amount = int(ceil(float(amount) * 1.35))
+				battle_log += "\nКАЗНЬ!"
+			if _has_trait(4):
+				poison_marks[target] = mini(5, int(poison_marks.get(target, 0)) + 1)
 			var enemy_armor: int = (18 + raid_stage * 5) if target == 4 else (5 + raid_stage * 2)
 			amount = Progression.damage_after_armor(amount, enemy_armor, _item_stat("penetration"))
 			var crit_chance: int = _item_stat("crit")
@@ -1034,6 +1054,16 @@ func _deal_damage(target: int, raw_damage: int, attacker_is_hero: bool) -> int:
 				amount = int(ceil(amount * 1.5))
 				battle_log = "КРИТИЧЕСКИЙ УДАР!"
 		else:
+			if _has_trait(1) and not frost_guard_used:
+				amount = maxi(1, int(ceil(float(amount) * 0.55)))
+				frost_guard_used = true
+				battle_log += "\nЛЕДЯНОЙ ЩИТ!"
+			if _has_trait(3) and not phoenix_used and amount >= health[target] and _team(pieces[target]) == 1:
+				phoenix_used = true
+				health[target] = maxi(1, int(ceil(float(_max_hp(pieces[target], true)) * 0.25)))
+				_damage_popup(target, health[target], true)
+				battle_log += "\nВОЗРОЖДЕНИЕ!"
+				return 0
 			amount = Progression.damage_after_armor(amount, _armor_bonus())
 			if randi_range(1, 100) <= mini(60, _item_stat("block")):
 				amount = maxi(1, int(ceil(amount * 0.5)))
@@ -1104,14 +1134,16 @@ func _raid_victory() -> void:
 	winner = "ПОБЕДА! БОСС ПОВЕРЖЕН!"
 	raid_wins += 1
 	_reward(100)
-	var item: Dictionary = Progression.roll_item(player_level, true, mini(2, int(raid_wins / 10)))
+	var item: Dictionary = Progression.first_clear_reward(raid_wins)
+	if item.is_empty():
+		item = Progression.roll_item(player_level, true, mini(2, int(raid_wins / 10)))
 	if equipment.size() >= 100:
 		gold += 100
 		battle_log = "Сумка полна! Вместо реликвии получено 100 золота."
 		_save_profile()
 		return
 	equipment.append(item)
-	battle_log = "Добыча: %s (%s), +%d к атаке" % [item["name"], Progression.RARITIES[int(item["rarity"])], int(item["attack"])]
+	battle_log = "НАГРАДА ГЛАВЫ: %s!" % item["name"] if raid_wins % 3 == 0 and raid_wins <= 18 else "Добыча: %s (%s), +%d к атаке" % [item["name"], Progression.RARITIES[int(item["rarity"])], int(item["attack"])]
 	_save_profile()
 
 func _use_potion() -> void:
@@ -1214,6 +1246,10 @@ func _reset() -> void:
 	raid_encounter = Progression.encounter_for_run(raid_wins)
 	boss_hp = 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35
 	boss_phase = 1
+	combat_hits = 0
+	frost_guard_used = false
+	phoenix_used = false
+	poison_marks.clear()
 	raid_round = 0
 	boss_target = -1
 	battle_log = ("%s • %s. Защити своего короля и победи Падшего короля!\nКаждый ход: 2 действия. Нажми фигуру, затем подсвеченную клетку." % [raid_region, raid_encounter]) if mode == "raid" else "Арена: два игрока на одном устройстве."
@@ -1546,7 +1582,26 @@ func _boss_action() -> void:
 	if winner != "": return
 	enemy_turn = true
 	raid_round += 1
+	frost_guard_used = false
 	turn_count += 1
+	for target in poison_marks.keys():
+		var square: int = int(target)
+		if square < 0 or square >= 64 or _team(pieces[square]) != -1:
+			continue
+		var poison_damage: int = int(poison_marks[target]) * (4 + raid_stage * 2)
+		health[square] = maxi(0, health[square] - poison_damage)
+		_damage_popup(square, poison_damage)
+		battle_log += "\nЯД: %d урона" % poison_damage
+		if square == 4:
+			boss_hp = health[square]
+			if boss_hp <= 0:
+				_raid_victory()
+				_draw()
+				return
+		elif health[square] <= 0:
+			pieces[square] = ""
+			health[square] = 0
+	poison_marks.clear()
 	var boss_max_hp: int = 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35
 	if boss_phase == 1 and boss_hp <= int(boss_max_hp / 2.0):
 		boss_phase = 2
