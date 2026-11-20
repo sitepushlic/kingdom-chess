@@ -1863,7 +1863,12 @@ func _draw() -> void:
 		battlefield_3d.set_boss_phase(boss_phase if mode == "raid" else 1)
 		battlefield_3d.set_hero_gear(equipment, equipped_slots)
 		var forecast: Array[int] = Progression.hazard_cells(str(raid_mission.get("modifier", "none")), raid_round + 1) if mode == "raid" and winner == "" else []
-		battlefield_3d.set_hazards(forecast, str(raid_mission.get("modifier", "none")))
+		var boss_forecast: Array[int] = Progression.boss_hazard_cells(raid_stage, raid_round + 1, raid_encounter) if mode == "raid" and winner == "" else []
+		for square in boss_forecast:
+			if not forecast.has(square): forecast.append(square)
+		var warning_type: String = str(raid_mission.get("modifier", "none"))
+		if forecast.size() > 0 and boss_forecast.size() > 0: warning_type = "boss"
+		battlefield_3d.set_hazards(forecast, warning_type)
 		battlefield_3d.sync_board(pieces, selected, legal_targets, boss_target if mode == "raid" and winner == "" else -1, health, max_health)
 	if winner != "" and not battle_result_shown:
 		call_deferred("_show_result")
