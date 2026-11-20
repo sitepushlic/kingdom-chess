@@ -952,6 +952,7 @@ func _load_profile() -> void:
 	if equipped >= 0 and int(equipped_slots.get("Оружие", -1)) < 0:
 		equipped_slots["Оружие"] = equipped
 	raid_wins = int(profile["wins"])
+	dry_loot_streak = int(profile.get("dry_streak", 0))
 	if equipped < 0 or equipped >= equipment.size():
 		equipped = -1
 	for slot in Progression.ITEM_SLOTS:
@@ -962,7 +963,7 @@ func _save_profile() -> void:
 	Progression.save_profile({
 		"level": player_level, "xp": experience, "gold": gold,
 		"potions": potions, "items": equipment,
-		"equipped": equipped, "slots": equipped_slots, "wins": raid_wins
+		"equipped": equipped, "slots": equipped_slots, "wins": raid_wins, "dry_streak": dry_loot_streak
 	})
 
 func _item_stat(stat: String) -> int:
@@ -1057,6 +1058,7 @@ func _minion_loot() -> void:
 		return
 	if randi_range(1, 100) > mini(75, 18 + dry_loot_streak * 5):
 		dry_loot_streak += 1
+		_save_profile()
 		return
 	var item: Dictionary = Progression.roll_item(player_level, false, mini(2, int(dry_loot_streak / 5)))
 	dry_loot_streak = 0
