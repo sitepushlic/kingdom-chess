@@ -1199,6 +1199,22 @@ func _legal(a: int, b: int) -> bool:
 		c += sc
 	return true
 
+func _attack_trail(source: int, target: int) -> void:
+	if source < 0 or source >= buttons.size() or target < 0 or target >= buttons.size(): return
+	var trail := Line2D.new()
+	trail.width = 9.0
+	trail.default_color = Color("#f8d38e") if _team(pieces[source]) == 1 else Color("#e16a86")
+	trail.antialiased = true
+	trail.z_index = 95
+	trail.add_point(buttons[source].get_global_rect().get_center() - global_position)
+	trail.add_point(buttons[target].get_global_rect().get_center() - global_position)
+	add_child(trail)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(trail, "width", 1.0, 0.28).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(trail, "modulate:a", 0.0, 0.28)
+	tween.chain().tween_callback(trail.queue_free)
+
 func _animate_hit(index: int, healing: bool = false) -> void:
 	if index < 0 or index >= unit_images.size(): return
 	var sprite: TextureRect = unit_images[index]
@@ -1284,6 +1300,7 @@ func _tap(i: int) -> void:
 		if pieces[i] != "":
 			var damage: int = DAMAGE[attacker.to_upper()]
 			if mode == "raid" and turn == 1: damage += (player_level - 1) * 2 + _attack_bonus()
+			_attack_trail(selected, i)
 			_deal_damage(i, damage, turn == 1)
 			_flash_square(i, Color("#ff897b"))
 			if mode == "raid" and i == 4:
