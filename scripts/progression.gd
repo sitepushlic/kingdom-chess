@@ -31,6 +31,7 @@ static func load_profile() -> Dictionary:
 	profile["xp"] = maxi(0, int(profile["xp"]))
 	profile["gold"] = maxi(0, int(profile["gold"]))
 	profile["potions"] = clampi(int(profile["potions"]), 0, 99)
+	profile["dry_streak"] = clampi(int(profile.get("dry_streak", 0)), 0, 100)
 	if typeof(profile["items"]) != TYPE_ARRAY:
 		profile["items"] = []
 	if typeof(profile.get("slots")) != TYPE_DICTIONARY:
@@ -40,7 +41,7 @@ static func load_profile() -> Dictionary:
 	return profile
 
 static func default_profile() -> Dictionary:
-	return {"level":1, "xp":0, "gold":0, "potions":2, "items":[], "equipped":-1, "slots":{"Оружие":-1,"Тело":-1,"Реликвия":-1}, "wins":0}
+	return {"level":1, "xp":0, "gold":0, "potions":2, "items":[], "equipped":-1, "slots":{"Оружие":-1,"Тело":-1,"Реликвия":-1}, "wins":0, "dry_streak":0}
 
 static func save_profile(profile: Dictionary) -> bool:
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
