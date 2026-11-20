@@ -14,6 +14,8 @@ var enemy_material: StandardMaterial3D
 var gold_material: StandardMaterial3D
 var dark_material: StandardMaterial3D
 var board_root: Node3D
+var torches: Array[OmniLight3D] = []
+var torch_flames: Array[MeshInstance3D] = []
 
 func _material(color: Color, metallic: float = 0.0, roughness: float = 0.42, emission: Color = Color.BLACK) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -91,7 +93,26 @@ func _ready() -> void:
 		highlights.append(marker)
 	for x in [-4.45, 4.45]:
 		for z in [-4.45, 4.45]:
-			_cylinder(0.19, 0.85, gold_material, board_root, Vector3(x, -0.15, z))
+			_cylinder(0.24, 0.18, dark_material, board_root, Vector3(x, -0.12, z))
+			_cylinder(0.17, 1.25, _material(Color("#56515c"), 0.3), board_root, Vector3(x, 0.50, z))
+			_cylinder(0.29, 0.13, gold_material, board_root, Vector3(x, 1.13, z))
+			var flame := _sphere(0.17, _material(Color("#ffb448"), 0.0, 0.2, Color("#ff681c")), board_root, Vector3(x, 1.40, z))
+			torch_flames.append(flame)
+			var firelight := OmniLight3D.new()
+			firelight.position = Vector3(x, 1.5, z)
+			firelight.light_color = Color("#ff9b4a")
+			firelight.light_energy = 1.2
+			firelight.omni_range = 3.8
+			add_child(firelight)
+			torches.append(firelight)
+	for n in range(18):
+		var angle := float(n) * TAU / 18.0
+		var radius := 6.4 + float(n % 3) * 0.65
+		var x := cos(angle) * radius
+		var z := sin(angle) * radius
+		var height := 1.4 + float(n % 5) * 0.38
+		_cylinder(0.43, height, _material(Color("#2b3344") if n % 2 == 0 else Color("#3d3948"), 0.12), board_root, Vector3(x, height * 0.5 - 0.65, z), 0.35)
+		_box(Vector3(0.98, 0.23, 0.98), dark_material, board_root, Vector3(x, height - 0.45, z))
 	var key := DirectionalLight3D.new()
 	key.rotation_degrees = Vector3(-55, -28, 0)
 	key.light_color = Color("#ffe2b7")
@@ -252,6 +273,10 @@ func pick_square(pixel: Vector2) -> int:
 
 func _process(delta: float) -> void:
 	clock += delta
+	for i in range(torch_flames.size()):
+		var flicker := sin(clock * (6.0 + float(i) * 0.27) + float(i) * 1.7)
+		torch_flames[i].scale = Vector3(0.85 + flicker * 0.12, 1.2 + flicker * 0.24, 0.85 + flicker * 0.12)
+		torches[i].light_energy = 1.15 + flicker * 0.22
 	for index in piece_nodes.keys():
 		if moving_nodes.has(index): continue
 		var actor: Node3D = piece_nodes[index]
