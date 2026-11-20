@@ -13,6 +13,11 @@ func _assert_ok(condition: bool, description: String) -> void:
 
 func _run() -> void:
 	var game = MainScene.instantiate()
+	root.add_child(game)
+	_assert_ok(game.buttons.size() == 64, "Board creates 64 interactive buttons")
+	_assert_ok(game.unit_images.size() == 64, "Board creates 64 illustrated units")
+	_assert_ok(game.inventory_popup != null, "Inventory dialog exists")
+	_assert_ok(game.boss_portrait != null, "Boss portrait exists")
 	game.pieces.resize(64)
 	game.health.resize(64)
 	for i in range(64):
@@ -37,5 +42,5 @@ func _run() -> void:
 		_assert_ok(int(item["attack"]) > 0, "Attack bonus")
 	_assert_ok(Progression.experience_needed(2) > Progression.experience_needed(1), "Increasing XP")
 	print("KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED")
-	game.free()
+	game.queue_free()
 	quit(0)
