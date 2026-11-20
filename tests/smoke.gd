@@ -87,6 +87,23 @@ func _run() -> void:
 	_assert_ok(boss_drop.has("power") and boss_drop.has("affix"), "Boss loot has affix and item power")
 	_assert_ok(boss_drop.has("penetration") and boss_drop.has("block") and boss_drop.has("bleed"), "Advanced equipment stats generated")
 	_assert_ok(Progression.sell_price(boss_drop) > 10, "Loot has scaling sell value")
+	var weak_weapon: Dictionary = Progression.roll_item(1)
+	weak_weapon["slot"] = "Оружие"
+	weak_weapon["level"] = 1
+	var locked_weapon: Dictionary = weak_weapon.duplicate(true)
+	locked_weapon["level"] = 50
+	locked_weapon["attack"] = 9999
+	var usable_armor: Dictionary = weak_weapon.duplicate(true)
+	usable_armor["slot"] = "Тело"
+	var usable_relic: Dictionary = weak_weapon.duplicate(true)
+	usable_relic["slot"] = "Реликвия"
+	game.player_level = 1
+	game.equipment = [locked_weapon, weak_weapon, usable_armor, usable_relic]
+	game.equipped_slots = {"Оружие": -1, "Тело": -1, "Реликвия": -1}
+	game._equip_best()
+	_assert_ok(int(game.equipped_slots["Оружие"]) == 1, "Autofit ignores level-locked stronger weapon")
+	_assert_ok(int(game.equipped_slots["Тело"]) == 2, "Autofit equips armor independently")
+	_assert_ok(int(game.equipped_slots["Реликвия"]) == 3, "Autofit equips relic independently")
 	_assert_ok(Progression.REGIONS.size() == 6 and Progression.ENCOUNTERS.size() == 5, "Six regions and five different encounters")
 	_assert_ok(Progression.CAMPAIGN.size() == 18, "Complete 18-mission story campaign")
 	var mission_titles: Dictionary = {}
