@@ -1113,8 +1113,32 @@ func _legal(a: int, b: int) -> bool:
 		c += sc
 	return true
 
+func _impact_effect(index: int, healing: bool = false) -> void:
+	if index < 0 or index >= buttons.size(): return
+	var cell: Button = buttons[index]
+	var ring := Panel.new()
+	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ring.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ring.pivot_offset = cell.size * 0.5
+	ring.scale = Vector2(0.25, 0.25)
+	ring.modulate.a = 0.95
+	ring.z_index = 22
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0)
+	style.border_color = Color("#8affce") if healing else Color("#ffc06b")
+	style.set_border_width_all(5)
+	style.set_corner_radius_all(22)
+	ring.add_theme_stylebox_override("panel", style)
+	cell.add_child(ring)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(ring, "scale", Vector2(1.4, 1.4), 0.38).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(ring, "modulate:a", 0.0, 0.38)
+	tween.chain().tween_callback(ring.queue_free)
+
 func _damage_popup(index: int, amount: int, healing: bool = false) -> void:
 	if index < 0 or index >= buttons.size(): return
+	_impact_effect(index, healing)
 	var number := Label.new()
 	number.text = ("+" if healing else "−") + str(amount)
 	number.add_theme_font_size_override("font_size", 30)
