@@ -450,7 +450,7 @@ func _host_lan() -> void:
 	lan_raid = true
 	mode = "raid"
 	_reset()
-	var ips: Array[String] = IP.get_local_addresses()
+	var ips := IP.get_local_addresses()
 	var addresses: Array[String] = []
 	for ip in ips:
 		if ip.contains(".") and not ip.begins_with("127.") and not ip.begins_with("169.254."):
