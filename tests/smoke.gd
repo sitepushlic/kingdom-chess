@@ -43,6 +43,12 @@ func _run() -> void:
 	_assert_ok(state["pieces"].size() == 64, "Co-op state has 64 pieces")
 	_assert_ok(state["health"].size() == 64, "Co-op state has 64 health values")
 	_assert_ok(state.has("selected") and state.has("curse_mode"), "Co-op sync includes targeting state")
+	game.mode = "arena"
+	game._save_battle()
+	_assert_ok(FileAccess.file_exists(game.battle_save_path), "Battle autosave exists")
+	game.pieces[52] = ""
+	_assert_ok(game._restore_battle(), "Autosaved battle restores")
+	_assert_ok(game.pieces[52] == "P", "Restored piece matches saved state")
 	_assert_ok(game._team("k") == -1, "Dark faction")
 	_assert_ok(game._team("K") == 1, "Light faction")
 	for i in range(100):
