@@ -1212,7 +1212,7 @@ func _reset() -> void:
 	raid_stage = mini(6, 1 + int(raid_wins / 3))
 	raid_region = Progression.region_for_run(raid_wins)
 	raid_encounter = Progression.encounter_for_run(raid_wins)
-	boss_hp = 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35 + int(raid_wins / 6.0) * 35
+	boss_hp = 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35
 	boss_phase = 1
 	raid_round = 0
 	boss_target = -1
@@ -1230,6 +1230,25 @@ func _reset() -> void:
 		health[11] = HP["N"]
 		pieces[12] = "p"
 		health[12] = HP["P"]
+		match raid_encounter:
+			"Осада":
+				pieces[10] = "r"
+				health[10] = HP["R"] + raid_stage * 15
+			"Охота":
+				pieces[10] = "n"
+				health[10] = HP["N"] + raid_stage * 12
+				pieces[13] = "n"
+				health[13] = HP["N"] + raid_stage * 12
+			"Засада":
+				pieces[9] = "b"
+				health[9] = HP["B"] + raid_stage * 10
+				pieces[14] = "p"
+				health[14] = HP["P"] + raid_stage * 10
+			"Разлом":
+				pieces[10] = "q"
+				health[10] = HP["Q"] + raid_stage * 18
+			_:
+				pass
 		boss_target = _choose_boss_target()
 	winner = ""
 	acted.clear()
@@ -1528,7 +1547,7 @@ func _boss_action() -> void:
 	enemy_turn = true
 	raid_round += 1
 	turn_count += 1
-	var boss_max_hp: int = 240 + (raid_stage - 1) * 100
+	var boss_max_hp: int = 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35
 	if boss_phase == 1 and boss_hp <= int(boss_max_hp / 2.0):
 		boss_phase = 2
 		battle_log = "ПАДШИЙ КОРОЛЬ В ЯРОСТИ! Его удары усиливаются."
@@ -1550,6 +1569,11 @@ func _boss_action() -> void:
 			health[boss_target] = 0
 	else:
 		battle_log = "Герои уклонились от удара Падшего короля!"
+	if raid_encounter == "Разлом" and raid_round % 4 == 0:
+		for hero_index in range(64):
+			if _team(pieces[hero_index]) == 1 and hero_index % 8 == 4:
+				_deal_damage(hero_index, 12 + raid_stage * 5, false)
+				battle_log += "\nРазлом обжигает центральную линию!"
 	if raid_round % (3 if boss_phase == 2 else 4) == 0 and boss_hp > 0:
 		var spawn := -1
 		for cell in [8, 9, 10, 13, 14, 15]:
@@ -1587,7 +1611,7 @@ func _draw() -> void:
 	phase_label.text = "ФАЗА II • ЯРОСТЬ ПАДШЕГО" if boss_phase == 2 else "ФАЗА I • ПРОБУЖДЕНИЕ"
 	inventory_label.text = "Ур. %d  •  Опыт: %d/%d  •  Золото: %d  •  Зелья: %d" % [player_level,experience,Progression.experience_needed(player_level),gold,potions]
 	equipment_label.text = "⚔ +%d  ⛨ +%d  ♥ +%d  ✦ %d%%  ☽ %d%%\nТрофеи: %d  •  Побед: %d" % [_attack_bonus(),_armor_bonus(),_item_stat("hp"),_item_stat("crit"),_item_stat("lifesteal"),equipment.size(),raid_wins]
-	info.text = ("⛨ ЩИТ АКТИВЕН\n" if shield_active else "") + ("ГЛАВА %d • БОСС: %d/%d HP • Раунд %d\n" % [raid_stage, boss_hp, 240 + (raid_stage - 1) * 100, raid_round] if mode == "raid" else "") + battle_log
+	info.text = ("⛨ ЩИТ АКТИВЕН\n" if shield_active else "") + ("ГЛАВА %d • БОСС: %d/%d HP • Раунд %d\n" % [raid_stage, boss_hp, 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35, raid_round] if mode == "raid" else "") + battle_log
 	if selected >= 0 and selected < 64 and pieces[selected] != "":
 		var hero: String = pieces[selected]
 		var hero_attack: int = DAMAGE[hero.to_upper()] + ((_attack_bonus() + (_effective_level() - 1) * 2) if mode == "raid" and _team(hero) == 1 else 0)
@@ -1608,7 +1632,7 @@ func _draw() -> void:
 		var life: ProgressBar = hp_bars[i]
 		life.visible = p != ""
 		if p != "":
-			life.max_value = maxi(1, (240 + (raid_stage - 1) * 100) if mode == "raid" and i == 4 else _max_hp(p, _team(p) == 1))
+			life.max_value = maxi(1, (240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35) if mode == "raid" and i == 4 else _max_hp(p, _team(p) == 1))
 			life.value = maxi(0, health[i])
 			life.add_theme_stylebox_override("fill", hp_bar_friendly_style if _team(p) == 1 else hp_bar_enemy_style)
 		hp_node.add_theme_color_override("font_color", Color("#ffe9ad") if _team(p) == 1 else Color("#ffbdc5"))
@@ -1643,7 +1667,7 @@ func _draw() -> void:
 		var max_health: Array = []
 		for index in range(64):
 			var piece: String = pieces[index]
-			max_health.append((240 + (raid_stage - 1) * 100) if mode == "raid" and index == 4 else (_max_hp(piece, _team(piece) == 1) if piece != "" else 1))
+			max_health.append((240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35) if mode == "raid" and index == 4 else (_max_hp(piece, _team(piece) == 1) if piece != "" else 1))
 		battlefield_3d.sync_board(pieces, selected, legal_targets, boss_target if mode == "raid" and winner == "" else -1, health, max_health)
 	if winner != "" and not battle_result_shown:
 		call_deferred("_show_result")
