@@ -48,6 +48,17 @@ jobs:
           echo "Java SDK: $JAVA_HOME"
           test -f "$ANDROID_HOME/platforms/android-34/android.jar"
           test -f "$HOME/.android/debug.keystore"
+      - name: Set absolute debug keystore path
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          preset = Path("export_presets.cfg")
+          text = preset.read_text()
+          text = text.replace('keystore/debug="~/.android/debug.keystore"', 'keystore/debug="' + os.environ["HOME"] + '/.android/debug.keystore"')
+          preset.write_text(text)
+          PY
+          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey
       - name: Import project
         run: ./Godot_v4.3-stable_linux.x86_64 --headless --path . --editor --quit
       - name: Export debug APK
