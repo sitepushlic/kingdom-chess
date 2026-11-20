@@ -55,6 +55,7 @@ var phoenix_used := false
 var poison_marks: Dictionary = {}
 var raid_region := ""
 var raid_encounter := ""
+var raid_mission: Dictionary = {}
 var boss_target := -1
 var raid_round := 0
 var equipment_label: Label
@@ -846,7 +847,7 @@ func _snapshot() -> Dictionary:
 		"pieces": pieces.duplicate(), "health": health.duplicate(),
 		"ap": ap, "turn": turn, "winner": winner,
 		"boss_hp": boss_hp, "boss_phase": boss_phase,
-		"raid_round": raid_round, "raid_stage": raid_stage, "raid_encounter": raid_encounter,
+		"raid_round": raid_round, "raid_stage": raid_stage, "raid_encounter": raid_encounter, "raid_mission": raid_mission.duplicate(true),
 		"boss_target": boss_target, "battle_log": battle_log,
 		"acted": acted.duplicate(), "enemy_wave": enemy_wave,
 		"selected": selected, "curse_mode": curse_mode, "heal_used": heal_used,
@@ -885,6 +886,7 @@ func _send_snapshot(data: Dictionary) -> void:
 	mode = "raid"
 	raid_region = Progression.region_for_run(maxi(0, (raid_stage - 1) * 3))
 	raid_encounter = str(data.get("raid_encounter", ""))
+	raid_mission = data.get("raid_mission", Progression.mission_for_run(raid_wins)).duplicate(true)
 	selected = int(data.get("selected", -1))
 	curse_mode = bool(data.get("curse_mode", false))
 	heal_used = bool(data.get("heal_used", false))
@@ -949,7 +951,9 @@ func _restore_battle() -> bool:
 	raid_round = maxi(0, int(parsed.get("raid_round", 0)))
 	raid_stage = clampi(int(parsed.get("raid_stage", 1)), 1, 6)
 	raid_region = Progression.region_for_run(maxi(0, (raid_stage - 1) * 3))
-	raid_encounter = str(parsed.get("raid_encounter", Progression.encounter_for_run(raid_wins)))
+	raid_mission = Progression.mission_for_run(raid_wins)
+	raid_encounter = str(parsed.get("raid_encounter", raid_mission.get("type", "Штурм")))
+	raid_mission = parsed.get("raid_mission", raid_mission).duplicate(true)
 	boss_target = clampi(int(parsed.get("boss_target", -1)), -1, 63)
 	battle_log = str(parsed.get("battle_log", "Битва продолжается."))
 	acted = parsed.get("acted", []).duplicate()
@@ -1257,7 +1261,8 @@ func _reset() -> void:
 	battle_result_shown = false
 	raid_stage = mini(6, 1 + int(raid_wins / 3))
 	raid_region = Progression.region_for_run(raid_wins)
-	raid_encounter = Progression.encounter_for_run(raid_wins)
+	raid_mission = Progression.mission_for_run(raid_wins)
+	raid_encounter = str(raid_mission.get("type", "Штурм"))
 	boss_hp = 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35
 	boss_phase = 1
 	combat_hits = 0
@@ -1266,7 +1271,7 @@ func _reset() -> void:
 	poison_marks.clear()
 	raid_round = 0
 	boss_target = -1
-	battle_log = ("%s • %s. Защити своего короля и победи Падшего короля!\nКаждый ход: 2 действия. Нажми фигуру, затем подсвеченную клетку." % [raid_region, raid_encounter]) if mode == "raid" else "Арена: два игрока на одном устройстве."
+	battle_log = ("%s • %s. %s\nКаждый ход: 2 действия. Нажми фигуру, затем подсвеченную клетку." % [raid_region, str(raid_mission.get("title", raid_encounter)), str(raid_mission.get("goal", "Победи босса."))]) if mode == "raid" else "Арена: два игрока на одном устройстве."
 	if mode == "raid":
 		for i in range(8,16):
 			pieces[i] = ""
@@ -1297,6 +1302,26 @@ func _reset() -> void:
 			"Разлом":
 				pieces[10] = "q"
 				health[10] = HP["Q"] + raid_stage * 18
+			_:
+				pass
+		var modifier: String = str(raid_mission.get("modifier", "none"))
+		match modifier:
+			"fortified":
+				for i in range(64):
+					if _team(pieces[i]) == -1 and i != 4: health[i] += 35 + raid_stage * 9
+			"fury":
+				for i in range(64):
+					if _team(pieces[i]) == -1 and i != 4: health[i] += 10 + raid_stage * 5
+			"ambush":
+				for i in [17, 22]:
+					if pieces[i] == "":
+						pieces[i] = "p"
+						health[i] = HP["P"] + raid_stage * 8
+			"rift":
+				for i in [18, 21]:
+					if pieces[i] == "":
+						pieces[i] = "n"
+						health[i] = HP["N"] + raid_stage * 6
 			_:
 				pass
 		boss_target = _choose_boss_target()
