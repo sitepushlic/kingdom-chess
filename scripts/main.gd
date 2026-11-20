@@ -75,6 +75,7 @@ var ui_combat: VBoxContainer
 var ui_camp: VBoxContainer
 var ui_network: VBoxContainer
 var battle_save_path := "user://battle_autosave.json"
+var initializing := true
 var last_saved_turn := -1
 var last_saved_round := -1
 
@@ -275,6 +276,9 @@ func _ready() -> void:
 	_create_shop_popup()
 	_create_result_popup()
 	_reset()
+	initializing = false
+	if not _restore_battle():
+		_save_battle()
 
 func _apply_global_theme() -> void:
 	var theme := Theme.new()
@@ -653,7 +657,7 @@ func _request_action(action: String, square: int = -1) -> void:
 	_broadcast_snapshot()
 
 func _save_battle() -> void:
-	if lan_connected or pieces.size() != 64: return
+	if initializing or lan_connected or pieces.size() != 64: return
 	var payload := _snapshot()
 	payload["mode"] = mode
 	payload["saved_at"] = Time.get_unix_time_from_system()
