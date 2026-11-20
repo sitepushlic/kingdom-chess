@@ -105,6 +105,31 @@ func _run() -> void:
 	_assert_ok(int(game.equipped_slots["Тело"]) == 2, "Autofit equips armor independently")
 	_assert_ok(int(game.equipped_slots["Реликвия"]) == 3, "Autofit equips relic independently")
 	_assert_ok(Progression.REGIONS.size() == 6 and Progression.ENCOUNTERS.size() == 5, "Six regions and five different encounters")
+	var available_modifiers: Dictionary = {}
+	for mission in Progression.CAMPAIGN:
+		available_modifiers[str(mission["modifier"])] = true
+	for modifier in ["frost", "poison", "fury", "fortified", "ambush", "rift"]:
+		_assert_ok(available_modifiers.has(modifier), "Campaign includes tactical modifier: " + modifier)
+	game.mode = "raid"
+	game._reset()
+	game.raid_mission = {"modifier":"fury"}
+	game.raid_round = 3
+	var minion_index := 11
+	var old_health: int = int(game.health[minion_index])
+	game._apply_mission_modifier()
+	_assert_ok(int(game.health[minion_index]) > old_health, "Fury restores minion health on scheduled turn")
+	game.raid_mission = {"modifier":"ambush"}
+	game.raid_round = 4
+	game.pieces[16] = ""
+	game.health[16] = 0
+	game._apply_mission_modifier()
+	_assert_ok(game.pieces[16] == "p", "Ambush summons a reinforcement on scheduled turn")
+	game.raid_mission = {"modifier":"frost"}
+	game.raid_round = 3
+	game.pieces[28] = "P"
+	game.health[28] = 200
+	game._apply_mission_modifier()
+	_assert_ok(int(game.health[28]) < 200, "Frost damages exposed hero on scheduled turn")
 	_assert_ok(Progression.CAMPAIGN.size() == 18, "Complete 18-mission story campaign")
 	var mission_titles: Dictionary = {}
 	for mission in Progression.CAMPAIGN:
