@@ -61,6 +61,8 @@ jobs:
           keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey
       - name: Import project
         run: ./Godot_v4.3-stable_linux.x86_64 --headless --path . --editor --quit
+      - name: Run gameplay smoke tests
+        run: ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://tests/smoke.gd
       - name: Export debug APK
         run: |
           mkdir -p build
