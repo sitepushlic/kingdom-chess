@@ -48,6 +48,7 @@ var equipment: Array = []
 var equipped := -1
 var equipped_slots: Dictionary = {"Оружие":-1, "Тело":-1, "Реликвия":-1}
 var raid_wins := 0
+var dry_loot_streak := 0
 var boss_target := -1
 var raid_round := 0
 var equipment_label: Label
@@ -663,7 +664,7 @@ func _inventory_sell() -> void:
 		return
 	if inventory_selected < 0 or inventory_selected >= equipment.size(): return
 	var item: Dictionary = equipment[inventory_selected]
-	var price: int = 10 + int(item.get("level", 1)) * 5 + int(item.get("rarity", 0)) * 25
+	var price: int = Progression.sell_price(item)
 	gold += price
 	equipment.remove_at(inventory_selected)
 	for slot in Progression.ITEM_SLOTS:
@@ -819,6 +820,7 @@ func _snapshot() -> Dictionary:
 		"raid_stats": {
 			"level": player_level, "attack": _attack_bonus(),
 			"armor": _armor_bonus(), "hp": _item_stat("hp"),
+			"penetration": _item_stat("penetration"), "block": _item_stat("block"), "bleed": _item_stat("bleed"),
 			"crit": _item_stat("crit"), "lifesteal": _item_stat("lifesteal")
 		}
 	}
@@ -854,7 +856,7 @@ func _send_snapshot(data: Dictionary) -> void:
 	var incoming_stats: Variant = data.get("raid_stats", {})
 	if typeof(incoming_stats) == TYPE_DICTIONARY:
 		shared_raid_stats.clear()
-		for stat in ["level", "attack", "armor", "hp", "crit", "lifesteal"]:
+		for stat in ["level", "attack", "armor", "hp", "crit", "lifesteal", "penetration", "block", "bleed"]:
 			shared_raid_stats[stat] = clampi(int(incoming_stats.get(stat, 0)), 0, 10000)
 	_draw()
 
@@ -991,15 +993,25 @@ func _deal_damage(target: int, raw_damage: int, attacker_is_hero: bool) -> int:
 	var amount := maxi(1, raw_damage)
 	if mode == "raid":
 		if attacker_is_hero:
+			var enemy_armor: int = (18 + raid_stage * 5) if target == 4 else (5 + raid_stage * 2)
+			amount = Progression.damage_after_armor(amount, enemy_armor, _item_stat("penetration"))
 			var crit_chance: int = _item_stat("crit")
 			if randi_range(1, 100) <= crit_chance:
 				amount = int(ceil(amount * 1.5))
 				battle_log = "КРИТИЧЕСКИЙ УДАР!"
 		else:
-			amount = maxi(1, amount - _armor_bonus())
+			amount = Progression.damage_after_armor(amount, _armor_bonus())
+			if randi_range(1, 100) <= mini(60, _item_stat("block")):
+				amount = maxi(1, int(ceil(amount * 0.5)))
+				battle_log = "БЛОК! Урон снижен вдвое."
 	health[target] = maxi(0, health[target] - amount)
 	_damage_popup(target, amount)
 	if attacker_is_hero and mode == "raid":
+		if health[target] > 0 and randi_range(1, 100) <= _item_stat("bleed"):
+			var bleed_damage: int = maxi(1, int(ceil(amount * 0.22)))
+			health[target] = maxi(0, health[target] - bleed_damage)
+			_damage_popup(target, bleed_damage)
+			battle_log += "\\nКРОВОТЕЧЕНИЕ: +%d урона" % bleed_damage
 		var lifesteal: int = _item_stat("lifesteal")
 		if lifesteal > 0 and selected >= 0 and selected < 64 and pieces[selected] != "":
 			var restored: int = mini(int(ceil(amount * lifesteal / 100.0)), maxi(0, _max_hp(pieces[selected], _team(pieces[selected]) == 1) - health[selected]))
@@ -1015,7 +1027,7 @@ func _equip_best() -> void:
 		return
 	var best := 0
 	for i in range(1, equipment.size()):
-		if player_level >= int(equipment[i].get("level", 1)) and int(equipment[i].get("attack", 0)) > int(equipment[best].get("attack", 0)):
+		if player_level >= int(equipment[i].get("level", 1)) and Progression.item_score(equipment[i]) > Progression.item_score(equipment[best]):
 			best = i
 	if player_level < int(equipment[best].get("level", 1)):
 		battle_log = "Пока нет экипировки доступного уровня."
@@ -1043,8 +1055,11 @@ func _minion_loot() -> void:
 	if equipment.size() >= 100:
 		battle_log += "\nСумка заполнена (100/100)."
 		return
-	if randi_range(1, 100) > 18: return
-	var item: Dictionary = Progression.roll_item(player_level)
+	if randi_range(1, 100) > mini(75, 18 + dry_loot_streak * 5):
+		dry_loot_streak += 1
+		return
+	var item: Dictionary = Progression.roll_item(player_level, false, mini(2, int(dry_loot_streak / 5)))
+	dry_loot_streak = 0
 	equipment.append(item)
 	battle_log += "\nТРОФЕЙ: %s [%s]" % [item["name"], Progression.RARITIES[int(item["rarity"])]]
 	_save_profile()
@@ -1054,7 +1069,7 @@ func _raid_victory() -> void:
 	winner = "ПОБЕДА! БОСС ПОВЕРЖЕН!"
 	raid_wins += 1
 	_reward(100)
-	var item: Dictionary = Progression.roll_item(player_level)
+	var item: Dictionary = Progression.roll_item(player_level, true, mini(2, int(raid_wins / 10)))
 	if equipment.size() >= 100:
 		gold += 100
 		battle_log = "Сумка полна! Вместо реликвии получено 100 золота."
