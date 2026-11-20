@@ -11,31 +11,34 @@ var turn := 1
 var ap := 2
 var acted: Array = []
 var winner := ""
+var heal_used := false
 var status: Label
 
 func _ready() -> void:
 	var bg := ColorRect.new()
-	bg.color = Color("#171321")
+	bg.color = Color("#110f19")
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
-	var ui := VBoxContainer.new()
-	ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	ui.add_theme_constant_override("separation", 14)
-	add_child(ui)
-	var heading := Label.new()
-	heading.text = "⚔ ВОЙНА КОРОЛЕВСТВ"
-	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	heading.add_theme_font_size_override("font_size", 36)
-	ui.add_child(heading)
-	status = Label.new()
-	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	ui.add_child(status)
+	var layout := HBoxContainer.new()
+	layout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layout.add_theme_constant_override("separation", 22)
+	add_child(layout)
+	var board_frame := MarginContainer.new()
+	board_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	board_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	board_frame.add_theme_constant_override("margin_left", 16)
+	board_frame.add_theme_constant_override("margin_top", 12)
+	board_frame.add_theme_constant_override("margin_bottom", 12)
+	layout.add_child(board_frame)
 	var square := AspectRatioContainer.new()
 	square.ratio = 1.0
+	square.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	square.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	ui.add_child(square)
+	board_frame.add_child(square)
 	var grid := GridContainer.new()
 	grid.columns = 8
+	grid.add_theme_constant_override("h_separation", 2)
+	grid.add_theme_constant_override("v_separation", 2)
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	square.add_child(grid)
@@ -43,26 +46,58 @@ func _ready() -> void:
 		var b := Button.new()
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		b.add_theme_font_size_override("font_size", 28)
+		b.add_theme_font_size_override("font_size", 25)
 		b.pressed.connect(_tap.bind(i))
 		grid.add_child(b)
 		buttons.append(b)
-	var help := Label.new()
-	help.text = "Выбери фигуру и клетку. 2 действия за ход.\nАтаки уменьшают здоровье."
-	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	ui.add_child(help)
+	var sidebar := PanelContainer.new()
+	sidebar.custom_minimum_size = Vector2(420, 0)
+	sidebar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.add_child(sidebar)
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color("#211a2b")
+	panel_style.border_color = Color("#866947")
+	panel_style.set_border_width_all(2)
+	panel_style.set_content_margin_all(22)
+	sidebar.add_theme_stylebox_override("panel", panel_style)
+	var ui := VBoxContainer.new()
+	ui.add_theme_constant_override("separation", 16)
+	sidebar.add_child(ui)
+	var heading := Label.new()
+	heading.text = "⚔ ВОЙНА КОРОЛЕВСТВ"
+	heading.add_theme_font_size_override("font_size", 28)
+	heading.add_theme_color_override("font_color", Color("#f1d49c"))
+	ui.add_child(heading)
+	var subtitle := Label.new()
+	subtitle.text = "ТАКТИЧЕСКАЯ АРЕНА • ПРОТОТИП"
+	subtitle.add_theme_font_size_override("font_size", 16)
+	subtitle.add_theme_color_override("font_color", Color("#b8a4ba"))
+	ui.add_child(subtitle)
+	status = Label.new()
+	status.add_theme_font_size_override("font_size", 25)
+	ui.add_child(status)
+	var guide := Label.new()
+	guide.text = "Выбери фигуру, затем клетку.\\nДва действия за ход.\\nКаждая фигура атакует по шахматным правилам."
+	guide.add_theme_font_size_override("font_size", 18)
+	ui.add_child(guide)
+	var skill := Button.new()
+	skill.text = "✦ БЛАГОСЛОВЕНИЕ (+20 HP)"
+	skill.custom_minimum_size.y = 65
+	skill.pressed.connect(_heal_selected)
+	ui.add_child(skill)
 	var end := Button.new()
 	end.text = "ЗАВЕРШИТЬ ХОД"
+	end.custom_minimum_size.y = 65
 	end.pressed.connect(_end_turn)
 	ui.add_child(end)
 	var restart := Button.new()
 	restart.text = "НОВАЯ БИТВА"
+	restart.custom_minimum_size.y = 60
 	restart.pressed.connect(_reset)
 	ui.add_child(restart)
 	var note := Label.new()
-	note.text = "Прототип: два игрока на одном экране. Онлайн позже."
-	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	note.add_theme_font_size_override("font_size", 16)
+	note.text = "Первая версия: локальный бой на одном телефоне.\\nОнлайн, 3D, рейды и инвентарь — в разработке."
+	note.add_theme_font_size_override("font_size", 15)
 	ui.add_child(note)
 	_reset()
 
@@ -83,6 +118,7 @@ func _reset() -> void:
 	selected = -1
 	winner = ""
 	acted.clear()
+	heal_used = false
 	_draw()
 
 func _team(p: String) -> int:
@@ -152,10 +188,26 @@ func _move(a: int,b: int) -> void:
 	health[a] = 0
 	acted.append(b)
 
+func _heal_selected() -> void:
+	if winner != "" or heal_used or ap < 1 or selected < 0: return
+	if _team(pieces[selected]) != turn or acted.has(selected): return
+	var p: String = pieces[selected].to_upper()
+	if health[selected] >= HP[p]: return
+	health[selected] = mini(HP[p], health[selected] + 20)
+	acted.append(selected)
+	heal_used = true
+	selected = -1
+	ap -= 1
+	if ap <= 0:
+		_end_turn()
+	else:
+		_draw()
+
 func _end_turn() -> void:
 	if winner != "": return
 	turn = -turn
 	ap = 2
+	heal_used = false
 	acted.clear()
 	selected = -1
 	_draw()
@@ -168,7 +220,7 @@ func _draw() -> void:
 		b.text = GLYPHS.get(p,"") + ("\n"+str(health[i]) if p != "" else "")
 		var style := StyleBoxFlat.new()
 		var row: int = i / 8
-		style.bg_color = Color("#51425c") if (row+i%8)%2 == 0 else Color("#b5a7a7")
+		style.bg_color = Color("#49354b") if (row+i%8)%2 == 0 else Color("#9d8b78")
 		if selected == i: style.bg_color = Color("#d4a53c")
 		elif selected >= 0 and _legal(selected,i): style.bg_color = Color("#60845c")
 		b.add_theme_stylebox_override("normal",style)
