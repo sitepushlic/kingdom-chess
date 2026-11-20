@@ -452,9 +452,9 @@ shader_type canvas_item;
 void fragment() {
 	vec2 uv = UV;
 	float distance_to_center = length((uv - vec2(0.5, 0.46)) * vec2(1.0, 0.8));
-	vec3 color = mix(vec3(0.012, 0.022, 0.043), vec3(0.14, 0.085, 0.073), smoothstep(0.78, 0.12, distance_to_center));
+	vec3 color = mix(vec3(0.012, 0.022, 0.043), vec3(0.14, 0.085, 0.073), (1.0 - smoothstep(0.12, 0.78, distance_to_center)));
 	float mist = sin(uv.y * 12.0 + TIME * 0.17 + sin(uv.x * 8.0)) * 0.5 + 0.5;
-	color += vec3(0.055, 0.027, 0.015) * mist * smoothstep(0.85, 0.2, uv.y);
+	color += vec3(0.055, 0.027, 0.015) * mist * (1.0 - smoothstep(0.2, 0.85, uv.y));
 	vec2 ember_grid = floor(vec2(uv.x * 16.0, uv.y * 28.0 + TIME * 0.3));
 	vec2 ember_local = fract(vec2(uv.x * 16.0, uv.y * 28.0 + TIME * 0.3));
 	float random_value = fract(sin(dot(ember_grid, vec2(127.1, 311.7))) * 43758.5453);
