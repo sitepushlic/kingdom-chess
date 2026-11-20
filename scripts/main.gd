@@ -78,6 +78,7 @@ var battle_save_path := "user://battle_autosave.json"
 var initializing := true
 var last_saved_turn := -1
 var last_saved_round := -1
+var shield_active := false
 
 func _ready() -> void:
 	_load_profile()
@@ -218,6 +219,8 @@ func _ready() -> void:
 	heal.tooltip_text = "Восстановить 20 HP выбранному герою"
 	var curse := _make_action_button("☄ ПРОКЛЯТИЕ", _curse_selected, action_bar)
 	curse.tooltip_text = "Выбери ферзя или слона, затем цель"
+	var shield := _make_action_button("⛨ ЩИТ", _shield_selected, action_bar)
+	shield.tooltip_text = "Ладья защищает союзников от следующего удара босса"
 	var potion := _make_action_button("♥ ЗЕЛЬЕ", _use_potion, action_bar)
 	potion.tooltip_text = "Восстановить 40 HP"
 	var end := _make_action_button("➤ ЗАВЕРШИТЬ ХОД", _end_turn, ui)
@@ -608,7 +611,8 @@ func _snapshot() -> Dictionary:
 		"raid_round": raid_round, "raid_stage": raid_stage,
 		"boss_target": boss_target, "battle_log": battle_log,
 		"acted": acted.duplicate(), "enemy_wave": enemy_wave,
-		"selected": selected, "curse_mode": curse_mode, "heal_used": heal_used
+		"selected": selected, "curse_mode": curse_mode, "heal_used": heal_used,
+		"shield_active": shield_active
 	}
 
 func _broadcast_snapshot() -> void:
@@ -638,6 +642,7 @@ func _send_snapshot(data: Dictionary) -> void:
 	selected = int(data.get("selected", -1))
 	curse_mode = bool(data.get("curse_mode", false))
 	heal_used = bool(data.get("heal_used", false))
+	shield_active = bool(data.get("shield_active", false))
 	_draw()
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -654,6 +659,8 @@ func _request_action(action: String, square: int = -1) -> void:
 		_use_potion()
 	elif action == "curse":
 		_curse_selected()
+	elif action == "shield":
+		_shield_selected()
 	_broadcast_snapshot()
 
 func _save_battle() -> void:
@@ -697,6 +704,7 @@ func _restore_battle() -> bool:
 	selected = -1
 	curse_mode = false
 	heal_used = bool(parsed.get("heal_used", false))
+	shield_active = bool(parsed.get("shield_active", false))
 	battle_result_shown = false
 	_draw()
 	return true
@@ -789,6 +797,20 @@ func _use_potion() -> void:
 	battle_log = "Зелье восстанавливает 40 здоровья."
 	_draw()
 
+func _shield_selected() -> void:
+	if lan_connected and not lan_host:
+		_request_action.rpc_id(1, "shield")
+		return
+	if winner != "" or mode != "raid" or selected < 0 or ap < 1: return
+	if pieces[selected] != "R" or acted.has(selected):
+		battle_log = "Щит может установить только светлая ладья."
+		_draw()
+		return
+	shield_active = true
+	battle_log = "Щит ладьи: следующий удар босса будет ослаблен на 50%."
+	_spend_action(selected)
+	_draw()
+
 func _curse_selected() -> void:
 	if lan_connected and not lan_host:
 		_request_action.rpc_id(1, "curse")
@@ -876,6 +898,7 @@ func _reset() -> void:
 	winner = ""
 	acted.clear()
 	heal_used = false
+	shield_active = false
 	_draw()
 	_broadcast_snapshot()
 
@@ -972,6 +995,8 @@ func _tap(i: int) -> void:
 				if pieces[i].to_upper() == "K":
 					if mode == "raid": _raid_victory()
 					else: winner = "ПОБЕДА СВЕТЛЫХ!" if turn == 1 else "ПОБЕДА ТЁМНЫХ!"
+				elif mode == "raid":
+					_reward(20)
 				_move(selected,i)
 		else:
 			_move(selected,i)
@@ -1113,6 +1138,8 @@ func _boss_action() -> void:
 		return
 	if boss_target >= 0 and _team(pieces[boss_target]) == 1:
 		var damage := (25 if raid_round % 3 != 0 else 45) + (raid_stage - 1) * 10 + (15 if boss_phase == 2 else 0)
+		if shield_active:
+			damage = maxi(1, int(ceil(damage * 0.5)))
 		health[boss_target] -= damage
 		_damage_popup(boss_target, damage)
 		_flash_square(boss_target, Color("#ff5e72"))
@@ -1134,6 +1161,7 @@ func _boss_action() -> void:
 			health[spawn] = HP["P"]
 			enemy_wave += 1
 			battle_log += "\nВосстал скелет-страж!"
+	shield_active = false
 	boss_target = _choose_boss_target()
 	if boss_target >= 0 and winner == "":
 		battle_log += "\nСледующая цель: %s%d" % ["ABCDEFGH".substr(boss_target % 8, 1), 8 - int(boss_target / 8)]
@@ -1162,7 +1190,7 @@ func _draw() -> void:
 	if equipped >= 0 and equipped < equipment.size():
 		equipped_name = str(equipment[equipped].get("name", "Артефакт")) + " (+" + str(_attack_bonus()) + ")"
 	equipment_label.text = "Снаряжение: %s\nТрофеи: %d  •  Побед в рейдах: %d" % [equipped_name,equipment.size(),raid_wins]
-	info.text = ("ГЛАВА %d • БОСС: %d/%d HP • Раунд %d\n" % [raid_stage, boss_hp, 240 + (raid_stage - 1) * 100, raid_round] if mode == "raid" else "") + battle_log
+	info.text = ("⛨ ЩИТ АКТИВЕН\n" if shield_active else "") + ("ГЛАВА %d • БОСС: %d/%d HP • Раунд %d\n" % [raid_stage, boss_hp, 240 + (raid_stage - 1) * 100, raid_round] if mode == "raid" else "") + battle_log
 	for i in range(64):
 		var b: Button = buttons[i]
 		var p: String = pieces[i]
