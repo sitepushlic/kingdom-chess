@@ -130,6 +130,16 @@ func _run() -> void:
 	game.health[28] = 200
 	game._apply_mission_modifier()
 	_assert_ok(int(game.health[28]) < 200, "Frost damages exposed hero on scheduled turn")
+	_assert_ok(Progression.hazard_cells("frost", 3).size() == 40, "Frost forecasts five complete board rows")
+	_assert_ok(Progression.hazard_cells("poison", 3).size() == 16, "Poison forecasts two side columns")
+	_assert_ok(Progression.hazard_cells("rift", 3).size() == 16, "Rift forecasts two center columns")
+	_assert_ok(Progression.hazard_cells("frost", 2).is_empty(), "Hazards only appear ahead of strike rounds")
+	_assert_ok(Progression.hazard_cells("ambush", 4).is_empty(), "Non-damage modifiers do not display misleading danger cells")
+	game.battlefield_3d.set_hazards(Progression.hazard_cells("rift", 3), "rift")
+	_assert_ok(game.battlefield_3d.hazard_markers.size() == 64, "3D battlefield has hazard marker for every square")
+	_assert_ok(game.battlefield_3d.hazard_markers[3].visible and not game.battlefield_3d.hazard_markers[0].visible, "3D hazard markers match forecasted squares")
+	game.battlefield_3d.set_hazards([], "none")
+	_assert_ok(not game.battlefield_3d.hazard_markers[3].visible, "3D hazard markers clear after danger")
 	_assert_ok(Progression.CAMPAIGN.size() == 18, "Complete 18-mission story campaign")
 	var mission_titles: Dictionary = {}
 	for mission in Progression.CAMPAIGN:
