@@ -393,10 +393,10 @@ func _legal(a: int, b: int) -> bool:
 	if p == "N": return (abs(dr) == 2 and abs(dc) == 1) or (abs(dr) == 1 and abs(dc) == 2)
 	if p == "K": return max(abs(dr),abs(dc)) == 1
 	if p == "P":
-		var f := -1 if turn == 1 else 1
+		var f := -1 if _team(pieces[a]) == 1 else 1
 		if dc == 0 and pieces[b] == "":
 			if dr == f: return true
-			return dr == 2*f and r0 == (6 if turn == 1 else 1) and pieces[a+8*f] == ""
+			return dr == 2*f and r0 == (6 if _team(pieces[a]) == 1 else 1) and pieces[a+8*f] == ""
 		return abs(dc) == 1 and dr == f and pieces[b] != ""
 	if p == "R" and dr != 0 and dc != 0: return false
 	if p == "B" and abs(dr) != abs(dc): return false
@@ -494,11 +494,50 @@ func _choose_boss_target() -> int:
 			target = i
 	return target
 
+func _minion_actions() -> void:
+	var minions: Array[int] = []
+	for i in range(64):
+		if _team(pieces[i]) == -1 and i != 4:
+			minions.append(i)
+	for source in minions:
+		if pieces[source] == "" or winner != "": continue
+		var attack_target := -1
+		for target in range(64):
+			if _team(pieces[target]) == 1 and _legal(source, target):
+				if attack_target < 0 or health[target] < health[attack_target]:
+					attack_target = target
+		if attack_target >= 0:
+			health[attack_target] -= DAMAGE[pieces[source].to_upper()]
+			if health[attack_target] <= 0:
+				if pieces[attack_target] == "K":
+					winner = "ПОРАЖЕНИЕ"
+				pieces[attack_target] = ""
+				health[attack_target] = 0
+			battle_log += "\nСтраж наносит удар!"
+			continue
+		var best := -1
+		var best_distance := 9999
+		for destination in range(64):
+			if pieces[destination] != "" or not _legal(source,destination): continue
+			for hero in range(64):
+				if _team(pieces[hero]) != 1: continue
+				var distance: int = absi(int(destination / 8) - int(hero / 8)) + absi(destination % 8 - hero % 8)
+				if distance < best_distance:
+					best_distance = distance
+					best = destination
+		if best >= 0:
+			_move(source, best)
+
 func _boss_action() -> void:
 	if winner != "": return
 	enemy_turn = true
 	raid_round += 1
 	turn_count += 1
+	_minion_actions()
+	if winner != "":
+		enemy_turn = false
+		_draw()
+		return
 	if boss_target >= 0 and _team(pieces[boss_target]) == 1:
 		var damage := 25 if raid_round % 3 != 0 else 45
 		health[boss_target] -= damage
