@@ -604,7 +604,7 @@ func _draw() -> void:
 		image_node.modulate = Color("#f8e3c0") if _team(p) == 1 else Color("#e2a3e9")
 		var hp_node: Label = hp_labels[i]
 		hp_node.text = str(health[i]) if p != "" else ""
-		hp_node.add_theme_color_override("font_color", Color("#f9e8b4") if _team(p) == 1 else Color("#eed0ff")
+		hp_node.add_theme_color_override("font_color", Color("#f9e8b4") if _team(p) == 1 else Color("#eed0ff"))
 		var style := StyleBoxFlat.new()
 		var row: int = i / 8
 		style.bg_color = Color("#292536") if (row+i%8)%2 == 0 else Color("#554758")
