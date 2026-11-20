@@ -334,8 +334,9 @@ func _ready() -> void:
 	_create_result_popup()
 	_create_tutorial()
 	_reset()
+	var restored := _restore_battle()
 	initializing = false
-	if not _restore_battle():
+	if not restored:
 		_save_battle()
 	if not FileAccess.file_exists(tutorial_seen_path):
 		call_deferred("_show_tutorial")
@@ -1334,10 +1335,7 @@ func _draw() -> void:
 	phase_label.visible = mode == "raid"
 	phase_label.text = "ФАЗА II • ЯРОСТЬ ПАДШЕГО" if boss_phase == 2 else "ФАЗА I • ПРОБУЖДЕНИЕ"
 	inventory_label.text = "Ур. %d  •  Опыт: %d/%d  •  Золото: %d  •  Зелья: %d" % [player_level,experience,Progression.experience_needed(player_level),gold,potions]
-	var equipped_name := "нет"
-	if equipped >= 0 and equipped < equipment.size():
-		equipped_name = str(equipment[equipped].get("name", "Артефакт")) + " (+" + str(_attack_bonus()) + ")"
-	equipment_label.text = "⚔ +%d  ⛨ +%d  ♥ +%d  ✦ %d%%  ☽ %d%%\nТрофеи: %d  •  Побед: %d" % [_attack_bonus(),_armor_bonus(),_item_stat("hp"),_item_stat("crit"),_item_stat("lifesteal"),equipment.size(),raid_wins]
+		equipment_label.text = "⚔ +%d  ⛨ +%d  ♥ +%d  ✦ %d%%  ☽ %d%%\nТрофеи: %d  •  Побед: %d" % [_attack_bonus(),_armor_bonus(),_item_stat("hp"),_item_stat("crit"),_item_stat("lifesteal"),equipment.size(),raid_wins]
 	info.text = ("⛨ ЩИТ АКТИВЕН\n" if shield_active else "") + ("ГЛАВА %d • БОСС: %d/%d HP • Раунд %d\n" % [raid_stage, boss_hp, 240 + (raid_stage - 1) * 100, raid_round] if mode == "raid" else "") + battle_log
 	for i in range(64):
 		var b: Button = buttons[i]
@@ -1354,10 +1352,7 @@ func _draw() -> void:
 		if p != "":
 			life.max_value = maxi(1, (240 + (raid_stage - 1) * 100) if mode == "raid" and i == 4 else _max_hp(p, _team(p) == 1))
 			life.value = maxi(0, health[i])
-			var life_fill := StyleBoxFlat.new()
-			life_fill.bg_color = Color("#81d3a8") if _team(p) == 1 else Color("#d8838d")
-			life_fill.set_corner_radius_all(3)
-			life.add_theme_stylebox_override("fill", life_fill)
+			
 		hp_node.add_theme_color_override("font_color", Color("#ffe9ad") if _team(p) == 1 else Color("#ffbdc5"))
 		var style := StyleBoxFlat.new()
 		var row: int = i / 8
