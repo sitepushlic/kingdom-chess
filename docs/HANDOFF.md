@@ -66,6 +66,11 @@ Portrait-first Android commercial-quality **3D tactical chess RPG**, with intuit
 - Commit `b9a1d46` (`scripts/main.gd`): initialize `Array[int]` explicitly and populate only within the raid branch; eliminates the typed-array assignment error.
 - Verify the newest CI before claiming this fix works. Link: https://github.com/sitepushlic/kingdom-chess/actions
 
+## CI follow-up — typed test argument (2026-11-21)
+- CI #164 **failed** at smoke test `tests/smoke.gd:155` with `Invalid type in function 'set_hazards' ... Array does not have the same element type as the expected typed array argument`. The prior `main.gd` typed-array runtime error was resolved; this is a distinct untyped `[]` argument in the test.
+- Commit `28f2ce6` replaces `set_hazards([], "none")` with the typed empty result of `Progression.hazard_cells("none", 1)`.
+- CI #165 is the first retest; verify completion before claiming green build.
+
 ## Recent earlier milestones
 - CI #137 passed: procedural 3D arena, visual equipment, attack trails, phase VFX and associated smoke tests.
 - CI #143 passed: 18 authored missions, variable enemy modifiers, campaign finale, HUD mission text, save and LAN sync; fixed a Godot 4.3 type-inference parse error in the mission generator.
