@@ -1862,8 +1862,11 @@ func _draw() -> void:
 		battlefield_3d.set_region(clampi(raid_stage - 1, 0, 5) if mode == "raid" else 0)
 		battlefield_3d.set_boss_phase(boss_phase if mode == "raid" else 1)
 		battlefield_3d.set_hero_gear(equipment, equipped_slots)
-		var forecast: Array[int] = Progression.hazard_cells(str(raid_mission.get("modifier", "none")), raid_round + 1) if mode == "raid" and winner == "" else []
-		var boss_forecast: Array[int] = Progression.boss_hazard_cells(raid_stage, raid_round + 1, raid_encounter) if mode == "raid" and winner == "" else []
+		var forecast: Array[int] = []
+		var boss_forecast: Array[int] = []
+		if mode == "raid" and winner == "":
+			forecast = Progression.hazard_cells(str(raid_mission.get("modifier", "none")), raid_round + 1)
+			boss_forecast = Progression.boss_hazard_cells(raid_stage, raid_round + 1, raid_encounter)
 		if mode == "raid" and winner == "" and raid_stage == 3 and (raid_round + 1) % 3 == 0:
 			var weakest := -1
 			for hero_index in range(64):
