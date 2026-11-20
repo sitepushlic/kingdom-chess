@@ -18,6 +18,7 @@ var health: Array = []
 var buttons: Array = []
 var unit_images: Array = []
 var hp_labels: Array = []
+var hp_bars: Array = []
 var hazard_overlays: Array = []
 var visual_clock := 0.0
 var selected := -1
@@ -157,13 +158,31 @@ func _ready() -> void:
 		unit_images.append(emblem)
 		var hp := Label.new()
 		hp.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-		hp.offset_top = -20
-		hp.offset_bottom = -1
+		hp.offset_top = -27
+		hp.offset_bottom = -9
 		hp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		hp.add_theme_font_size_override("font_size", 15)
 		hp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(hp)
 		hp_labels.append(hp)
+		var life := ProgressBar.new()
+		life.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+		life.offset_left = 7
+		life.offset_right = -7
+		life.offset_top = -9
+		life.offset_bottom = -3
+		life.show_percentage = false
+		life.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var life_bg := StyleBoxFlat.new()
+		life_bg.bg_color = Color("#251d25")
+		life_bg.set_corner_radius_all(3)
+		var life_fill := StyleBoxFlat.new()
+		life_fill.bg_color = Color("#82d5ad")
+		life_fill.set_corner_radius_all(3)
+		life.add_theme_stylebox_override("background", life_bg)
+		life.add_theme_stylebox_override("fill", life_fill)
+		b.add_child(life)
+		hp_bars.append(life)
 		var warning := ColorRect.new()
 		warning.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		warning.color = Color(1.0, 0.12, 0.14, 0.24)
@@ -1329,6 +1348,15 @@ func _draw() -> void:
 		image_node.modulate = Color("#fff2dc") if _team(p) == 1 else Color("#db9ba5")
 		var hp_node: Label = hp_labels[i]
 		hp_node.text = str(health[i]) if p != "" else ""
+		var life: ProgressBar = hp_bars[i]
+		life.visible = p != ""
+		if p != "":
+			life.max_value = maxi(1, boss_hp if mode == "raid" and i == 4 else _max_hp(p, _team(p) == 1))
+			life.value = maxi(0, health[i])
+			var life_fill := StyleBoxFlat.new()
+			life_fill.bg_color = Color("#81d3a8") if _team(p) == 1 else Color("#d8838d")
+			life_fill.set_corner_radius_all(3)
+			life.add_theme_stylebox_override("fill", life_fill)
 		hp_node.add_theme_color_override("font_color", Color("#ffe9ad") if _team(p) == 1 else Color("#ffbdc5"))
 		var style := StyleBoxFlat.new()
 		var row: int = i / 8
