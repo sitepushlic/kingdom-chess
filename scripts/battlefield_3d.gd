@@ -8,6 +8,10 @@ var moving_nodes: Dictionary = {}
 var clock := 0.0
 var camera: Camera3D
 var highlights: Array[MeshInstance3D] = []
+var hazard_markers: Array[MeshInstance3D] = []
+var active_hazards: Array[int] = []
+var hazard_type := ""
+var hazard_materials: Dictionary = {}
 var tiles: Array[MeshInstance3D] = []
 var hero_material: StandardMaterial3D
 var enemy_material: StandardMaterial3D
@@ -83,6 +87,7 @@ func _ready() -> void:
 	selection_material = _material(Color("#f6c76b"), 0.2, 0.3, Color("#9d5732"))
 	danger_material = _material(Color("#ed5c65"), 0.2, 0.3, Color("#9d5732"))
 	move_material = _material(Color("#61d7b6"), 0.2, 0.3, Color("#9d5732"))
+	hazard_materials = {"frost": _material(Color("#68d6ff"), 0.15, 0.24, Color("#2a8acb")), "poison": _material(Color("#a9e967"), 0.15, 0.24, Color("#5d9c2b")), "rift": _material(Color("#d78aff"), 0.15, 0.24, Color("#903bd2"))}
 	var world := WorldEnvironment.new()
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
@@ -105,6 +110,10 @@ func _ready() -> void:
 		var marker := _cylinder(0.43, 0.025, _material(Color("#63e4bc"), 0.15, 0.4, Color("#4dd5a9")), board_root, Vector3(x, 0.078, z))
 		marker.visible = false
 		highlights.append(marker)
+		var hazard_marker := _cylinder(0.47, 0.017, hazard_materials["frost"], board_root, Vector3(x, 0.096, z))
+		hazard_marker.visible = false
+		hazard_marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		hazard_markers.append(hazard_marker)
 	for x in [-4.45, 4.45]:
 		for z in [-4.45, 4.45]:
 			_cylinder(0.24, 0.18, dark_material, board_root, Vector3(x, -0.12, z))
@@ -290,6 +299,16 @@ func set_region(region_index: int) -> void:
 	for torch in torches:
 		torch.light_color = palette[2]
 
+func set_hazards(cells: Array[int], modifier: String) -> void:
+	if active_hazards == cells and hazard_type == modifier: return
+	active_hazards = cells.duplicate()
+	hazard_type = modifier
+	var material: Material = hazard_materials.get(modifier, hazard_materials["frost"])
+	for index in range(hazard_markers.size()):
+		var marker: MeshInstance3D = hazard_markers[index]
+		marker.visible = cells.has(index)
+		if marker.visible: marker.material_override = material
+
 func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int, health: Array = [], max_health: Array = []) -> void:
 	for index in range(64):
 		var piece: String = str(pieces[index])
@@ -419,6 +438,9 @@ func _process(delta: float) -> void:
 		var flicker := sin(clock * (6.0 + float(i) * 0.27) + float(i) * 1.7)
 		torch_flames[i].scale = Vector3(0.85 + flicker * 0.12, 1.2 + flicker * 0.24, 0.85 + flicker * 0.12)
 		torches[i].light_energy = 1.15 + flicker * 0.22
+	for marker in hazard_markers:
+		if marker.visible:
+			marker.scale = Vector3(0.91 + 0.07 * sin(clock * 5.0), 1.0, 0.91 + 0.07 * sin(clock * 5.0))
 	for index in piece_nodes.keys():
 		if moving_nodes.has(index): continue
 		var actor: Node3D = piece_nodes[index]
