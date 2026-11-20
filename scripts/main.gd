@@ -1,11 +1,21 @@
 extends Control
 
+const UNIT_TEXTURES = {
+	"K": preload("res://assets/units/k.svg"),
+	"Q": preload("res://assets/units/q.svg"),
+	"R": preload("res://assets/units/r.svg"),
+	"B": preload("res://assets/units/b.svg"),
+	"N": preload("res://assets/units/n.svg"),
+	"P": preload("res://assets/units/p.svg")
+}
 const GLYPHS = {"K":"♔","Q":"♕","R":"♖","B":"♗","N":"♘","P":"♙","k":"♚","q":"♛","r":"♜","b":"♝","n":"♞","p":"♟"}
 const HP = {"K":180,"Q":100,"R":150,"B":85,"N":115,"P":65}
 const DAMAGE = {"K":20,"Q":35,"R":24,"B":22,"N":30,"P":15}
 var pieces: Array = []
 var health: Array = []
 var buttons: Array = []
+var unit_images: Array = []
+var hp_labels: Array = []
 var selected := -1
 var turn := 1
 var ap := 2
@@ -58,17 +68,37 @@ func _ready() -> void:
 		var b := Button.new()
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		b.add_theme_font_size_override("font_size", 25)
+		b.add_theme_font_size_override("font_size", 18)
 		b.pressed.connect(_tap.bind(i))
 		grid.add_child(b)
 		buttons.append(b)
+		var emblem := TextureRect.new()
+		emblem.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		emblem.offset_left = 4
+		emblem.offset_top = 2
+		emblem.offset_right = -4
+		emblem.offset_bottom = -17
+		emblem.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		emblem.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		emblem.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(emblem)
+		unit_images.append(emblem)
+		var hp := Label.new()
+		hp.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+		hp.offset_top = -20
+		hp.offset_bottom = -1
+		hp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		hp.add_theme_font_size_override("font_size", 15)
+		hp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(hp)
+		hp_labels.append(hp)
 	var sidebar := PanelContainer.new()
-	sidebar.custom_minimum_size = Vector2(420, 0)
+	sidebar.custom_minimum_size = Vector2(460, 0)
 	sidebar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	layout.add_child(sidebar)
 	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color("#211a2b")
-	panel_style.border_color = Color("#866947")
+	panel_style.bg_color = Color("#191724")
+	panel_style.border_color = Color("#a88750")
 	panel_style.set_border_width_all(2)
 	panel_style.set_content_margin_all(22)
 	sidebar.add_theme_stylebox_override("panel", panel_style)
@@ -81,12 +111,12 @@ func _ready() -> void:
 	ui.add_theme_constant_override("separation", 12)
 	scroll.add_child(ui)
 	var heading := Label.new()
-	heading.text = "⚔ ВОЙНА КОРОЛЕВСТВ"
+	heading.text = "⚔  ВОЙНА КОРОЛЕВСТВ"
 	heading.add_theme_font_size_override("font_size", 28)
 	heading.add_theme_color_override("font_color", Color("#f1d49c"))
 	ui.add_child(heading)
 	var subtitle := Label.new()
-	subtitle.text = "ТАКТИЧЕСКАЯ АРЕНА • ПРОТОТИП"
+	subtitle.text = "ХРОНИКИ ПАДШЕГО ТРОНА"
 	subtitle.add_theme_font_size_override("font_size", 16)
 	subtitle.add_theme_color_override("font_color", Color("#b8a4ba"))
 	ui.add_child(subtitle)
@@ -112,7 +142,7 @@ func _ready() -> void:
 	inventory_label.add_theme_color_override("font_color", Color("#e5c58c"))
 	ui.add_child(inventory_label)
 	var guide := Label.new()
-	guide.text = "Выбери фигуру, затем клетку.\nДва действия за ход.\nКаждая фигура атакует по шахматным правилам."
+	guide.text = "Выбери героя и клетку назначения.\n2 действия на ход • Тактический бой"
 	guide.add_theme_font_size_override("font_size", 18)
 	ui.add_child(guide)
 	skill_button = Button.new()
@@ -188,11 +218,14 @@ func _curse_selected() -> void:
 			break
 	if target < 0: return
 	health[target] -= 30
+	if mode == "raid" and target == 4: boss_hp = maxi(0,health[target])
 	if health[target] <= 0:
 		var victim: String = pieces[target]
 		pieces[target] = ""
 		health[target] = 0
-		if victim.to_upper() == "K": winner = "ПОБЕДА!"
+		if victim.to_upper() == "K":
+			winner = "ПОБЕДА!"
+			if mode == "raid": _reward(100)
 		_reward(20)
 	_spend_action(selected)
 	battle_log = "Проклятие наносит 30 урона."
@@ -368,13 +401,23 @@ func _draw() -> void:
 	for i in range(64):
 		var b: Button = buttons[i]
 		var p: String = pieces[i]
-		b.text = GLYPHS.get(p,"") + ("\n"+str(health[i]) if p != "" else "")
+		b.text = ""
+		var image_node: TextureRect = unit_images[i]
+		image_node.texture = UNIT_TEXTURES.get(p.to_upper()) if p != "" else null
+		image_node.modulate = Color("#f8e3c0") if _team(p) == 1 else Color("#e2a3e9")
+		var hp_node: Label = hp_labels[i]
+		hp_node.text = str(health[i]) if p != "" else ""
+		hp_node.add_theme_color_override("font_color", Color("#f9e8b4") if _team(p) == 1 else Color("#eed0ff")
 		var style := StyleBoxFlat.new()
 		var row: int = i / 8
-		style.bg_color = Color("#49354b") if (row+i%8)%2 == 0 else Color("#9d8b78")
+		style.bg_color = Color("#292536") if (row+i%8)%2 == 0 else Color("#554758")
+		style.border_color = Color("#8b7453") if (row+i%8)%2 == 0 else Color("#6f5a55")
+		style.set_border_width_all(1)
+		style.set_corner_radius_all(4)
 		if selected == i: style.bg_color = Color("#d4a53c")
-		elif selected >= 0 and _legal(selected,i): style.bg_color = Color("#60845c")
+		elif selected >= 0 and _legal(selected,i): style.bg_color = Color("#44675e")
 		b.add_theme_stylebox_override("normal",style)
 		b.add_theme_stylebox_override("hover",style)
 		b.add_theme_stylebox_override("pressed",style)
+		b.add_theme_stylebox_override("focus",StyleBoxEmpty.new())
 		b.add_theme_color_override("font_color",Color("#fff3dd") if _team(p) == 1 else Color("#201824"))
