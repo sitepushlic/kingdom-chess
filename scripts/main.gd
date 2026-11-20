@@ -241,6 +241,7 @@ func _ready() -> void:
 	ui.add_child(phase_label)
 	var mode_row := HBoxContainer.new()
 	ui.add_child(mode_row)
+	mode_row.visible = false
 	mode_button = Button.new()
 	mode_button.text = "⚔ АРЕНА"
 	mode_button.custom_minimum_size.y = 43
