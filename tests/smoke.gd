@@ -81,6 +81,14 @@ func _run() -> void:
 		_assert_ok(Progression.ITEM_SLOTS.has(item["slot"]), "Loot has RPG equipment slot")
 		_assert_ok(item.has("armor") and item.has("hp") and item.has("crit") and item.has("lifesteal"), "Loot has RPG stats")
 	_assert_ok(Progression.experience_needed(2) > Progression.experience_needed(1), "Increasing XP")
+	_assert_ok(Progression.damage_after_armor(100, 50, 0) == 50, "Armor scales with damage")
+	_assert_ok(Progression.damage_after_armor(100, 50, 50) == 100, "Penetration bypasses armor")
+	var boss_drop: Dictionary = Progression.roll_item(12, true)
+	_assert_ok(boss_drop.has("power") and boss_drop.has("affix"), "Boss loot has affix and item power")
+	_assert_ok(boss_drop.has("penetration") and boss_drop.has("block") and boss_drop.has("bleed"), "Advanced equipment stats generated")
+	_assert_ok(Progression.sell_price(boss_drop) > 10, "Loot has scaling sell value")
+	_assert_ok(game.battlefield_3d != null and game.battlefield_3d.tiles.size() == 64, "Actual 3D arena contains 64 modeled squares")
+	_assert_ok(game.battlefield_3d.pick_square(Vector2(450, 450)) >= 0, "3D camera ray picks battlefield square")
 	game.equipment = [
 		{"name":"Test sword","slot":"Оружие","level":1,"attack":12,"crit":0},
 		{"name":"Test armor","slot":"Тело","level":1,"attack":2,"armor":8,"hp":30},
@@ -100,7 +108,7 @@ func _run() -> void:
 	game.pieces[60] = "K"
 	game.health[60] = 180
 	var damage_dealt: int = game._deal_damage(60, 30, false)
-	_assert_ok(damage_dealt == 22 and game.health[60] == 158, "Armor reduces actual chess-piece damage")
+	_assert_ok(damage_dealt == 26 and game.health[60] == 154, "Armor reduces actual chess-piece damage")
 	game._reset()
 	game.health[60] = 180
 	game.selected = 60
