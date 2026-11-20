@@ -896,8 +896,10 @@ func _use_potion() -> void:
 	if winner != "" or potions <= 0 or selected < 0 or ap < 1 or acted.has(selected): return
 	if _team(pieces[selected]) != turn: return
 	var p: String = pieces[selected].to_upper()
-	if health[selected] >= HP[p]: return
-	health[selected] = mini(HP[p], health[selected] + 40)
+	if health[selected] >= _max_hp(p, _team(pieces[selected]) == 1): return
+	var healed: int = mini(40, _max_hp(p, _team(pieces[selected]) == 1) - health[selected])
+	health[selected] += healed
+	_damage_popup(selected, healed, true)
 	potions -= 1
 	_save_profile()
 	_spend_action(selected)
@@ -936,8 +938,7 @@ func _apply_curse(target: int) -> void:
 		return
 	if _team(pieces[target]) != -turn: return
 	var source: int = selected
-	health[target] -= 30
-	_damage_popup(target, 30)
+	_deal_damage(target, 30 + (_attack_bonus() if mode == "raid" else 0), turn == 1)
 	_flash_square(target, Color("#e99fff"))
 	if mode == "raid" and target == 4:
 		boss_hp = maxi(0, health[target])
@@ -974,7 +975,7 @@ func _reset() -> void:
 			elif r == 6: p = "P"
 			elif r == 7: p = "RNBQKBNR"[c]
 			pieces.append(p)
-			health.append(HP[p.to_upper()] if p != "" else 0)
+			health.append(_max_hp(p, _team(p) == 1) if p != "" else 0)
 	turn = 1
 	ap = 2
 	selected = -1
@@ -1091,8 +1092,7 @@ func _tap(i: int) -> void:
 		if pieces[i] != "":
 			var damage: int = DAMAGE[attacker.to_upper()]
 			if mode == "raid": damage += (player_level - 1) * 2 + _attack_bonus()
-			health[i] -= damage
-			_damage_popup(i, damage)
+			_deal_damage(i, damage, turn == 1)
 			_flash_square(i, Color("#ff897b"))
 			if mode == "raid" and i == 4:
 				boss_hp = maxi(0,health[i])
@@ -1154,7 +1154,7 @@ func _heal_selected() -> void:
 	if _team(pieces[selected]) != turn or acted.has(selected): return
 	var p: String = pieces[selected].to_upper()
 	if health[selected] >= HP[p]: return
-	var restored: int = mini(20, HP[p] - health[selected])
+	var restored: int = mini(20, _max_hp(p, _team(pieces[selected]) == 1) - health[selected])
 	health[selected] += restored
 	_damage_popup(selected, restored, true)
 	acted.append(selected)
@@ -1206,8 +1206,7 @@ func _minion_actions() -> void:
 				if attack_target < 0 or health[target] < health[attack_target]:
 					attack_target = target
 		if attack_target >= 0:
-			health[attack_target] -= DAMAGE[pieces[source].to_upper()]
-			_damage_popup(attack_target, DAMAGE[pieces[source].to_upper()])
+			_deal_damage(attack_target, DAMAGE[pieces[source].to_upper()], false)
 			_flash_square(attack_target, Color("#ff8a77"))
 			if health[attack_target] <= 0:
 				if pieces[attack_target] == "K":
@@ -1247,8 +1246,7 @@ func _boss_action() -> void:
 		var damage := (25 if raid_round % 3 != 0 else 45) + (raid_stage - 1) * 10 + (15 if boss_phase == 2 else 0)
 		if shield_active:
 			damage = maxi(1, int(ceil(damage * 0.5)))
-		health[boss_target] -= damage
-		_damage_popup(boss_target, damage)
+		damage = _deal_damage(boss_target, damage, false)
 		_flash_square(boss_target, Color("#ff5e72"))
 		battle_log = "Падший король наносит %d урона по отмеченной клетке!" % damage
 		if health[boss_target] <= 0:
