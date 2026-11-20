@@ -1862,6 +1862,8 @@ func _draw() -> void:
 		battlefield_3d.set_region(clampi(raid_stage - 1, 0, 5) if mode == "raid" else 0)
 		battlefield_3d.set_boss_phase(boss_phase if mode == "raid" else 1)
 		battlefield_3d.set_hero_gear(equipment, equipped_slots)
+		var forecast: Array[int] = Progression.hazard_cells(str(raid_mission.get("modifier", "none")), raid_round + 1) if mode == "raid" and winner == "" else []
+		battlefield_3d.set_hazards(forecast, str(raid_mission.get("modifier", "none")))
 		battlefield_3d.sync_board(pieces, selected, legal_targets, boss_target if mode == "raid" and winner == "" else -1, health, max_health)
 	if winner != "" and not battle_result_shown:
 		call_deferred("_show_result")
