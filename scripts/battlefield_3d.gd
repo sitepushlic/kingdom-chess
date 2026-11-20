@@ -16,6 +16,7 @@ var dark_material: StandardMaterial3D
 var board_root: Node3D
 var torches: Array[OmniLight3D] = []
 var torch_flames: Array[MeshInstance3D] = []
+var current_region := -1
 
 func _material(color: Color, metallic: float = 0.0, roughness: float = 0.42, emission: Color = Color.BLACK) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -181,6 +182,24 @@ func _build_piece(letter: String) -> Node3D:
 	unit.scale = Vector3.ONE * 0.84
 	board_root.add_child(unit)
 	return unit
+
+func set_region(region_index: int) -> void:
+	if current_region == region_index: return
+	current_region = region_index
+	var palettes := [
+		[Color("#273a4c"), Color("#b7a58c"), Color("#ff9b4a")],
+		[Color("#243e59"), Color("#92b7d0"), Color("#79d9ff")],
+		[Color("#183d42"), Color("#83ada7"), Color("#42e5bd")],
+		[Color("#39283f"), Color("#947b8e"), Color("#e783ed")],
+		[Color("#28395e"), Color("#c4b6a2"), Color("#b7a4ff")],
+		[Color("#2b182e"), Color("#78617e"), Color("#ed4c78")]
+	]
+	var palette: Array = palettes[clampi(region_index, 0, palettes.size() - 1)]
+	for index in range(tiles.size()):
+		var mat: StandardMaterial3D = tiles[index].material_override
+		mat.albedo_color = palette[0] if (int(index / 8) + index % 8) % 2 == 0 else palette[1]
+	for torch in torches:
+		torch.light_color = palette[2]
 
 func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int, health: Array = [], max_health: Array = []) -> void:
 	for index in range(64):
