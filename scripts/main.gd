@@ -1591,6 +1591,14 @@ func _minion_actions() -> void:
 		if best >= 0:
 			_move(source, best)
 
+func _boss_aoe_hit(index: int, damage: int) -> void:
+	if index < 0 or index >= 64 or _team(pieces[index]) != 1: return
+	_deal_damage(index, damage, false)
+	if health[index] <= 0:
+		if pieces[index] == "K": winner = "ПОРАЖЕНИЕ"
+		pieces[index] = ""
+		health[index] = 0
+
 func _boss_action() -> void:
 	if winner != "": return
 	enemy_turn = true
@@ -1639,8 +1647,8 @@ func _boss_action() -> void:
 		battle_log = "Герои уклонились от удара Падшего короля!"
 	if raid_stage == 2 and raid_round % 3 == 0:
 		for hero_index in range(64):
-			if _team(pieces[hero_index]) == 1 and hero_index / 8 <= 3:
-				_deal_damage(hero_index, 10 + raid_stage * 3, false)
+			if _team(pieces[hero_index]) == 1 and int(hero_index / 8) <= 3:
+				_boss_aoe_hit(hero_index, 10 + raid_stage * 3, false)
 				battle_log += "\nЛЕДЯНАЯ БУРЯ: %d клетка" % hero_index
 	elif raid_stage == 3 and raid_round % 3 == 0:
 		var weakest := -1
@@ -1648,7 +1656,7 @@ func _boss_action() -> void:
 			if _team(pieces[hero_index]) == 1 and (weakest < 0 or health[hero_index] < health[weakest]):
 				weakest = hero_index
 		if weakest >= 0:
-			_deal_damage(weakest, 18 + raid_stage * 4, false)
+			_boss_aoe_hit(weakest, 18 + raid_stage * 4, false)
 			battle_log += "\nПРИЗРАЧНЫЙ УДАР!"
 	elif raid_stage == 4 and raid_round % 4 == 0:
 		boss_hp = mini(boss_max_hp, boss_hp + 30 + raid_stage * 8)
@@ -1657,12 +1665,12 @@ func _boss_action() -> void:
 	elif raid_stage == 5 and raid_round % 3 == 0:
 		for hero_index in range(64):
 			if _team(pieces[hero_index]) == 1 and hero_index % 8 in [2, 5]:
-				_deal_damage(hero_index, 12 + raid_stage * 3, false)
+				_boss_aoe_hit(hero_index, 12 + raid_stage * 3, false)
 				battle_log += "\nНЕБЕСНАЯ МОЛНИЯ!"
 	elif raid_stage == 6 and raid_round % 3 == 0:
 		for hero_index in range(64):
 			if _team(pieces[hero_index]) == 1 and health[hero_index] > 0:
-				_deal_damage(hero_index, 8 + raid_stage * 2, false)
+				_boss_aoe_hit(hero_index, 8 + raid_stage * 2, false)
 		battle_log += "\nТЬМА ПОГЛОЩАЕТ АРЕНУ!"
 	if raid_encounter == "Разлом" and raid_round % 4 == 0:
 		for hero_index in range(64):
