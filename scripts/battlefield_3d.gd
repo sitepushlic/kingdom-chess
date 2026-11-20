@@ -17,6 +17,9 @@ var board_root: Node3D
 var torches: Array[OmniLight3D] = []
 var torch_flames: Array[MeshInstance3D] = []
 var current_region := -1
+var gear_signature := ""
+var hero_gear: Dictionary = {}
+var boss_crown: Material
 
 func _material(color: Color, metallic: float = 0.0, roughness: float = 0.42, emission: Color = Color.BLACK) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -70,6 +73,7 @@ func _ready() -> void:
 	enemy_material = _material(Color("#57283e"), 0.45)
 	gold_material = _material(Color("#d9ad57"), 0.78, 0.25)
 	dark_material = _material(Color("#1a2638"), 0.4)
+	boss_crown = _material(Color("#e56587"), 0.65, 0.22, Color("#9a193e"))
 	var world := WorldEnvironment.new()
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
@@ -137,6 +141,32 @@ func _ready() -> void:
 func _square_position(index: int) -> Vector3:
 	return Vector3(float(index % 8) - 3.5, 0.11, float(index / 8) - 3.5)
 
+func set_hero_gear(items: Array, slots: Dictionary) -> void:
+	var signature := ""
+	var next_gear: Dictionary = {}
+	for slot in ["Оружие", "Тело", "Реликвия"]:
+		var index: int = int(slots.get(slot, -1))
+		if index >= 0 and index < items.size():
+			var item: Dictionary = items[index]
+			next_gear[slot] = item
+			signature += "%s:%d:%d:%d|" % [slot, int(item.get("rarity", 0)), int(item.get("upgrade", 0)), int(item.get("set_id", -1))]
+	if signature == gear_signature: return
+	gear_signature = signature
+	hero_gear = next_gear
+	for index in piece_nodes.keys():
+		var node: Node3D = piece_nodes[index]
+		node.queue_free()
+	piece_nodes.clear()
+	piece_types.clear()
+	moving_nodes.clear()
+
+func _gear_material(slot: String) -> Material:
+	if not hero_gear.has(slot): return gold_material
+	var item: Dictionary = hero_gear[slot]
+	var rarity := clampi(int(item.get("rarity", 0)), 0, 6)
+	var palette := [Color("#b9c6d5"), Color("#62c7b6"), Color("#548dea"), Color("#aa78f5"), Color("#efac57"), Color("#e96d86"), Color("#fff0a4")]
+	return _material(palette[rarity], 0.82, 0.23, palette[rarity] * (0.18 + float(int(item.get("upgrade", 0))) * 0.04))
+
 func _build_piece(letter: String) -> Node3D:
 	var unit := Node3D.new()
 	var white := letter == letter.to_upper()
@@ -179,6 +209,32 @@ func _build_piece(letter: String) -> Node3D:
 	var bar_fill := _box(Vector3(0.69, 0.055, 0.10), _material(Color("#4edca4") if white else Color("#f26a76"), 0.15, 0.28, Color("#194735") if white else Color("#48121c")), unit, Vector3(0, 1.76, 0.02))
 	bar_fill.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	unit.set_meta("health_fill", bar_fill)
+	if white and not hero_gear.is_empty():
+		if hero_gear.has("Тело"):
+			var armor_mat := _gear_material("Тело")
+			_cylinder(0.29, 0.15, armor_mat, unit, Vector3(0, 0.32, 0))
+			for side in [-1.0, 1.0]:
+				_box(Vector3(0.12, 0.28, 0.28), armor_mat, unit, Vector3(side * 0.27, 0.48, 0))
+		if hero_gear.has("Оружие"):
+			var weapon_mat := _gear_material("Оружие")
+			_cylinder(0.045, 0.82, weapon_mat, unit, Vector3(0.42, 0.68, 0))
+			_box(Vector3(0.33, 0.065, 0.13), weapon_mat, unit, Vector3(0.42, 0.87, 0))
+			_cylinder(0.09, 0.21, weapon_mat, unit, Vector3(0.42, 1.13, 0), 0.015)
+		if hero_gear.has("Реликвия"):
+			var relic_mat := _gear_material("Реликвия")
+			_sphere(0.13, relic_mat, unit, Vector3(-0.39, 0.81, 0))
+			_cylinder(0.05, 0.32, gold_material, unit, Vector3(-0.39, 0.57, 0))
+		var set_count := 0
+		var set_id := -1
+		for slot in hero_gear:
+			var current_id: int = int(hero_gear[slot].get("set_id", -1))
+			if current_id >= 0:
+				if set_id < 0: set_id = current_id
+				if current_id == set_id: set_count += 1
+		if set_count >= 2:
+			var aura_mat := _gear_material("Оружие") if hero_gear.has("Оружие") else gold_material
+			var ring := _cylinder(0.39, 0.025, aura_mat, unit, Vector3(0, 0.12, 0))
+			ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	unit.scale = Vector3.ONE * 0.84
 	board_root.add_child(unit)
 	return unit
