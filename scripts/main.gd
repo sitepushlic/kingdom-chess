@@ -207,21 +207,33 @@ func _ready() -> void:
 	panel_style.set_corner_radius_all(16)
 	panel_style.set_content_margin_all(10)
 	sidebar.add_theme_stylebox_override("panel", panel_style)
+	var sidebar_column := VBoxContainer.new()
+	sidebar_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sidebar_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sidebar_column.add_theme_constant_override("separation", 6)
+	sidebar.add_child(sidebar_column)
 	var scroll := ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	sidebar.add_child(scroll)
+	sidebar_column.add_child(scroll)
+	var fixed_actions := VBoxContainer.new()
+	fixed_actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	fixed_actions.add_theme_constant_override("separation", 6)
+	sidebar_column.add_child(fixed_actions)
 	var ui := VBoxContainer.new()
 	ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ui.add_theme_constant_override("separation", 8)
 	scroll.add_child(ui)
 	var heading := Label.new()
 	heading.text = "♛  KINGDOM CHESS"
+	heading.visible = false
 	heading.add_theme_font_size_override("font_size", 19)
 	heading.add_theme_color_override("font_color", Color("#f1d49c"))
 	ui.add_child(heading)
 	var subtitle := Label.new()
 	subtitle.text = "ВОЙНА КОРОЛЕВСТВ • ТАКТИЧЕСКАЯ RPG"
+	subtitle.visible = false
 	subtitle.add_theme_font_size_override("font_size", 13)
 	subtitle.add_theme_color_override("font_color", Color("#b8a4ba"))
 	ui.add_child(subtitle)
@@ -282,6 +294,8 @@ func _ready() -> void:
 	potion.tooltip_text = "Восстановить 40 HP"
 	var end := _make_action_button("➤ ЗАВЕРШИТЬ ХОД", _end_turn, ui)
 	end.custom_minimum_size.y = 56
+	action_bar.reparent(fixed_actions)
+	end.reparent(fixed_actions)
 	info = Label.new()
 	info.add_theme_font_size_override("font_size", 17)
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
