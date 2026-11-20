@@ -156,6 +156,24 @@ static func first_clear_reward(wins: int) -> Dictionary:
 static func region_for_run(wins: int) -> String:
 	return REGIONS[clampi(int(wins / 3.0), 0, REGIONS.size() - 1)]
 
+static func hazard_cells(modifier: String, next_round: int) -> Array[int]:
+	var cells: Array[int] = []
+	if next_round <= 0: return cells
+	match modifier:
+		"frost":
+			if next_round % 3 == 0:
+				for i in range(64):
+					if int(i / 8) <= 4: cells.append(i)
+		"poison":
+			if next_round % 3 == 0:
+				for i in range(64):
+					if i % 8 in [1, 6]: cells.append(i)
+		"rift":
+			if next_round % 3 == 0:
+				for i in range(64):
+					if i % 8 in [3, 4]: cells.append(i)
+	return cells
+
 static func mission_for_run(wins: int) -> Dictionary:
 	if wins < CAMPAIGN.size():
 		return CAMPAIGN[clampi(wins, 0, CAMPAIGN.size() - 1)].duplicate(true)
