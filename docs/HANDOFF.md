@@ -1,3 +1,18 @@
+## 2026-11-21 — CRITICAL HP READABILITY AND 3D COMBAT UI PERFORMANCE (LATEST)
+**Standing user instructions:** Make as much meaningful progress per turn as possible; update HANDOFF on every turn; finish game/graphics. **Do not build/export/sign APK until user explicitly reverses instruction.** Never claim tests passed without execution evidence.
+
+### Changes committed to GitHub main
+- `f416fef5` **New tactical 3D visual:** every piece has a `CriticalHealthRing` using a shared emissive amber/red material, placed at plinth height, normally hidden. `_apply_health_fill` reveals it only when 0 < HP <=25%, preserving clear board-space warning without reliance on small health bars. Low graphics hides ring; higher graphics restores it using retained 64-cell HP snapshots. Region model replacement recreates and restores correct critical state.
+- `7683a32f` **Health warning QA:** smoke tests assert shared material, 20%-HP visibility, low/medium graphics toggles and preservation after regional actor rebuild.
+- `f32171bc` **Visual polish:** low-HP ring pulses in scale with a cheap sine animation during normal `_process` loop; no extra dynamic light, shader or tween allocation per frame.
+- `074b170c` **Combat HUD optimization:** world-space damage/healing labels now tracked in `active_combat_numbers: Array[Label3D]` (max 18). Each hit prunes queued/freed labels and counts same-tile labels by inspecting this small array instead of traversing the entire 3D board scene tree; oldest is detached and freed on overflow. Reduces cost during multi-hit battles and preserves staggering.
+- `49800e57` **HUD QA:** verifies active label array cap and pruning of a label queued for deletion before next hit.
+
+### Verification and remaining work
+- Source edits and test assertions are committed. **No successful Godot 4.3 smoke, art import or rendered playtest has been observed this turn**. Avoid claiming game is complete or validated. Existing CI workflow still generates 72 character GLBs and 21 equipment GLBs, validates, imports, runs smoke; APK remains disabled.
+- Need actual CI failure diagnostics, GLB animation/rig validation and rendered art inspection, further gameplay balance and mobile performance checks. Critical health ring currently adds one shared-mesh node per actor; validate performance on target hardware.
+- Previous pass fixed nested boss enrage aura lookups and added capped/staggered 3D combat numbers (`c5d4e2ba`, `0822b464`).
+
 ## 2026-11-21 — BOSS RIG FIX + MULTI-HIT COMBAT READABILITY (LATEST)
 **Permanent user requirements:** Work in large substantive batches; update HANDOFF every turn; finish game and graphics; **do not build/export/sign APK** unless explicitly requested. Never claim a passing test run without evidence.
 
