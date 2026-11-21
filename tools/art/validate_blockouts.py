@@ -104,6 +104,8 @@ def validate(path, require_animation=True):
     # Mobile budget: no runaway geometry, uncompressed GLB, or excessive nodes.
     assert len(data) < 250_000, f"{path}: GLB exceeds 250KB blockout budget"
     assert len(gltf["nodes"]) <= 160, f"{path}: excessive draw-call nodes"
+    assert all(material.get("doubleSided",False) is False for material in gltf["materials"]), f"{path}: avoid mobile two-sided material overdraw"
+    assert all("pbrMetallicRoughness" in material for material in gltf["materials"]), f"{path}: missing PBR material"
     triangles=0
     for mesh in gltf["meshes"]:
         for primitive in mesh["primitives"]:
