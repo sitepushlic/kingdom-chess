@@ -1833,9 +1833,13 @@ func _end_turn() -> void:
 		_boss_action()
 		return
 	turn = -turn
-	if mode == "arena" and _king_threatened(pieces, turn) and not _has_legal_action(turn):
-		winner = "ПОБЕДА ТЁМНЫХ!" if turn == 1 else "ПОБЕДА СВЕТЛЫХ!"
-		battle_log = "МАТ: королю некуда уйти и нет допустимых защитных действий."
+	if mode == "arena" and not _has_legal_action(turn):
+		if _king_threatened(pieces, turn):
+			winner = "ПОБЕДА ТЁМНЫХ!" if turn == 1 else "ПОБЕДА СВЕТЛЫХ!"
+			battle_log = "МАТ: королю некуда уйти и нет допустимых защитных действий."
+		else:
+			winner = "НИЧЬЯ"
+			battle_log = "ПАТ: нет допустимых ходов, король не под шахом."
 	ap = 2
 	heal_used = false
 	acted.clear()
