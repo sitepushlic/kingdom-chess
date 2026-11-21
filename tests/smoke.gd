@@ -118,12 +118,12 @@ func _run() -> void:
 	_assert_ok(game._king_threatened(game.pieces, 1), "Rook gives check on open file")
 	# A rook can remove a checking attacker with a lethal RPG strike, but a
 	# nonlethal hit must not count as a check escape.
-	game.pieces[52] = "R"
+	game.pieces[5] = "R"
 	game.health[4] = 10
-	_assert_ok(game._legal(52, 4), "Lethal capture of checking rook resolves check")
+	_assert_ok(game._legal(5, 4), "Lethal capture of checking rook resolves check")
 	game.health[4] = 150
-	_assert_ok(not game._legal(52, 4), "Nonlethal strike cannot leave king in check")
-	game.pieces[52] = ""
+	_assert_ok(not game._legal(5, 4), "Nonlethal strike cannot leave king in check")
+	game.pieces[5] = ""
 	game.health[4] = 150
 
 	_assert_ok(game.battlefield_3d != null, "3D board exists for check warning")
@@ -483,6 +483,7 @@ func _run() -> void:
 	_assert_ok(game.lan_status != null, "LAN status field exists")
 	_assert_ok(game.battle_result_dialog != null, "Battle result dialog exists")
 	_assert_ok(game.boss_portrait != null, "Boss portrait exists")
+	game._reset()
 	game.pieces.resize(64)
 	game.health.resize(64)
 	for i in range(64):
@@ -505,6 +506,8 @@ func _run() -> void:
 	_assert_ok(state.has("shield_active"), "Co-op sync includes shield protection")
 	_assert_ok(state.has("raid_stats") and state["raid_stats"].has("attack"), "Co-op state includes RPG combat bonuses")
 	game.mode = "arena"
+	game.acted.clear()
+	_assert_ok(game.valid_raid_snapshot(game._snapshot()), "Autosave fixture passes strict snapshot schema")
 	game._save_battle()
 	_assert_ok(FileAccess.file_exists(game.battle_save_path), "Battle autosave exists")
 	game.pieces[52] = ""
@@ -830,12 +833,18 @@ func _run() -> void:
 	game.battlefield_3d.attack(60, 52)
 	_assert_ok(game.battlefield_3d.piece_nodes.has(60), "3D attack animation preserves board state")
 	var test_sword: Dictionary = weak_weapon.duplicate(true)
+	for stat in ["attack", "armor", "hp", "crit", "lifesteal", "penetration", "block", "bleed"]:
+		test_sword[stat] = 0
 	test_sword["attack"] = 12
 	var test_armor: Dictionary = usable_armor.duplicate(true)
+	for stat in ["attack", "armor", "hp", "crit", "lifesteal", "penetration", "block", "bleed"]:
+		test_armor[stat] = 0
 	test_armor["attack"] = 2
 	test_armor["armor"] = 8
 	test_armor["hp"] = 30
 	var test_relic: Dictionary = usable_relic.duplicate(true)
+	for stat in ["attack", "armor", "hp", "crit", "lifesteal", "penetration", "block", "bleed"]:
+		test_relic[stat] = 0
 	test_relic["attack"] = 1
 	test_relic["lifesteal"] = 10
 	game.equipment = [test_sword, test_armor, test_relic]
