@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 ART = ROOT / "assets" / "characters"
-EXPECTED = [f"hero_{n:02d}.glb" for n in range(1,31)] + [f"boss_region_{n}.glb" for n in range(6)]
+EXPECTED = ([f"hero_{n:02d}.glb" for n in range(1,31)] + [f"boss_region_{n}.glb" for n in range(6)] + [f"enemy_{piece}_region_{region}.glb" for region in range(6) for piece in "prnbqk"])
 CLIPS = {"idle","move","attack","hit","death","cast"}
 COMPONENT_SIZE = {5120:1,5121:1,5122:2,5123:2,5125:4,5126:4}
 COMPONENTS = {"SCALAR":1,"VEC2":2,"VEC3":3,"VEC4":4,"MAT4":16}
@@ -54,9 +54,9 @@ def main():
         path = ART / name
         assert path.is_file(), f"missing {path}"
         counts.append(validate(path))
-    assert len(counts) == 36
+    assert len(counts) == 72
     assert len(set(counts[:30])) > 1, "all heroes have identical node counts"
-    print(f"KINGDOM CHESS: 36 GLB FILES VALIDATED, {len(set(counts[:30]))} HERO MESH COUNTS")
+    print(f"KINGDOM CHESS: 72 GLB FILES VALIDATED, {len(set(counts[:30]))} HERO MESH COUNTS")
 
 if __name__ == "__main__":
     main()
