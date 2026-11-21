@@ -2,6 +2,7 @@ extends RefCounted
 class_name KingdomProgression
 
 const SAVE_PATH = "user://kingdom_progress.json"
+const HeroRoster = preload("res://scripts/hero_roster.gd")
 const RARITIES = ["Обычный", "Необычный", "Редкий", "Эпический", "Легендарный", "Мифический", "Реликтовый"]
 const RARITY_WEIGHTS = [42, 28, 16, 8, 4, 1.5, 0.5]
 const SLOT_NAMES = {
@@ -77,6 +78,7 @@ static func sanitize_profile(parsed: Dictionary) -> Dictionary:
 	profile["potions"] = safe_save_int(profile["potions"], 2, 0, 99)
 	profile["wins"] = safe_save_int(profile["wins"], 0, 0, 1000000000)
 	profile["dry_streak"] = safe_save_int(profile["dry_streak"], 0, 0, 100)
+	profile["selected_hero"] = HeroRoster.valid_selection(str(profile.get("selected_hero", "hero_01")), int(profile["wins"]), int(profile["level"]))
 	if typeof(profile["items"]) != TYPE_ARRAY:
 		profile["items"] = []
 	if typeof(profile.get("slots")) != TYPE_DICTIONARY:
@@ -159,7 +161,7 @@ static func is_valid_equipment_item(item: Dictionary) -> bool:
 	return true
 
 static func default_profile() -> Dictionary:
-	return {"level":1, "xp":0, "gold":0, "potions":2, "items":[], "equipped":-1, "slots":{"Оружие":-1,"Тело":-1,"Реликвия":-1}, "wins":0, "dry_streak":0}
+	return {"level":1, "xp":0, "gold":0, "potions":2, "items":[], "equipped":-1, "slots":{"Оружие":-1,"Тело":-1,"Реликвия":-1}, "wins":0, "dry_streak":0, "selected_hero":"hero_01"}
 
 static func save_profile(profile: Dictionary) -> bool:
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
