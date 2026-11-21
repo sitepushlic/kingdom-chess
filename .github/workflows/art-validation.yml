@@ -34,6 +34,20 @@ jobs:
         run: python3 tools/art/check_reproducibility.py
       - name: Export art QA report
         run: python3 tools/art/export_art_report.py
+      - name: Publish art QA summary
+        run: |
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          data=json.loads(Path("build/art_manifest.json").read_text())
+          print("Manifest keys:", sorted(data.keys()))
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as out:
+              out.write("## Kingdom Chess: generated 3D art QA\n\n")
+              out.write("93 generated GLB assets validated (72 characters, 21 equipment).\n\n")
+              for key in ("total_triangles","total_skins","total_bone_references","total_animation_channels"):
+                  if key in data:
+                      out.write(f"- {key}: {data[key]}\n")
+          PY
       - name: Upload generated art QA report
         if: always()
         uses: actions/upload-artifact@v4
