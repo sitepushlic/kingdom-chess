@@ -260,6 +260,35 @@ func _load_authored_character(kind: String, parent: Node3D) -> bool:
 	parent.add_child(instance)
 	return true
 
+func _add_character_surface_detail(kind: String, white: bool, parent: Node3D) -> void:
+	# Low-poly OBJ art gains a legible, class-specific layered metal costume.
+	# Details are children of VisualRig and participate in all character animations.
+	var armor := _material(Color("#b5c6d4") if white else Color("#704d64"), 0.78, 0.29)
+	var edge := _material(Color("#f3d58b") if white else Color("#c85679"), 0.83, 0.22)
+	var gem := _material(Color("#63d8f3") if white else Color("#f15a99"), 0.22, 0.20, Color("#2289c0") if white else Color("#a91f57"))
+	match kind:
+		"P":
+			_ring(0.20, 0.028, armor, parent, Vector3(0, 0.44, 0))
+			_sphere(0.075, gem, parent, Vector3(0, 0.68, -0.13))
+		"R":
+			for side in [-1.0, 1.0]:
+				_box(Vector3(0.10, 0.36, 0.16), armor, parent, Vector3(side * 0.23, 0.67, 0))
+			_ring(0.21, 0.035, edge, parent, Vector3(0, 0.94, 0))
+		"N":
+			_box(Vector3(0.34, 0.18, 0.15), armor, parent, Vector3(0, 0.66, 0.14))
+			_sphere(0.065, gem, parent, Vector3(0, 0.98, -0.30))
+		"B":
+			_ring(0.18, 0.026, edge, parent, Vector3(0, 0.79, 0))
+			_sphere(0.09, gem, parent, Vector3(0, 1.11, -0.04))
+		"Q":
+			for n in range(5):
+				var angle := float(n) * TAU / 5.0
+				_sphere(0.058, gem, parent, Vector3(cos(angle) * 0.23, 1.12, sin(angle) * 0.23))
+			_ring(0.23, 0.027, edge, parent, Vector3(0, 0.98, 0))
+		"K":
+			_ring(0.23, 0.038, edge, parent, Vector3(0, 1.09, 0))
+			_sphere(0.08, gem, parent, Vector3(0, 1.38, -0.06))
+
 func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	var unit := Node3D.new()
 	var white := letter == letter.to_upper()
@@ -304,6 +333,7 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 			_cylinder(0.27, 0.12, accent, unit, Vector3(0, 1.12, 0))
 			_box(Vector3(0.12, 0.47, 0.12), gold_material, unit, Vector3(0, 1.41, 0))
 			_box(Vector3(0.37, 0.10, 0.12), gold_material, unit, Vector3(0, 1.48, 0))
+	_add_character_surface_detail(kind, white, unit)
 	# Each class has an identifiable elevated crest, even at portrait mobile scale.
 	if kind == "N":
 		for side in [-1.0, 1.0]:
