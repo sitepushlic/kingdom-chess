@@ -718,17 +718,19 @@ func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bo
 		# Do not draw another static costume on top of animated geometry.
 		_add_character_surface_detail(kind, white, unit)
 	if white and selected_hero_piece: _add_selected_hero_identity(kind, unit)
-	# Each class has an identifiable elevated crest, even at portrait mobile scale.
-	if kind == "N":
-		for side in [-1.0, 1.0]:
-			var ear := _cylinder(0.055, 0.24, accent, unit, Vector3(side * 0.11, 1.20, -0.05), 0.0)
-			ear.rotation.z = side * 0.24
-	elif kind == "B":
-		_ring(0.17, 0.025, gold_material, unit, Vector3(0, 1.03, 0))
-	elif kind == "Q":
-		_sphere(0.105, gold_material, unit, Vector3(0, 1.30, 0))
-	elif kind == "P":
-		_ring(0.145, 0.021, accent, unit, Vector3(0, 0.65, 0))
+	# Class heraldry is already authored into imported GLBs. Keep the
+	# procedural class emblem only for a missing-asset fallback.
+	if not imported_character:
+		if kind == "N":
+			for side in [-1.0, 1.0]:
+				var ear := _cylinder(0.055, 0.24, accent, unit, Vector3(side * 0.11, 1.20, -0.05), 0.0)
+				ear.rotation.z = side * 0.24
+		elif kind == "B":
+			_ring(0.17, 0.025, gold_material, unit, Vector3(0, 1.03, 0))
+		elif kind == "Q":
+			_sphere(0.105, gold_material, unit, Vector3(0, 1.30, 0))
+		elif kind == "P":
+			_ring(0.145, 0.021, accent, unit, Vector3(0, 0.65, 0))
 	if is_boss:
 		# Imported bosses already carry their own regional horns, crystals,
 		# wings and relics. Avoid masking them with a generic second costume.
