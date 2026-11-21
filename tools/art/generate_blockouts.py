@@ -203,6 +203,55 @@ def make_character(identifier, boss=False):
         box("MageRobe",(0,.55,0),(.55,.48,.37))
         box("ArcaneCollar",(0,1.06,0),(.50,.13,.38),3)
         box("Focus",(-.43,1.12,-.08),(.15,.15,.15),3)
+    # Layered armor and region identity. Distinct silhouettes remain legible
+    # in a small Android viewport; all parts reuse five shared materials.
+    if identifier.startswith("hero_"):
+        for side in (-1, 1):
+            box("HeroBootToe"+str(side),(side*.12,.085,-.155),(.19,.085,.19),1)
+            box("HeroWristBand"+str(side),(side*.30,.69,-.055),(.18,.075,.20),3)
+        if family == 0:
+            box("RoyalGorget",(0,1.095,-.135),(.34,.13,.15),3)
+            box("RoyalTabard",(0,.62,-.205),(.25,.40,.065),0)
+        elif family == 1:
+            for side in (-1, 1):
+                box("RaiderFang"+str(side),(side*.25,1.11,-.09),(.09,.25,.10),3,side*.22)
+            box("RaiderChestScar",(0,.94,-.184),(.075,.27,.05),4,-.35)
+        elif family == 2:
+            for side in (-1, 1):
+                box("RangerCloakTrim"+str(side),(side*.20,.78,.265),(.06,.59,.055),3)
+            box("RangerHoodBrow",(0,1.465,-.155),(.36,.075,.095),1)
+        elif family == 3:
+            for side in (-1, 1):
+                box("ForgeBracer"+str(side),(side*.30,.73,-.125),(.19,.20,.10),3)
+            box("ForgeChestVent",(0,.90,-.242),(.18,.12,.055),4)
+        else:
+            for side in (-1, 1):
+                box("MageRobeHem"+str(side),(side*.18,.34,-.14),(.14,.10,.22),3)
+            box("MageFocusChain",(0,1.00,-.182),(.06,.21,.045),3)
+    elif identifier.startswith("enemy_"):
+        region = (num - 31)//6
+        # Region-specific chest silhouettes communicate increasing danger
+        # without relying solely on palette differences.
+        if region == 0:
+            for side in (-1, 1):
+                box("AshFurnaceSpike"+str(side),(side*.24,1.12,.08),(.12,.30,.14),0,side*.20)
+        elif region == 1:
+            for side in (-1, 1):
+                box("IceCollar"+str(side),(side*.20,1.15,-.05),(.15,.25,.15),4,side*.15)
+        elif region == 2:
+            box("DeepSeaChestPearl",(0,.93,-.21),(.16,.17,.10),4)
+            box("DeepSeaKelpMantle",(0,.87,.24),(.55,.58,.08),0)
+        elif region == 3:
+            for side in (-1, 1):
+                box("ObsidianRidge"+str(side),(side*.21,1.01,-.15),(.10,.35,.11),1,side*.17)
+        elif region == 4:
+            box("SkyStormBeacon",(0,1.64,.04),(.18,.24,.16),4)
+            for side in (-1, 1):
+                box("SkyStormFin"+str(side),(side*.36,1.11,.16),(.12,.34,.12),3,side*.32)
+        else:
+            box("NightThroneSeal",(0,.97,-.21),(.22,.22,.075),4)
+            for side in (-1, 1):
+                box("NightThroneFang"+str(side),(side*.24,1.59,.05),(.10,.40,.12),0,side*.25)
     # Six head geometry signatures.
     if signature==0:
         box("Crown",(0,1.52,0),(.40,.14,.31),3)
