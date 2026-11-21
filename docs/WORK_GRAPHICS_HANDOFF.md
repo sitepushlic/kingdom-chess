@@ -382,3 +382,9 @@ Commits on `main`:
 - **`0cfd80c90cb5575c023c8e1d07e21e138cfb2c96`**, **`3da2a4aba39c72aa954ff2cc1d7862a2e6ebcf2e`**: integrated independent rig test into Android and fast art GitHub Actions workflows.
 **Verification limits:** source commits succeeded; no full CI logs, executed 72-model generator, Godot import or Android APK confirmed in this session. The new test is scheduled to run in CI, not claimed to have passed.
 **Next:** obtain actual GitHub Actions workflow status and logs, address failing tests, verify Android APK; visually inspect armor deformation and improve 3D models after confirmed import.
+
+## 42. Critical Godot smoke exit-status fix and 72-character clip coverage — 2026-11-21
+- **`cea40cdfd1a8e7d7f314f5b4a3d38d92d8fee5ef`**: fixed a serious smoke test correctness bug. Previously `_assert_ok` called `quit(1)` on failure, but the test could continue to the final unconditional `quit(0)`, potentially overriding the failing exit status. Now assertions accumulate `_failure_count` and only the final branch exits 0 when no assertion failed; otherwise exits 1 and prints the failure count. This makes GitHub Actions smoke results materially more trustworthy.
+- **`9c50cd3ce117dfb2736c8cfde9a2a893321707f8`**: Godot smoke now verifies all six imported animation names on **all 72 characters** (432 clip-presence checks), instead of checking clips only for eight representative assets. Existing detailed checks of representative clip track counts and duration remain.
+**Verification:** commits are confirmed on `main`. A completed Godot runner execution, successful smoke result, and valid APK remain **unconfirmed**; do not imply the new assertions have passed. The new stricter test can reveal previously hidden failures.
+**Next:** inspect real GitHub Actions logs once run identifiers are available, fix actual Godot import issues and Android export failures, then continue mobile visual inspection and production-quality mesh development.
