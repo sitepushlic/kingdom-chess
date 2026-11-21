@@ -16,6 +16,7 @@ var active_hazards: Array[int] = []
 var hazard_type := ""
 var hazard_materials: Dictionary = {}
 var tiles: Array[MeshInstance3D] = []
+var tile_materials: Array[StandardMaterial3D] = []
 var hero_material: StandardMaterial3D
 var enemy_material: StandardMaterial3D
 var gold_material: StandardMaterial3D
@@ -145,10 +146,11 @@ func _ready() -> void:
 	board_root.add_child(region_scenery)
 	_box(Vector3(9.2, 0.48, 9.2), _material(Color("#29202a"), 0.45), board_root, Vector3(0, -0.43, 0))
 	_box(Vector3(8.6, 0.13, 8.6), gold_material, board_root, Vector3(0, -0.13, 0))
+	tile_materials = [_material(Color("#28384b"), 0.22), _material(Color("#b7a58c"), 0.22)]
 	for i in range(64):
 		var x := float(i % 8) - 3.5
 		var z := float(i / 8) - 3.5
-		var tile_mat := _material(Color("#28384b") if (i / 8 + i % 8) % 2 == 0 else Color("#b7a58c"), 0.22)
+		var tile_mat: StandardMaterial3D = tile_materials[(int(i / 8) + i % 8) % 2]
 		tiles.append(_box(Vector3(0.985, 0.10, 0.985), tile_mat, board_root, Vector3(x, 0, z)))
 		var marker := _cylinder(0.43, 0.025, _material(Color("#63e4bc"), 0.15, 0.4, Color("#4dd5a9")), board_root, Vector3(x, 0.078, z))
 		marker.visible = false
@@ -504,9 +506,9 @@ func set_region(region_index: int) -> void:
 		[Color("#2b182e"), Color("#78617e"), Color("#ed4c78")]
 	]
 	var palette: Array = palettes[clampi(region_index, 0, palettes.size() - 1)]
-	for index in range(tiles.size()):
-		var mat: StandardMaterial3D = tiles[index].material_override
-		mat.albedo_color = palette[0] if (int(index / 8) + index % 8) % 2 == 0 else palette[1]
+	# Two shared materials replace 64 independent tile materials and avoid repeated updates.
+	tile_materials[0].albedo_color = palette[0]
+	tile_materials[1].albedo_color = palette[1]
 	for torch in torches:
 		torch.light_color = palette[2]
 	# Region lighting changes the actual 3D scene, not just tile colours.
