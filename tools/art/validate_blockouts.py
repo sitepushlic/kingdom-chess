@@ -151,6 +151,12 @@ def validate(path, require_animation=True):
                 if index not in parents: break
                 index=parents[index]
             return result
+        # Facial detail is real head-attached geometry, not a static
+        # decoration left behind when the neck rotates.
+        face_head=next(i for i,node in enumerate(gltf["nodes"]) if node.get("name")=="Head")
+        face_children={gltf["nodes"][i].get("name") for i in gltf["nodes"][face_head].get("children",[])}
+        assert {"NoseBridge","NoseTip","Mouth","Pupil1","Pupil-1",
+                "Ear1","Ear-1","LowerCheek1","LowerCheek-1"}<=face_children, f"{path}: missing animated facial detail"
         # Distal rigid armor must inherit the lower bone transform.
         # A plate left under the shoulder/hip floats during joint flex.
         by_name={node.get("name"):i for i,node in enumerate(gltf["nodes"])}
