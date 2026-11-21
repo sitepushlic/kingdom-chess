@@ -1,3 +1,8 @@
+## Godot import recovered — 2026-11-21
+- Android workflow run `44917661870` for commit `0e5c7d9` successfully completed 93-GLB validation and **Godot 4.3 project import** after fixing explicit `Node3D` types in `tests/smoke.gd` (commit `1bd3cea`). The run had progressed to `Launch actual Godot main scene` at observation time; its outcome, smoke tests and APK export remain **UNVERIFIED**. Link: https://github.com/sitepushlic/kingdom-chess/actions/runs/44917661870
+- Important CI behavior: documentation commits trigger Android workflow and may cancel previous in-progress runs. Inspect latest run and its actual logs before changing files again. Prior art-only workflow `44916777543` verified green.
+- Immediate priority: verify headless main-scene launch, smoke tests, Android export and downloadable APK; diagnose exact next failure from job logs. Then do real Android installation/gameplay/performance QA. No claims of finished graphics, balance or release readiness.
+
 ## Godot 4.3 import parser repair — 2026-11-21
 - Android run `44916821652` FAILED at `Import project` after successfully generating/uploading all 93 GLBs. Actual job log shows `res://tests/smoke.gd:140` and `:187`: `Cannot infer the type of original_hero_visual / rare_hero_visual` because `_build_piece()` does not provide a statically inferable return type.
 - Commit `1bd3cea4ad30a584372f7b0bb5a5d5eaa0a20352` changed both smoke-test declarations to explicit `Node3D` typing, matching how other 3D visuals are typed in the same test. Requires fresh Godot import verification.
