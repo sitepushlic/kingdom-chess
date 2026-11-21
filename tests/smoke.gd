@@ -253,6 +253,13 @@ func _run() -> void:
 	game.hero_poison.clear()
 	game._send_snapshot(poison_snapshot)
 	_assert_ok(game.hero_poison.is_empty(), "Remote snapshot is ignored when LAN client is not connected")
+	var invalid_poison_board: Array = game.pieces.duplicate()
+	invalid_poison_board[48] = "INVALID"
+	_assert_ok(game.sanitize_hero_poison({48: 2}, invalid_poison_board).is_empty(), "Invalid uppercase glyph cannot receive poison")
+	invalid_poison_board[48] = "p"
+	_assert_ok(game.sanitize_hero_poison({48: 2}, invalid_poison_board).is_empty(), "Enemy pawn cannot receive allied poison status")
+	invalid_poison_board[48] = "P"
+	_assert_ok(int(game.sanitize_hero_poison({48: 2}, invalid_poison_board).get(48, 0)) == 2, "Valid hero pawn retains poison")
 	_assert_ok(Progression.CAMPAIGN.size() == 18, "Complete 18-mission story campaign")
 	var mission_titles: Dictionary = {}
 	for mission in Progression.CAMPAIGN:
