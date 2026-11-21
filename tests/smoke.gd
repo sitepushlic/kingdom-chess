@@ -269,7 +269,7 @@ func _run() -> void:
 	var scenery_counts: Array[int] = []
 	for region_index in range(6):
 		game.battlefield_3d.set_region(region_index)
-		var scenery := game.battlefield_3d.region_scenery
+		var scenery: Node3D = game.battlefield_3d.region_scenery
 		_assert_ok(scenery != null and scenery.get_child_count() > 25, "Region has distinct 3D environment meshes")
 		scenery_counts.append(scenery.get_child_count())
 	_assert_ok(scenery_counts[0] != scenery_counts[1], "Fortress and frostland environments use different geometry")
