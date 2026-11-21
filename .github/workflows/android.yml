@@ -72,11 +72,15 @@ jobs:
       - name: Check Python art pipeline syntax
         run: python3 -m compileall -q tools/art
       - name: Generate original GLB character blockouts
-        run: python3 tools/art/generate_blockouts.py
+        run: |
+          set -o pipefail
+          python3 tools/art/generate_blockouts.py 2>&1 | tee art-generation.log
       - name: Generate 21 modular equipment GLBs
         run: python3 tools/art/generate_equipment.py
       - name: Validate all generated GLB assets
-        run: python3 tools/art/validate_blockouts.py
+        run: |
+          set -o pipefail
+          python3 tools/art/validate_blockouts.py 2>&1 | tee art-validation.log
       - name: Validate real character motion curves and skinned spine tracks
         run: python3 tools/art/validate_motion.py
       - name: Verify all 288 subdivided skinned limbs
@@ -174,7 +178,7 @@ jobs:
             else
               echo "No completed APK found. Check Godot import, smoke and export logs."
             fi
-            for name in import.log game-launch.log smoke.log export.log; do
+            for name in art-generation.log art-validation.log import.log game-launch.log smoke.log export.log; do
               if [ -f "$name" ]; then
                 echo
                 echo "### $name (last 25 lines)"
@@ -190,6 +194,8 @@ jobs:
         with:
           name: kingdom-chess-godot-diagnostics
           path: |
+            art-generation.log
+            art-validation.log
             import.log
             game-launch.log
             smoke.log
