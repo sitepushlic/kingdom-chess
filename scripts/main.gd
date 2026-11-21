@@ -1601,6 +1601,8 @@ func _spend_action(index: int) -> void:
 
 func _reset() -> void:
 	if lan_connected and not lan_host: return
+	if battlefield_3d != null:
+		battlefield_3d.clear_last_move_visual()
 	pieces.clear()
 	health.clear()
 	for r in range(8):
