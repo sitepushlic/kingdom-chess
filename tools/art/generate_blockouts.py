@@ -109,7 +109,8 @@ def make_character(identifier, boss=False):
         head_parts=("Eye","CheekGuard","BrowRidge","NoseBridge","NoseTip",
                     "Mouth","Pupil","Ear","LowerCheek","KingCrown","QueenDiadem",
                     "BishopMitre","KnightWing","RangerHood","EmberHorn",
-                    "GlacierSpire","AstralCrown","CrimsonFang")
+                    "GlacierSpire","AstralCrown","CrimsonFang",
+                    "Crown","Antler","HighHelm","Crest","Halo","Mask")
         if name.startswith(head_parts):
             head_pivot=next((n for n in nodes if n.get("name")=="Head"),None)
             if head_pivot is not None:
