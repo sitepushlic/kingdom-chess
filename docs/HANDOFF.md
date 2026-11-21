@@ -1,3 +1,20 @@
+## 2026-11-21 — COMBAT VFX MEMORY, BOSS REDRAW AND RIG QA (LATEST)
+**Standing user instruction:** Do maximal substantive work per turn, always update HANDOFF, finish graphics and gameplay. **Never build/export APK until explicitly asked.** Minimize repetitive status narration; no claim of verified tests without logs.
+
+### Changes committed to main in this pass
+- `2eb6971d` **Damage and healing shockwaves:** `battlefield_3d.hit()` no longer creates a fresh TorusMesh and StandardMaterial3D on every hit. Shares a cached low-poly torus and two cached PBR materials, while preserving independent tweened MeshInstance3D and color/alpha. Reduces repeated mesh/material allocation in combat.
+- `66a3dfc7` **Rook rig correction:** found contradictory parenting: `EnemyRookTower` was classified as head ornament before shoulder-arm attachment logic. Removed from head list so each rook shoulder tower follows its corresponding animated arm, as rig QA expects.
+- `1052d98f` **Shockwave QA:** gameplay smoke asserts healing/damage share one torus mesh and retain separate, stable tint materials across repeated hits.
+- `5215eaa4` **Boss phase redraw:** `set_boss_phase()` now reapplies enrage aura visibility, scale and crown tint even if logical phase unchanged, fixing boss art after board actor regeneration. Smooth tween only on actual phase change; no tween allocation on redundant redraw.
+- `970faff6` **Boss redraw regression:** smoke simulates stale enrage aura and scale then reapplies same phase and asserts restored 3D state.
+- `1a8c959e` **Hit spark optimization:** one cached low-poly SphereMesh plus distinct cached mint/amber PBR materials now shared by all transient heal and damage spark instances.
+- `f72a5b22` **Spark regression:** verifies particle mesh and material identity survives repeated heals.
+
+### Verification and next steps
+- All changes committed directly to GitHub `main`. **No successful Godot runtime, Python GLB generation or CI pass verified in this turn**; tests are added, not confirmed passed.
+- Existing generation produces 30 hero, 36 enemy, six boss GLBs plus 21 equipment GLBs; prior changes added unique geometry and rig attachments. Need actual end-to-end art pipeline execution, render inspection and performance profiling, then polish animation/UI and gameplay balance.
+- APK explicitly paused. No Android build/export performed.
+
 ## 2026-11-21 — EXTENDED CHARACTER RIG / EQUIPMENT CACHE / QA PASS (LATEST)
 **User constraints:** Make maximal substantive progress per turn; update HANDOFF each time. **Do not build/export/sign APK** until explicitly requested. Keep reports short and factual. No green Godot or asset-generation run has been observed; do not assert success.
 
