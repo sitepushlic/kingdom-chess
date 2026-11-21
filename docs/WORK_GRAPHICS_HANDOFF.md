@@ -223,3 +223,12 @@ Changes committed to `main` in one batch:
 - **`338bb9d86bb29150cb7047139ab82ce278e22914`**, **`12796e075cfb727db77354d66e9aac96f2e1f285`**, **`1f5a0eae9ee63829968d5e524e4748c274e13753`**: validator decodes real binary vertex/index attributes and checks face winding against normals; validates single-sided PBR materials.
 **Verification:** commits confirmed. The tests and generator have **not been executed** in this session; actual Godot import, gameplay smoke and Android build are **not confirmed**. Generated 93 GLBs remain procedural blockouts. The workflow-run lookup currently exposes only PR-triggered runs, while the project builds on push.
 **Next:** inspect actual push-triggered Actions status/logs by an available method; fix any CI failures; build proper skinned 3D models, polished VFX, scene environments and on-device QA.
+
+## 24. Full import coverage and terminal death poses — 2026-11-21
+This batch committed directly to `main`:
+- **`7635596094069681781658d46a45957ab547cbc6`**, **`2253c4330afbd685ee79cd4720c2bd1e48d533d3`**: GLB AnimationPlayer completion callback no longer returns a defeated character to idle after a death clip. Both bare `death` and library-qualified `*/death` clip names are recognized.
+- **`a56f04c21dd6277670e7b2ced274df42d46258e4`**: Godot smoke checks all 72 character GLB resources (30 heroes, 6 bosses, 36 region/class enemies) import as `PackedScene`, not just a few samples. The 21 equipment resources are checked in an existing smoke loop.
+- **`68a36778491e83eee14f5e801eb7f28270d5637e`**: headless smoke CI timeout increased to 120 seconds to accommodate exhaustive 93-GLB resource import checks.
+- **`221e3dd84782f8c42999169edb218eb501b71474`**: captured character's death clip has time to play before the final disappearance, rather than being cut off at 0.5 seconds.
+**Verification:** source changes and commits confirmed; Godot and Actions runs not verified. GLB generation/import, Android APK and on-device graphics still require an observed green build.
+**Next:** real workflow status and logs, fix any failed imports or tests, true skinned meshes, polished textures and lighting, 18 distinct mission environments, Android performance measurements.
