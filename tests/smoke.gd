@@ -158,6 +158,18 @@ func _run() -> void:
 	_assert_ok(authored_boss_visual.find_child("AuthoredCharacter", true, false) != null, "Regional boss imports its dedicated 3D scene")
 	_assert_ok(authored_boss_visual.find_child("EmberHorn1", true, false) != null or authored_boss_visual.find_child("GlacierSpire0", true, false) != null, "Regional boss retains authored physical landmarks")
 	authored_boss_visual.queue_free()
+	# All 72 character assets must import, not only representative samples.
+	var character_paths: Array[String] = []
+	for hero_number in range(1, 31):
+		character_paths.append("res://assets/characters/hero_%02d.glb" % hero_number)
+	for region_number in range(6):
+		character_paths.append("res://assets/characters/boss_region_%d.glb" % region_number)
+		for chess_class in ["p", "r", "n", "b", "q", "k"]:
+			character_paths.append("res://assets/characters/enemy_%s_region_%d.glb" % [chess_class, region_number])
+	_assert_ok(character_paths.size() == 72, "Exactly 72 character GLB import paths")
+	for character_path in character_paths:
+		_assert_ok(ResourceLoader.exists(character_path), "Character GLB exists: " + character_path)
+		_assert_ok(load(character_path) is PackedScene, "Character GLB imports as scene: " + character_path)
 	# Generated GLBs are required in CI before Godot import. Verify hero-ID
 	# and region-boss models really load and contain all six authored clip names.
 	var required_clips := ["idle", "move", "attack", "hit", "death", "cast"]
