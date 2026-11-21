@@ -356,6 +356,30 @@ def make_character(identifier, boss=False):
                    "Leg1":[0,.45,.25], "Leg-1":[0,-.45,-.25]},
         "cast":   {"Arm1":[0,-1.60,-.60], "Arm-1":[0,-1.60,.60]},
     }
+    # Distinct combat language: heavy guardians strike slowly, duelists
+    # slash, mystics channel with both arms, and bosses use wide windups.
+    # All variants retain the same six clip names for the runtime.
+    combat_family = family % 5
+    if combat_family == 0:
+        limb_poses["attack"]["Arm1"]=[0,-.80,-1.05,.75,0]
+        limb_poses["cast"]["Arm-1"]=[0,-.45,-1.10,-.45,0]
+    elif combat_family == 1:
+        limb_poses["attack"]["Arm1"]=[0,.45,-1.45,.55,0]
+        limb_poses["attack"]["Arm-1"]=[0,-.35,-.70,.25,0]
+    elif combat_family == 2:
+        limb_poses["attack"]["Arm1"]=[0,-.40,-1.80,.25,0]
+        limb_poses["cast"]["Arm1"]=[0,-.55,-1.55,-.55,0]
+    elif combat_family == 3:
+        limb_poses["attack"]["Arm1"]=[0,-.95,-1.45,.85,0]
+        limb_poses["attack"]["Arm-1"]=[0,-.65,-.20,.30,0]
+    else:
+        limb_poses["attack"]["Arm1"]=[0,-.20,-1.05,-.40,0]
+        limb_poses["cast"]["Arm-1"]=[0,-.65,-1.65,-.65,0]
+    if boss:
+        limb_poses["attack"]["Arm1"]=[0,-.55,-1.65,-.95,.20,0]
+        limb_poses["attack"]["Arm-1"]=[0,.30,-.85,-.35,.25,0]
+        limb_poses["cast"]["Arm1"]=[0,-.40,-1.70,-1.40,0]
+        limb_poses["cast"]["Arm-1"]=[0,-.40,-1.70,-1.40,0]
     node_ids = {node["name"]: idx for idx,node in enumerate(nodes)}
     animations=[]
     for name,(times,positions) in clips.items():
