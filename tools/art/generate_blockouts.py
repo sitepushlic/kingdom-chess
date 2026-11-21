@@ -1315,7 +1315,8 @@ def main():
             enemy_number = 31 + region*6 + class_index
             (OUT/("enemy_%s_region_%d.glb"%(chess_class.lower(),region))).write_bytes(
                 make_character("enemy_%02d"%enemy_number))
-    print("Generated 30 hero, 6 boss and 36 regional enemy GLB blockouts")
+    assert len(_PNG_CACHE)==10, "Exactly five albedo and five normal maps must be generated once per batch"
+    print("Generated 30 hero, 6 boss and 36 regional enemy GLB blockouts; 10 cached PBR texture payloads")
 
 if __name__=="__main__":
     main()
