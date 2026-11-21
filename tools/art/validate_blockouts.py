@@ -265,6 +265,13 @@ def validate(path, require_animation=True):
             limb_positions=decode_attribute(limb_primitive["attributes"]["POSITION"])
             limb_indices=decode_attribute(limb_primitive["indices"])
             assert len(limb_positions)==40 and len(limb_indices)==60, f"{path}: expected 40 vertices / 20 triangles per deforming limb"
+            ring_levels=sorted({round(vertex[1],5) for vertex in limb_positions})
+            assert len(ring_levels)==3, f"{path}: missing geometric elbow/knee ring"
+            ring_widths=[]
+            for level in ring_levels:
+                ring_vertices=[vertex for vertex in limb_positions if abs(vertex[1]-level)<1e-4]
+                ring_widths.append(max(vertex[0] for vertex in ring_vertices)-min(vertex[0] for vertex in ring_vertices))
+            assert ring_widths[0]<ring_widths[1]<ring_widths[2], f"{path}: untapered limb silhouette"
             assert any(abs(weights[1]-.5)<1e-5 for weights in limb_weights), f"{path}: missing balanced elbow/knee ring weights"
             assert all(abs(sum(weights)-1)<1e-5 for weights in limb_weights), f"{path}: nonnormalized limb skin weights"
             assert all(all(0<=joint<2 for joint in joints) for joints in limb_joints), f"{path}: invalid limb skin joint index"
