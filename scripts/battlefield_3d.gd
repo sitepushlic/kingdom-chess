@@ -698,18 +698,22 @@ func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bo
 	elif kind == "P":
 		_ring(0.145, 0.021, accent, unit, Vector3(0, 0.65, 0))
 	if is_boss:
-		_add_region_boss_costume(unit)
+		# Imported bosses already carry their own regional horns, crystals,
+		# wings and relics. Avoid masking them with a generic second costume.
+		if unit.get_node_or_null("AuthoredCharacter") == null:
+			_add_region_boss_costume(unit)
 		var shadow_ring := _cylinder(0.43, 0.035, boss_crown, unit, Vector3(0, 0.12, 0))
 		shadow_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		var dark_crown := _cylinder(0.33, 0.20, boss_crown, unit, Vector3(0, 1.23, 0))
-		dark_crown.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-		for n in range(7):
-			var angle := float(n) * TAU / 7.0
-			var horn := _cylinder(0.065, 0.34, boss_crown, unit, Vector3(cos(angle) * 0.28, 1.47, sin(angle) * 0.28), 0.0)
-			horn.rotation.z = sin(angle) * 0.28
-			horn.rotation.x = cos(angle) * 0.28
-		for side in [-1.0, 1.0]:
-			_sphere(0.11, boss_crown, unit, Vector3(side * 0.29, 0.93, -0.16))
+		if unit.get_node_or_null("AuthoredCharacter") == null:
+			var dark_crown := _cylinder(0.33, 0.20, boss_crown, unit, Vector3(0, 1.23, 0))
+			dark_crown.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+			for n in range(7):
+				var angle := float(n) * TAU / 7.0
+				var horn := _cylinder(0.065, 0.34, boss_crown, unit, Vector3(cos(angle) * 0.28, 1.47, sin(angle) * 0.28), 0.0)
+				horn.rotation.z = sin(angle) * 0.28
+				horn.rotation.x = cos(angle) * 0.28
+			for side in [-1.0, 1.0]:
+				_sphere(0.11, boss_crown, unit, Vector3(side * 0.29, 0.93, -0.16))
 		unit.scale = Vector3.ONE * 1.17
 	var bar_back := _box(Vector3(0.73, 0.085, 0.085), dark_material, unit, Vector3(0, 1.76, 0))
 	bar_back.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
