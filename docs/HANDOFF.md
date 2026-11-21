@@ -166,3 +166,8 @@ For EVERY future implementation session:
 - Commit `15e62e1`: battle redraw feeds current poison statuses to the 3D battlefield; status markers clear outside active raid battles.
 - Commit `3b1964f`: smoke tests assert marker creation and removal.
 - Latest CI after these commits requires verification. Known limitations: marker is a simple procedural sphere rather than final authored VFX; device visibility and performance are not tested. Prioritize distinct mission win conditions, authored art, two-phone networking tests and signed Android release pipeline.
+
+## Automated development — lethal poison regression (2026-11-21)
+- Checked Actions: #199 succeeded; #200 was **cancelled**, not a successful APK build; #201 was in progress at session start (https://github.com/sitepushlic/kingdom-chess/actions/runs/44868700226). A run number of 200 does not establish successful delivery.
+- Commit `1a114c9` (`tests/smoke.gd`): added gameplay smoke assertions that a two-tick persistent poison status can lethally defeat the allied king, removes the dead king from the board and clears remaining poison statuses. Existing poison cleanup and reset coverage remains.
+- CI for this new commit is not yet verified; check newest run and artifact upload, fix any failures before claiming a passing APK. Next: genuinely distinct mission objectives and victory rules, authored 3D models/animation, Android device and LAN QA, signed release pipeline. Prototype is not commercial-ready.
