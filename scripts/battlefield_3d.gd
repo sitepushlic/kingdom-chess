@@ -798,6 +798,14 @@ func set_region(region_index: int) -> void:
 	rim_light.light_energy = 1.25 if region_index == 5 else 1.6
 	_rebuild_region_scenery(region_index, palette)
 	region_scenery.visible = visual_quality > 0
+	# Existing boss geometry is region-specific: rebuild it when changing biomes.
+	# Preserve its square and avoid rebuilding ordinary pieces or chess state.
+	if piece_nodes.has(4) and str(piece_types.get(4, "")) == "k" and not moving_nodes.has(4):
+		var previous_boss: Node3D = piece_nodes[4]
+		previous_boss.queue_free()
+		var refreshed_boss: Node3D = _build_piece("k", true)
+		refreshed_boss.position = _square_position(4)
+		piece_nodes[4] = refreshed_boss
 
 func set_hazards(cells: Array[int], modifier: String) -> void:
 	if active_hazards == cells and hazard_type == modifier: return
@@ -1037,7 +1045,10 @@ func hit(index: int, healing: bool = false) -> void:
 	shock_tween.chain().tween_callback(shock.queue_free)
 	var actor: Node3D = piece_nodes[index]
 	var hit_rig: Node3D = actor.get_meta("visual_rig", null)
-	if hit_rig != null: _animate_limbs(hit_rig, "heal" if healing else "hit")
+	if hit_rig != null:
+		if not healing: _play_authored_clip(hit_rig, "hit")
+		else: _play_authored_clip(hit_rig, "cast")
+		_animate_limbs(hit_rig, "heal" if healing else "hit")
 	var start_scale: Vector3 = actor.scale
 	var tween := create_tween()
 	tween.tween_property(actor, "scale", start_scale * (1.18 if healing else 0.78), 0.10)
