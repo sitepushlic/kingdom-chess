@@ -1777,19 +1777,24 @@ func _spawn_impact_sparks(index: int, healing: bool) -> void:
 	var count: int = 5 if visual_quality == 1 else 9
 	var origin: Vector3 = _square_position(index) + Vector3(0, 0.65, 0)
 	var tint: Color = Color("#75ffd0") if healing else Color("#ffbd65")
-	var spark_mat: StandardMaterial3D = _material(tint, 0.12, 0.22, tint)
-	spark_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	spark_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	var spark_mesh := SphereMesh.new()
-	spark_mesh.radius = 0.045
-	spark_mesh.height = 0.09
-	spark_mesh.radial_segments = 6
-	spark_mesh.rings = 3
+	var spark_key: String = "heal_sparks" if healing else "damage_sparks"
+	if not impact_materials.has(spark_key):
+		var spark_mat := _material(tint, 0.12, 0.22, tint)
+		spark_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		spark_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		impact_materials[spark_key] = spark_mat
+	if not primitive_mesh_cache.has("hit_spark_sphere"):
+		var spark_mesh := SphereMesh.new()
+		spark_mesh.radius = 0.045
+		spark_mesh.height = 0.09
+		spark_mesh.radial_segments = 6
+		spark_mesh.rings = 3
+		primitive_mesh_cache["hit_spark_sphere"] = spark_mesh
 	for n in range(count):
 		var angle: float = TAU * float(n) / float(count) + float(index) * 0.37
 		var spark := MeshInstance3D.new()
-		spark.mesh = spark_mesh
-		spark.material_override = spark_mat
+		spark.mesh = primitive_mesh_cache["hit_spark_sphere"]
+		spark.material_override = impact_materials[spark_key]
 		spark.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		spark.position = origin
 		board_root.add_child(spark)
