@@ -296,3 +296,12 @@ Committed to `main` in this session:
 - **`631dc5868166fe680a2ffaa4dc78eb93a1bb2deb`**: added `.github/workflows/art-validation.yml`, a separate fast Python-only Actions job for all 93 GLBs, full six-skin validation, semantic animation QA, deterministic regeneration and an uploaded complexity manifest. Triggers on relevant pushes/PRs or manual dispatch; no Android SDK or Godot download required.
 **Observed:** Connected GitHub repository source and commits were inspected; local container cannot resolve github.com, has no Godot binary and cannot clone this repository. GitHub combined commit-status API returned no statuses on previous commit; this is NOT evidence of a successful workflow. The new workflow has not been observed completing. CI failures must be investigated via Actions logs, and successful Godot import/Android APK remain unverified.
 **Next:** read actual fast-art workflow logs and fix failures, then Godot import/smoke and Android APK. Only after confirmed working builds should more visual assets be added.
+
+## 32. Android release gate, visible CI diagnostics and animation validation — 2026-11-21
+This batch committed to `main`:
+- **`0dc451c150ba139ec1254ed14fd759658b2f295c`**: Android export now runs with a 300-second timeout, logs full export output, requires a nonempty APK, opens it as a ZIP, verifies `AndroidManifest.xml`, native Godot `.so` libraries, packaged game assets and ZIP integrity. Failed exports must not silently upload an invalid APK.
+- **`8d58979a568b7a56dae95581bcfc16b2ea8447b1`**: standalone 93-asset art CI publishes an Actions step summary of aggregate mesh and rig complexity.
+- **`b61485845072ca1b2ef860e0172742ecfdaac018`**, **`1e365d5c2a7cb83efa62a940905a52cd1bafbdbd`**: Android workflow always publishes the final 25 lines of import, gameplay smoke and export logs in its job summary and uploads diagnostics even on failure.
+- **`64d8b275f9584d3583c1ce540f2b4cdea3d0874d`**: corrected outdated GLB generator documentation to describe all 72 character assets and six two-joint skins.
+**Verification:** code commits saved, but **no observed successful Actions run, local Godot import or valid Android APK**. These gates make errors observable and stop invalid APK delivery; they do not themselves prove a successful build.
+**Next mandatory:** inspect the new Actions run results/logs; resolve actual Python validator, Godot importer, smoke and Android export failures before claiming a working build. Then continue detailed character geometry and on-device visual testing.
