@@ -109,6 +109,16 @@ def make_character(identifier, boss=False):
     box("Torso",(0,0.88,0),(.39,.54,.26))
     box("Waist",(0,.56,0),(.34,.17,.28),1)
     box("Head",(0,1.31,0),(.29,.30,.27),2)
+    # Readable face and layered armor details at mobile portrait scale.
+    for side in (-1,1):
+        box("Eye"+str(side),(side*.075,1.34,-.144),(.053,.047,.016),4 if boss else 1)
+        box("CheekGuard"+str(side),(side*.142,1.25,-.09),(.045,.14,.11),1)
+    box("BrowRidge",(0,1.405,-.14),(.25,.047,.04),1)
+    box("BeltBuckle",(0,.57,-.153),(.12,.10,.055),3)
+    box("ChestInsignia",(0,.92,-.143),(.16,.19,.045),3)
+    for side in (-1,1):
+        box("Gauntlet"+str(side),(side*.30,.66,-.03),(.15,.14,.19),1)
+        box("ShinPlate"+str(side),(side*.12,.30,-.095),(.145,.25,.06),1)
     for side in (-1,1):
         box("Leg"+str(side),(side*.12,.30,0),(.13,.45,.15),1)
         box("Arm"+str(side),(side*.30,.84,0),(.13,.48,.17),1)
