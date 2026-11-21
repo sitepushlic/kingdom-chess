@@ -43,6 +43,32 @@ func _run() -> void:
 	_assert_ok(HeroRoster.valid_selection("hero_30", 0, 1) == "hero_01", "Locked hero cannot be injected into save")
 	var game = MainScene.instantiate()
 	root.add_child(game)
+	# Chess-first RPG movement: threat geometry, king safety and pinned pieces.
+	game.mode = "arena"
+	game._reset()
+	var empty_board: Array = []
+	empty_board.resize(64)
+	empty_board.fill("")
+	empty_board[60] = "K"
+	empty_board[4] = "r"
+	empty_board[52] = "R"
+	empty_board[0] = "k"
+	game.pieces = empty_board.duplicate()
+	_assert_ok(game._king_threatened(game.pieces, 1) == false, "Friendly rook blocks rook check")
+	_assert_ok(not game._legal(52, 53), "Pinned rook cannot step aside and expose king")
+	_assert_ok(game._legal(52, 44), "Pinned rook can slide along the pin line")
+	game.pieces[52] = ""
+	_assert_ok(game._king_threatened(game.pieces, 1), "Rook gives check on open file")
+	_assert_ok(not game._legal(60, 52), "King cannot move onto attacked square")
+	_assert_ok(game._legal(60, 59), "King can escape check to safe square")
+	game.pieces[4] = ""
+	game.pieces[43] = "n"
+	_assert_ok(game._chess_attacks_square(game.pieces, 43, 60), "Knight threat leaps over blockers")
+	game.pieces[43] = ""
+	game.pieces[51] = "p"
+	_assert_ok(game._chess_attacks_square(game.pieces, 51, 60), "Pawn threatens diagonal king square")
+	_assert_ok(not game._chess_attacks_square(game.pieces, 51, 59), "Pawn does not threaten forward square")
+	game._reset()
 	await process_frame
 	_assert_ok(ProjectSettings.get_setting("display/window/size/viewport_width") == 720, "Portrait viewport width")
 	_assert_ok(ProjectSettings.get_setting("display/window/size/viewport_height") == 1280, "Portrait viewport height")
