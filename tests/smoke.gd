@@ -63,6 +63,17 @@ func _run() -> void:
 	game.pieces[52] = ""
 	_assert_ok(game._restore_battle(), "Autosaved battle restores")
 	_assert_ok(game.pieces[52] == "P", "Restored piece matches saved state")
+	game.hero_poison[52] = 2
+	game._save_battle()
+	game.hero_poison.clear()
+	_assert_ok(game._restore_battle(), "Autosave with poison restores")
+	_assert_ok(int(game.hero_poison.get(52, 0)) == 2, "Poison duration survives disk save")
+	var poison_board: Array = game.pieces.duplicate()
+	var poison_corrupt: Dictionary = {"52":2, "60":3, "4":2, "999":2, "bad":1, "51":"2"}
+	var clean_poison: Dictionary = game.sanitize_hero_poison(poison_corrupt, poison_board)
+	_assert_ok(clean_poison.size() == 1 and int(clean_poison.get(52, 0)) == 2, "Poison recovery rejects enemy, invalid duration, out-of-bounds and malformed entries")
+	var poison_legacy: Dictionary = game.sanitize_hero_poison({}, poison_board)
+	_assert_ok(poison_legacy.is_empty(), "Legacy saves without poison remain compatible")
 	game._reset()
 	game.mode = "raid"
 	game._reset()
