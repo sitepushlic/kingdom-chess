@@ -358,22 +358,66 @@ def make_character(identifier, boss=False):
     torso_mesh_node=len(nodes)
     nodes.append({"name":"SkinnedTorso","mesh":len(meshes),"skin":1})
     nodes[1]["children"].append(torso_mesh_node)
+    # A three-ring chest shell provides a real waist/upper-torso profile
+    # and a 50/50 deformation band at the spine joint.
     torso_positions=[]
+    torso_normals=[]
     torso_weights=[]
     torso_joints=[]
-    for x,y,z in CUBE_VERTS:
-        torso_positions.extend((x*.195,.88+y*.27,z*.13))
-        chest_influence=.82 if y>0 else .18
-        torso_weights.extend((1.0-chest_influence,chest_influence,0.0,0.0))
-        torso_joints.extend((0,1,0,0))
-    torso_pos=accessor(torso_positions,"72f",24,5126,"VEC3",34962,
-                       ([-.195,.61,-.13],[.195,1.15,.13]))
-    torso_joint=accessor(torso_joints,"96B",24,5121,"VEC4",34962)
-    torso_weight=accessor(torso_weights,"96f",24,5126,"VEC4",34962)
+    torso_indices=[]
+    for normal,face in FACE_CORNERS:
+        if normal[1]==0:
+            # Split each side into two outward-wound four-corner panels.
+            # The shared center ring follows both SpineHip and SpineChest.
+            panels=[]
+            for upper in (False,True):
+                polygon=[]
+                for edge in range(4):
+                    v=face[edge]
+                    w=face[(edge+1)%4]
+                    inside_v=v[1]>=0 if upper else v[1]<=0
+                    inside_w=w[1]>=0 if upper else w[1]<=0
+                    if inside_v: polygon.append(v)
+                    if inside_v!=inside_w:
+                        t=-v[1]/(w[1]-v[1])
+                        polygon.append(tuple(v[k]+t*(w[k]-v[k]) for k in range(3)))
+                assert len(polygon)==4
+                panels.append(polygon)
+        else:
+            panels=[face]
+        for panel in panels:
+            base=len(torso_positions)//3
+            panel_positions=[]
+            for x,y,z in panel:
+                # Wider shoulders and a tapered waist. The waist-to-chest
+                # transition is continuous across the central ring.
+                width={-1:.165,0:.190,1:.225}[y]
+                depth={-1:.115,0:.125,1:.145}[y]
+                point=(x*width,.88+y*.27,z*depth)
+                panel_positions.append(point)
+                torso_positions.extend(point)
+                influence={-1:.18,0:.50,1:.82}[y]
+                torso_weights.extend((1-influence,influence,0,0))
+                torso_joints.extend((0,1,0,0))
+            u=[panel_positions[1][j]-panel_positions[0][j] for j in range(3)]
+            v=[panel_positions[2][j]-panel_positions[0][j] for j in range(3)]
+            cross=(u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])
+            magnitude=math.sqrt(sum(component*component for component in cross))
+            assert magnitude>1e-8, "Degenerate torso panel"
+            torso_normals.extend([component/magnitude for component in cross]*4)
+            torso_indices.extend(base+index for index in (0,1,2,0,2,3))
+    torso_count=len(torso_positions)//3
+    assert torso_count==40
+    torso_pos=accessor(torso_positions,str(torso_count*3)+"f",torso_count,5126,"VEC3",34962,
+                       ([-.225,.61,-.145],[.225,1.15,.145]))
+    torso_normal=accessor(torso_normals,str(torso_count*3)+"f",torso_count,5126,"VEC3",34962)
+    torso_joint=accessor(torso_joints,str(torso_count*4)+"B",torso_count,5121,"VEC4",34962)
+    torso_weight=accessor(torso_weights,str(torso_count*4)+"f",torso_count,5126,"VEC4",34962)
+    torso_index=accessor(torso_indices,str(len(torso_indices))+"H",len(torso_indices),5123,"SCALAR",34963)
     meshes.append({"name":"DeformingTorso","primitives":[{
-        "attributes":{"POSITION":torso_pos,"NORMAL":normals,
+        "attributes":{"POSITION":torso_pos,"NORMAL":torso_normal,
                       "JOINTS_0":torso_joint,"WEIGHTS_0":torso_weight},
-        "indices":indices,"material":0}]})
+        "indices":torso_index,"material":0}]})
     torso_inverse=[]
     for y in (.70,1.03):
         torso_inverse.extend((1,0,0,0, 0,1,0,0, 0,0,1,0, 0,-y,0,1))
