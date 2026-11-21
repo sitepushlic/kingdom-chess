@@ -238,9 +238,14 @@ def make_character(identifier, boss=False):
                 continue
             # The cube is scaled around its center; rotation animates its
             # orientation, giving clear readable gestures at mobile scale.
-            def quat_z(angle):
-                return (0.0,0.0,math.sin(angle/2),math.cos(angle/2))
-            poses=[quat_z(angle) for angle in angles]
+            def limb_quat(angle):
+                # Forward/back locomotion uses X-axis rotation; lateral
+                # knockback/death gestures use Z-axis rotation.
+                half=angle/2
+                if name in ("move","attack","cast","idle"):
+                    return (math.sin(half),0.0,0.0,math.cos(half))
+                return (0.0,0.0,math.sin(half),math.cos(half))
+            poses=[limb_quat(angle) for angle in angles]
             if len(poses)!=len(times):
                 # Hold the last pose for clips with four timeline samples.
                 poses = (poses + [poses[-1]]*len(times))[:len(times)]
