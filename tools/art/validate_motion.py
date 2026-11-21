@@ -44,12 +44,17 @@ def main():
         assert abs(arm[-1][0])<1e-5, f"Hero {n}: attack does not recover to rest"
         signatures.add(tuple(round(frame[0],3) for frame in arm))
         for clip in ("idle","move","attack","hit","death","cast"):
-            for bone in ("SpineChest","CapeHem","Head"):
+            for bone in ("SpineChest","CapeHem","Head","Arm1Lower","Arm-1Lower","Leg1Lower","Leg-1Lower"):
                 quats=animation_track(doc,data,base,clip,bone)
                 assert len(quats)>=3, f"Hero {n}: {clip}/{bone} too short"
                 for q in quats:
                     assert abs(sum(x*x for x in q)-1)<1e-4, f"Hero {n}: nonunit {clip}/{bone} quaternion"
     assert len(signatures)>=5, f"Expected 5 distinct hero attack silhouettes, got {len(signatures)}"
+    for n in range(1,31):
+        doc,data,base=load(ART / f"hero_{n:02d}.glb")
+        for limb in ("Arm1Lower","Arm-1Lower","Leg1Lower","Leg-1Lower"):
+            motion=animation_track(doc,data,base,"move",limb)
+            assert max(abs(pose[0]) for pose in motion)>0.02, f"Hero {n}: {limb} never flexes during locomotion"
     for n in range(6):
         doc,data,base=load(ART / f"boss_region_{n}.glb")
         arm=animation_track(doc,data,base,"attack","Arm1")
