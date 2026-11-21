@@ -72,6 +72,14 @@ func _run() -> void:
 	game.pieces[52] = ""
 	_assert_ok(game._king_threatened(game.pieces, 1), "Rook gives check on open file")
 	_assert_ok(game.battlefield_3d != null, "3D board exists for check warning")
+	_assert_ok(game.battlefield_3d.tile_materials.size() == 2, "Chessboard uses two reusable 3D tile materials")
+	_assert_ok(game.battlefield_3d.tiles.size() == 64, "Chessboard retains all 64 3D tiles")
+	_assert_ok(game.battlefield_3d.tiles[0].material_override == game.battlefield_3d.tiles[2].material_override, "Same-color tiles share material instance")
+	_assert_ok(game.battlefield_3d.tiles[0].material_override != game.battlefield_3d.tiles[1].material_override, "Alternating chess squares keep distinct materials")
+	game.battlefield_3d.set_region(1)
+	_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == Color("#243e59"), "Region palette updates shared dark material")
+	_assert_ok(game.battlefield_3d.tile_materials[1].albedo_color == Color("#92b7d0"), "Region palette updates shared light material")
+
 	game.battlefield_3d.set_visual_quality(0)
 	_assert_ok(not game.battlefield_3d.key_light.shadow_enabled and not game.battlefield_3d.rim_light.visible, "Low mobile quality disables shadows and rim light")
 	_assert_ok(not game.battlefield_3d.region_scenery.visible, "Low mobile quality culls optional 3D region scenery")
