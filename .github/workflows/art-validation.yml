@@ -27,7 +27,18 @@ jobs:
       - name: Generate 21 equipment GLBs
         run: python3 tools/art/generate_equipment.py
       - name: Validate all GLB structures and six skins
-        run: python3 tools/art/validate_blockouts.py
+        run: |
+          mkdir -p build/logs
+          set -o pipefail
+          python3 -u tools/art/validate_blockouts.py 2>&1 | tee build/logs/glb-validation.log
+      - name: Upload GLB validation diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kingdom-chess-glb-validation-log
+          path: build/logs/glb-validation.log
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Validate animated joints and recovery
         run: python3 tools/art/validate_motion.py
       - name: Verify all 288 subdivided skinned limbs
