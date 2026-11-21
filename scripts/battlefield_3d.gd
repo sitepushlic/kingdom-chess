@@ -80,6 +80,7 @@ var health_bar_materials: Dictionary = {}
 var critical_health_material: StandardMaterial3D
 var combat_number_serial: int = 0
 var combat_number_limit: int = 18
+var active_combat_numbers: Array[Label3D] = []
 var castle_material_cache: Dictionary = {}
 # Smooth biome lighting transitions without allocating materials or extra lights.
 var region_light_target: Color = Color("#7c92b1")
@@ -1754,18 +1755,21 @@ func show_combat_number(index: int, amount: int, healing: bool = false) -> void:
 		return
 	# Limit burst spam and stagger consecutive labels on the same tile.
 	# This keeps rapid multi-hit combat readable and bounds transient 3D nodes.
-	var existing_numbers: Array[Label3D] = []
 	var same_square: int = 0
-	for child in board_root.get_children():
-		if child is Label3D and child.name.begins_with("CombatNumber"):
-			var previous: Label3D = child as Label3D
-			existing_numbers.append(previous)
-			if int(previous.get_meta("combat_cell", -1)) == index:
-				same_square += 1
-	if existing_numbers.size() >= combat_number_limit:
-		var oldest: Label3D = existing_numbers[0]
-		oldest.queue_free()
-		board_root.remove_child(oldest)
+	# Track only transient labels, never traverse the hundreds of meshes
+	# in the battlefield scene tree on each damage event.
+	for i in range(active_combat_numbers.size() - 1, -1, -1):
+		var previous: Label3D = active_combat_numbers[i]
+		if not is_instance_valid(previous) or previous.is_queued_for_deletion():
+			active_combat_numbers.remove_at(i)
+		elif int(previous.get_meta("combat_cell", -1)) == index:
+			same_square += 1
+	if active_combat_numbers.size() >= combat_number_limit:
+		var oldest: Label3D = active_combat_numbers.pop_front()
+		if is_instance_valid(oldest):
+			oldest.queue_free()
+			if oldest.get_parent() == board_root:
+				board_root.remove_child(oldest)
 	combat_number_serial += 1
 	var number := Label3D.new()
 	number.name = "CombatNumber_%d" % combat_number_serial
@@ -1780,6 +1784,7 @@ func show_combat_number(index: int, amount: int, healing: bool = false) -> void:
 	number.no_depth_test = true
 	number.position = _square_position(index) + Vector3(0.22 * float(same_square % 3 - 1), 1.9 + 0.20 * float(same_square % 4), 0.0)
 	board_root.add_child(number)
+	active_combat_numbers.append(number)
 	var float_tween := create_tween()
 	float_tween.set_parallel(true)
 	float_tween.tween_property(number, "position:y", number.position.y + 0.78, 0.85).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
