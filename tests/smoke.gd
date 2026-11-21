@@ -266,6 +266,15 @@ func _run() -> void:
 	_assert_ok(game.sanitize_hero_poison({48: 2}, invalid_poison_board).is_empty(), "Enemy pawn cannot receive allied poison status")
 	invalid_poison_board[48] = "P"
 	_assert_ok(int(game.sanitize_hero_poison({48: 2}, invalid_poison_board).get(48, 0)) == 2, "Valid hero pawn retains poison")
+	var scenery_counts: Array[int] = []
+	for region_index in range(6):
+		game.battlefield_3d.set_region(region_index)
+		var scenery := game.battlefield_3d.region_scenery
+		_assert_ok(scenery != null and scenery.get_child_count() > 25, "Region has distinct 3D environment meshes")
+		scenery_counts.append(scenery.get_child_count())
+	_assert_ok(scenery_counts[0] != scenery_counts[1], "Fortress and frostland environments use different geometry")
+	game.battlefield_3d.set_region(0)
+	_assert_ok(game.battlefield_3d.region_scenery.get_child_count() == scenery_counts[0], "Switching regions rebuilds scenery without accumulation")
 	_assert_ok(Progression.CAMPAIGN.size() == 18, "Complete 18-mission story campaign")
 	var mission_titles: Dictionary = {}
 	for mission in Progression.CAMPAIGN:
