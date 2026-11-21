@@ -9,6 +9,7 @@ var clock := 0.0
 var camera: Camera3D
 var highlights: Array[MeshInstance3D] = []
 var hazard_markers: Array[MeshInstance3D] = []
+var poison_indicators: Dictionary = {}
 var active_hazards: Array[int] = []
 var hazard_type := ""
 var hazard_materials: Dictionary = {}
@@ -308,6 +309,18 @@ func set_hazards(cells: Array[int], modifier: String) -> void:
 		var marker: MeshInstance3D = hazard_markers[index]
 		marker.visible = cells.has(index)
 		if marker.visible: marker.material_override = material
+
+func set_poison_indicators(statuses: Dictionary) -> void:
+	for cell in poison_indicators.keys():
+		if not statuses.has(cell):
+			(poison_indicators[cell] as MeshInstance3D).queue_free()
+			poison_indicators.erase(cell)
+	for cell in statuses.keys():
+		if typeof(cell) != TYPE_INT or cell < 0 or cell >= 64: continue
+		if int(statuses[cell]) <= 0 or poison_indicators.has(cell): continue
+		var marker := _sphere(0.13, hazard_materials["poison"], board_root, _square_position(cell) + Vector3(0, 2.25, 0))
+		marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		poison_indicators[cell] = marker
 
 func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int, health: Array = [], max_health: Array = []) -> void:
 	for index in range(64):
