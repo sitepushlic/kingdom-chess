@@ -53,6 +53,18 @@ func _run() -> void:
 	game.mode = "arena"
 	game._reset()
 	_assert_ok(game.valid_battle_arrays(game.pieces, game.health), "Fresh battle has valid pieces and HP arrays")
+	var valid_sync: Dictionary = game._snapshot()
+	_assert_ok(game.valid_raid_snapshot(valid_sync), "Host-generated raid snapshot passes schema validation")
+	var invalid_sync: Dictionary = valid_sync.duplicate(true)
+	invalid_sync.erase("boss_phase")
+	_assert_ok(not game.valid_raid_snapshot(invalid_sync), "Missing raid phase cannot corrupt client state")
+	invalid_sync = valid_sync.duplicate(true)
+	invalid_sync["turn"] = 0
+	_assert_ok(not game.valid_raid_snapshot(invalid_sync), "Invalid turn owner is rejected")
+	invalid_sync = valid_sync.duplicate(true)
+	invalid_sync["acted"] = [64]
+	_assert_ok(not game.valid_raid_snapshot(invalid_sync), "Out-of-range acted square is rejected")
+
 	var malformed_board: Array = game.pieces.duplicate()
 	var malformed_hp: Array = game.health.duplicate()
 	malformed_board[0] = "not_a_chess_piece"
