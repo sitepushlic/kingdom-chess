@@ -62,6 +62,8 @@ def validate(path, require_animation=True):
             png=data[start:start+view["byteLength"]]
             assert png.startswith(b"\x89PNG\r\n\x1a\n"), f"{path}: invalid embedded PNG header {png[:16]!r}, offset={view['byteOffset']}"
             assert len(png)>80 and png[-12:]==b"\x00\x00\x00\x00IEND\xaeB\x60\x82", f"{path}: truncated PNG"
+            width,height,depth,color=struct.unpack_from(">IIBB",png,16)
+            assert (width,height,depth,color)==(128,128,8,6), f"{path}: expected 128px RGBA material atlas"
         for mesh in gltf["meshes"]:
             for primitive in mesh["primitives"]:
                 attrs=primitive["attributes"]
