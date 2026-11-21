@@ -125,6 +125,20 @@ func _run() -> void:
 			_assert_ok(not game.battlefield_3d.ambient_motes[0].visible, "Medium quality disables ambient motes")
 		game._open_castle()
 		_assert_ok(game.castle_list.item_count == 5, "Castle dialog displays five upgradeable buildings")
+		game.battlefield_3d.set_castle_visual_levels({"forge":0,"barracks":5,"treasury":10,"academy":15,"infirmary":20})
+		var skyline_visual: Node3D = game.battlefield_3d.region_scenery.get_node_or_null("CastleSkyline")
+		_assert_ok(skyline_visual != null, "Upgradable castle scenery exists")
+		if skyline_visual != null:
+			for stage_index in range(5):
+				var visual_building: Node3D = skyline_visual.get_node_or_null("CastleBuilding_%d" % stage_index)
+				_assert_ok(visual_building != null, "Upgradable castle building %d exists" % stage_index)
+				if visual_building != null:
+					_assert_ok(int(visual_building.get_meta("upgrade_stage", -1)) == stage_index, "Building %d reflects its saved construction tier" % stage_index)
+					_assert_ok(visual_building.scale.y >= 1.0, "Building visual scale never collapses")
+					for ornament_index in range(4):
+						var ornament: Node3D = visual_building.get_node_or_null("UpgradeOrnament_%d" % ornament_index)
+						_assert_ok(ornament != null and ornament.visible == (ornament_index < stage_index), "Construction ornaments follow upgrade tier")
+		game.battlefield_3d.set_castle_visual_levels(game.castle)
 		var initial_castle: Dictionary = game.castle.duplicate(true)
 		var castle_gold: int = game.gold
 		var castle_wins: int = game.raid_wins
@@ -145,6 +159,7 @@ func _run() -> void:
 		game.mode = "raid"
 		_assert_ok(game._attack_bonus() == raid_attack, "Castle PvE attack bonus remains active")
 		game.castle = initial_castle
+		game.battlefield_3d.set_castle_visual_levels(initial_castle)
 		game.gold = castle_gold
 		game.raid_wins = castle_wins
 		game._save_profile()
