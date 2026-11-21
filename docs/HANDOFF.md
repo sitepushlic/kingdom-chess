@@ -1,3 +1,23 @@
+## 2026-11-21 — TACTICAL 3D CHESS READABILITY AND FALLBACK ART PERFORMANCE (LATEST)
+**User instructions:** Make maximal meaningful progress each turn, update this handoff every turn, finish game/graphics. **Do not build/export/sign APK until explicitly instructed.** Never report a successful Godot or Python test run without evidence.
+
+### Implemented on GitHub main this pass
+- `1c2c83d7` **Board cosmetics correctness:** resetting a purchased/selected board skin to region-default now restores frame wood, gold inlay and corner gem colors, not just square colors.
+- `27e89e95` **Board QA:** regression assertions for restored frame, inlay and gem colors.
+- `978ba0a5` **Fallback art performance:** share six PBR materials across hero/enemy fallback chess class costumes instead of creating three fresh StandardMaterial3D instances per actor rebuild.
+- `7ac19f99` **Fallback art QA:** material palette reuse across multiple classes.
+- `0d0883f6` **Animated tactical selection:** pulse only the selected 3D chess square using its existing highlight mesh; reset non-selected highlights' transforms and keep legal destination markers static. No new per-frame mesh/material allocations.
+- `e4a0fc75` **Selection QA:** verify pulse, static legal target and deselection reset.
+- `cf823e8b` **Capture readability:** legal attacks on enemy-occupied squares now use a dedicated amber 3D highlight; safe empty moves remain green, selection gold and boss danger red. This is visual-only and does not modify chess rules.
+- `c4b5c38f` **Capture QA:** tests enemy capture, empty destination, friendly occupancy and selection priority.
+- `46dd0878` **Persistent last-move visualization:** two preallocated low-poly 3D rings indicate the previous move's source and destination; reused each turn, with validated cell indices and explicit reset API.
+- `3a2b7e7f` **Match reset integration:** `Main._reset()` clears last-move rings when starting a fresh game.
+- `0fb5b40c` **Last-move QA:** asserts two rings, source/destination positioning, resource reuse, invalid input rejection and reset behavior.
+
+### Verification / follow-up
+- All commits are source changes to GitHub main. **No actual Godot 4.3 import, smoke test pass or rendered playtest verified in this session**; smoke assertions authored but not observed running. An update conflict on `battlefield_3d.gd` was resolved by fetching the current blob and committing against its latest SHA; unrelated concurrent updates preserved.
+- Continue: inspect first failing GitHub Actions job logs, validate 72 imported characters and 21 equipment GLBs and their animation clips, improve mesh fidelity and combat UI, then test progression and performance on hardware. APK remains paused.
+
 ## 2026-11-21 — BOARD PALETTE RESET AND TACTICAL COORDINATES (LATEST)
 **User's standing instructions:** Work in substantial batches, update HANDOFF every turn, continue completing Kingdom Chess, prioritize graphics. **No APK export/build/signing until explicitly requested.** Report unverified tests honestly.
 
