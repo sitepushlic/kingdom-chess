@@ -142,7 +142,16 @@ def main():
     arm["children"].remove(pauldron)
     doc["nodes"][1]["children"].append(pauldron)
     must_reject(pack_glb(doc,binary),"royal shoulder plate detached from animated arm")
-    print("Validator regression tests: pristine GLB accepted; 14 corrupt GLBs rejected")
+    # Forge archetype has additional articulated knee plates. Use the
+    # fourth hero (family index 3), not the royal hero_01 fixture.
+    forge_raw=(ROOT/"assets"/"characters"/"hero_04.glb").read_bytes()
+    doc,binary=read_glb(forge_raw)
+    knee=next(i for i,node in enumerate(doc["nodes"]) if node.get("name")=="ForgeKnee1")
+    shin=next(node for node in doc["nodes"] if node.get("name")=="Leg1Lower")
+    shin["children"].remove(knee)
+    doc["nodes"][1]["children"].append(knee)
+    must_reject(pack_glb(doc,binary),"forge knee plate detached from shin")
+    print("Validator regression tests: pristine GLB accepted; 15 corrupt GLBs rejected")
 
 if __name__=="__main__":
     main()
