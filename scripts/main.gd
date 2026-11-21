@@ -1850,6 +1850,10 @@ func _damage_popup(index: int, amount: int, healing: bool = false) -> void:
 		battlefield_3d.show_combat_number(index, amount, healing)
 
 	if index < 0 or index >= buttons.size(): return
+	# The 2D grid is a hidden input fallback when the 3D SubViewport is active.
+	# Avoid allocating invisible sprites, tweens and labels for every combat hit.
+	if not buttons[index].get_parent().visible:
+		return
 	_impact_effect(index, healing)
 	_animate_hit(index, healing)
 	var number := Label.new()
