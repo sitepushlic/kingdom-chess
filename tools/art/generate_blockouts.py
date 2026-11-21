@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Deterministic original GLB character mesh pipeline, no external dependencies.
+"""Deterministic original low-poly glTF 2.0 character generator.
 
-Produces 30 hero models and six region boss models with six named glTF
-animation clips. Models are intentionally stylized low-poly BLOCKOUTS, not
-final rigged production characters. Each hero gets a different costume/head
-profile, not only a material swap. Run before Godot imports the project.
+Produces 30 heroes, 36 regional enemies and 6 bosses with six named clips
+and six small two-joint GPU skins (cape, torso, arms, legs) per character.
+These are procedural blockouts, not polished production models. Run before
+Godot imports the project; the generated assets are not stored in Git.
 """
 import json
 import math
@@ -441,8 +441,8 @@ def make_character(identifier, boss=False):
                       "skeleton":pivot_index,
                       "inverseBindMatrices":inverse_index})
         limb_skin_bones[limb_name]=lower_joint_index
-    # Six named glTF clips animate the full character pivot. These are
-    # rigid transform clips, NOT skeletal animations.
+    # Six named glTF clips animate the body, rigid head pivot and all
+    # six weighted glTF skins (spine, cape, elbows and knees).
     clips = {
         "idle":([0,.5,1.0],[(0,0,0),(0,.025,0),(0,0,0)]),
         "move":([0,.18,.36],[(0,0,0),(0,.12,0),(0,0,0)]),
