@@ -234,12 +234,11 @@ func set_hero_gear(items: Array, slots: Dictionary) -> void:
 	if signature == gear_signature: return
 	gear_signature = signature
 	hero_gear = next_gear
-	for index in piece_nodes.keys():
-		var node: Node3D = piece_nodes[index]
-		node.queue_free()
-	piece_nodes.clear()
-	piece_types.clear()
-	moving_nodes.clear()
+	# Rebuild only the bearer of the selected hero's equipment.
+	# Do not destroy every chess piece (or interrupt in-flight movement)
+	# when the player changes one equipment slot.
+	if hero_model_cell >= 0 and piece_nodes.has(hero_model_cell) and not moving_nodes.has(hero_model_cell):
+		piece_types[hero_model_cell] = ""
 
 func _gear_material(slot: String) -> Material:
 	if not hero_gear.has(slot): return gold_material
@@ -647,7 +646,7 @@ func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bo
 	var bar_fill := _box(Vector3(0.69, 0.055, 0.10), _material(Color("#4edca4") if white else Color("#f26a76"), 0.15, 0.28, Color("#194735") if white else Color("#48121c")), unit, Vector3(0, 1.76, 0.02))
 	bar_fill.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	unit.set_meta("health_fill", bar_fill)
-	if white and not hero_gear.is_empty():
+	if white and selected_hero_piece and not hero_gear.is_empty():
 		if hero_gear.has("Тело"):
 			var armor_mat := _gear_material("Тело")
 			_add_rarity_insignia("Тело", unit, Vector3(0, 0.52, -0.26))
