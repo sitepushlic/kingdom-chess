@@ -17,6 +17,18 @@ var hazard_type := ""
 var hazard_materials: Dictionary = {}
 var tiles: Array[MeshInstance3D] = []
 var tile_materials: Array[StandardMaterial3D] = []
+# Visual-only chessboard palettes; ownership and selection UI are future work.
+# These colors never affect rules, hitboxes, highlights or unit statistics.
+const BOARD_STYLES: Array[Dictionary] = [
+	{"name":"Королевский мрамор", "dark":"#28384b", "light":"#b7a58c", "edge":"#433246", "metal":"#e0bb74", "gem":"#6ecfcb"},
+	{"name":"Ледяной дворец", "dark":"#31577b", "light":"#d4ecf0", "edge":"#243f62", "metal":"#9ad7ed", "gem":"#b0e8ff"},
+	{"name":"Обсидиановый трон", "dark":"#30243c", "light":"#8d748d", "edge":"#251b31", "metal":"#b77ce0", "gem":"#e9a4ff"},
+	{"name":"Изумрудный сад", "dark":"#2b5545", "light":"#c4d9b0", "edge":"#304535", "metal":"#d9bf70", "gem":"#84f0ac"}
+]
+var board_style_index := 0
+var board_edge_material: StandardMaterial3D
+var board_inlay_material: StandardMaterial3D
+var board_gem_material: StandardMaterial3D
 var hero_material: StandardMaterial3D
 var enemy_material: StandardMaterial3D
 var gold_material: StandardMaterial3D
@@ -125,6 +137,22 @@ func _ring(major_radius: float, tube_radius: float, material: Material, parent: 
 	parent.add_child(instance)
 	return instance
 
+func set_board_visual_style(style_index: int) -> void:
+	# The art selection is intentionally cosmetic. No gameplay variables
+	# or combat stats are read or changed by this method.
+	board_style_index = clampi(style_index, 0, BOARD_STYLES.size() - 1)
+	if tile_materials.size() < 2:
+		return
+	var palette: Dictionary = BOARD_STYLES[board_style_index]
+	tile_materials[0].albedo_color = Color(str(palette["dark"]))
+	tile_materials[1].albedo_color = Color(str(palette["light"]))
+	if board_edge_material != null:
+		board_edge_material.albedo_color = Color(str(palette["edge"]))
+	if board_inlay_material != null:
+		board_inlay_material.albedo_color = Color(str(palette["metal"]))
+	if board_gem_material != null:
+		board_gem_material.albedo_color = Color(str(palette["gem"]))
+
 func _ready() -> void:
 	hero_material = _material(Color("#d8e4f3"), 0.55)
 	enemy_material = _material(Color("#57283e"), 0.45)
@@ -157,7 +185,9 @@ func _ready() -> void:
 	# A sculpted chessboard frame and coordinate markers make the 3D RPG
 	# arena immediately recognizable as chess, even without the HUD.
 	var edge_wood: StandardMaterial3D = _material(Color("#433246"), 0.18, 0.32)
+	board_edge_material = edge_wood
 	var inlay: StandardMaterial3D = _material(Color("#e0bb74"), 0.72, 0.22)
+	board_inlay_material = inlay
 	for side in [-1, 1]:
 		_box(Vector3(9.1, 0.16, 0.18), edge_wood, board_root, Vector3(0, -0.035, float(side) * 4.13))
 		_box(Vector3(0.18, 0.16, 9.1), edge_wood, board_root, Vector3(float(side) * 4.13, -0.035, 0))
@@ -167,6 +197,7 @@ func _ready() -> void:
 	# squares. Keep them static and under the mobile light budget.
 	var corner_stone: StandardMaterial3D = _material(Color("#625168"), 0.28, 0.47)
 	var corner_gem: StandardMaterial3D = _material(Color("#6ecfcb"), 0.22, 0.24, Color("#327d9b"))
+	board_gem_material = corner_gem
 	for corner_x in [-1, 1]:
 		for corner_z in [-1, 1]:
 			var corner_at := Vector3(float(corner_x) * 4.25, -0.04, float(corner_z) * 4.25)
