@@ -311,3 +311,8 @@ For EVERY future implementation session:
 - `48a2b61`: added runtime `set_visual_quality(0..2)` to the 3D renderer. Low disables dynamic torch lights, rim light, directional shadows and hazard-marker animation; medium (default) uses two of four torches with shadows disabled; high restores all four torches, rim light and directional shadows. This is a rendering-quality control, **not** proof of measured FPS improvement.
 - `a9d2294`: headless smoke assertions for all three light/shadow configurations and restoring medium defaults.
 - The setting is currently internal; **no player-facing graphics setting yet**. Need Android device benchmarking (GPU timings, thermal stability, battery), optional dynamic resolution, mesh/texture LOD, and commercial-quality authored GLB assets. CI results for these commits not yet checked.
+
+## Manual session — player-facing mobile graphics settings (2026-11-21)
+- `271ae34`: main menu now has a real **ГРАФИКА** button cycling low/medium/high tiers, applies changes to `Battlefield3D.set_visual_quality` immediately and persists tier to `user://graphics.cfg` with `ConfigFile`; loads selection at startup and applies it when creating the renderer. This setting is independent of progression and battle saves.
+- `cbb22f9`: smoke tests cover menu control, tier cycling, immediate renderer update and on-disk persistence. Tests reset tier afterward.
+- CI **not yet verified** for these commits; mobile UI fit, frame-rate and battery impact require physical Android testing. The three-tier renderer remains procedural art, not commercial-grade authored character meshes.
