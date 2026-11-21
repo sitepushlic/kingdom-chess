@@ -327,13 +327,13 @@ static func normalize_progress_drop(original: Dictionary, player_level: int, rar
 	# Rebuild rarity-derived display name: never label common loot as legendary.
 	var base_name: String = str(item.get("name", "Предмет"))
 	for set_name in SET_NAMES:
-		var prefix: String = str(set_name) + ": "
-		if base_name.begins_with(prefix):
-			base_name = base_name.substr(prefix.length())
+		var set_prefix: String = str(set_name) + ": "
+		if base_name.begins_with(set_prefix):
+			base_name = base_name.substr(set_prefix.length())
 	for prefix_name in PREFIXES:
-		var prefix: String = str(prefix_name) + " "
-		if base_name.begins_with(prefix):
-			base_name = base_name.substr(prefix.length())
+		var rarity_prefix: String = str(prefix_name) + " "
+		if base_name.begins_with(rarity_prefix):
+			base_name = base_name.substr(rarity_prefix.length())
 	for trait_name in TRAITS:
 		base_name = base_name.replace(" • " + str(trait_name), "")
 	for affix_name in AFFIXES:
