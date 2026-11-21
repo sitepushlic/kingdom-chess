@@ -82,6 +82,12 @@ func _run() -> void:
 		_assert_ok(game.battlefield_3d.board_gem_halos[0].visible, "High quality enables gemstone halos")
 		game.battlefield_3d.set_visual_quality(1)
 		_assert_ok(not game.battlefield_3d.board_gem_halos[0].visible, "Default quality disables expensive halo geometry")
+		_assert_ok(game.battlefield_3d.ambient_motes.size() <= 12, "Ambient effects remain bounded on Android")
+		if game.battlefield_3d.ambient_motes.size() > 0:
+			game.battlefield_3d.set_visual_quality(2)
+			_assert_ok(game.battlefield_3d.ambient_motes[0].visible, "High quality enables ambient motes")
+			game.battlefield_3d.set_visual_quality(1)
+			_assert_ok(not game.battlefield_3d.ambient_motes[0].visible, "Medium quality disables ambient motes")
 		_assert_ok(game.battlefield_3d.BOARD_STYLES.size() == 4, "Four visual-only chessboard styles are available")
 		var original_dark: Color = game.battlefield_3d.tile_materials[0].albedo_color
 		var original_piece_count: int = game.battlefield_3d.piece_nodes.size()
