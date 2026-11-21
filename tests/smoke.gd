@@ -148,6 +148,7 @@ func _run() -> void:
 	_assert_ok(game.battlefield_3d.region_scenery.visible, "High quality restores 3D region scenery")
 	_assert_ok(game.battlefield_3d.torches.all(func(light): return light.visible), "High quality restores torch lighting")
 	_assert_ok(game.battlefield_3d.torch_flames.all(func(flame): return flame.visible), "High quality restores all flame meshes")
+	_assert_ok(game.battlefield_3d.torch_flames.all(func(flame): return flame.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF), "Decorative emissive flames never cast shadows")
 	game.battlefield_3d.set_visual_quality(1)
 	_assert_ok(not game.battlefield_3d.key_light.shadow_enabled and game.battlefield_3d.torches[0].visible and not game.battlefield_3d.torches[1].visible, "Default mobile quality uses half the torch lights")
 	_assert_ok(game.battlefield_3d.torch_flames[0].visible and not game.battlefield_3d.torch_flames[1].visible, "Medium quality culls flame meshes for disabled lights")
