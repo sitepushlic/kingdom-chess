@@ -218,7 +218,7 @@ def make_character(identifier, boss=False):
         # Forged knee plates are rigid armor and must follow knee flex,
         # just like shin guards; keep their bind-space center unchanged.
         if name.startswith("ForgeKnee"):
-            side=name[len("ForgeKnee"):]
+            side=name[-2:] if name.endswith("-1") else name[-1:]
             pivot=next((n for n in nodes if n.get("name")=="Leg"+side),None)
             if pivot is not None:
                 nodes[idx]["translation"]=[center[i]-pivot["translation"][i] for i in range(3)]
