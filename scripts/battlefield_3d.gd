@@ -148,12 +148,15 @@ func _sphere(radius: float, material: Material, parent: Node3D, at: Vector3) -> 
 
 func _ring(major_radius: float, tube_radius: float, material: Material, parent: Node3D, at: Vector3) -> MeshInstance3D:
 	var instance := MeshInstance3D.new()
-	var mesh := TorusMesh.new()
-	mesh.inner_radius = major_radius - tube_radius
-	mesh.outer_radius = major_radius + tube_radius
-	mesh.rings = 8
-	mesh.ring_segments = 24
-	instance.mesh = mesh
+	var cache_key: String = "ring:%s:%s" % [str(major_radius), str(tube_radius)]
+	if not primitive_mesh_cache.has(cache_key):
+		var mesh := TorusMesh.new()
+		mesh.inner_radius = major_radius - tube_radius
+		mesh.outer_radius = major_radius + tube_radius
+		mesh.rings = 8
+		mesh.ring_segments = 24
+		primitive_mesh_cache[cache_key] = mesh
+	instance.mesh = primitive_mesh_cache[cache_key]
 	instance.material_override = material
 	instance.position = at
 	parent.add_child(instance)
