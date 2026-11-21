@@ -1230,14 +1230,16 @@ func _run() -> void:
 	game.battlefield_3d.sync_board(game.pieces, -1, [], -1)
 	_assert_ok(game.battlefield_3d.piece_nodes.size() > 0, "3D chess models rebuild with equipped cosmetic gear")
 	var aura_test_boss: Node3D = game.battlefield_3d._build_piece("k", true, false)
-	var aura_group: Node3D = aura_test_boss.get_node_or_null("BossEnrageAura")
+	var aura_group: Node3D = aura_test_boss.find_child("BossEnrageAura", true, false) as Node3D
 	_assert_ok(aura_group != null and aura_group.get_child_count() == 7, "Boss has three crown rings and four orbiting crystal shards")
+	_assert_ok(aura_group != null and aura_group.get_parent().name == "VisualRig", "Boss aura follows animated VisualRig hierarchy")
+
 	aura_test_boss.queue_free()
 	game.battlefield_3d.set_boss_phase(2)
 	_assert_ok(game.battlefield_3d.boss_enraged, "Boss enrage switches on cinematic 3D transformation")
 	if game.battlefield_3d.piece_nodes.has(4):
 		var active_boss: Node3D = game.battlefield_3d.piece_nodes[4]
-		var active_aura: Node3D = active_boss.get_node_or_null("BossEnrageAura")
+		var active_aura: Node3D = active_boss.find_child("BossEnrageAura", true, false) as Node3D
 		if active_aura != null:
 			_assert_ok(active_aura.visible, "Boss enrage reveals animated crown aura")
 			active_aura.visible = false
