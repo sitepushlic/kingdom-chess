@@ -56,6 +56,11 @@ func _run() -> void:
 	game._tap(-1)
 	game._tap(64)
 	_assert_ok(game.pieces == before_invalid_tap, "Invalid board tap indices cannot mutate battle")
+	game.ap = 0
+	game.selected = -1
+	game._tap(48)
+	_assert_ok(game.selected == -1 and game.pieces == before_invalid_tap, "Zero action points block selecting and moving units")
+	game.ap = 2
 	_assert_ok(not game._legal(-1, 0) and not game._legal(0, 64), "Out-of-range chess moves are rejected")
 	var empty_board: Array = []
 	empty_board.resize(64)
