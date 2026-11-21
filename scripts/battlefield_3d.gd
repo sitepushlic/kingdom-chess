@@ -712,10 +712,12 @@ func pick_square(pixel: Vector2) -> int:
 
 func _process(delta: float) -> void:
 	clock += delta
-	for i in range(torch_flames.size()):
-		var flicker := sin(clock * (6.0 + float(i) * 0.27) + float(i) * 1.7)
-		torch_flames[i].scale = Vector3(0.85 + flicker * 0.12, 1.2 + flicker * 0.24, 0.85 + flicker * 0.12)
-		if torches[i].visible:
+	# Hidden lights and low-quality flames do not need per-frame updates.
+	if fx_enabled:
+		for i in range(torch_flames.size()):
+			if not torches[i].visible: continue
+			var flicker := sin(clock * (6.0 + float(i) * 0.27) + float(i) * 1.7)
+			torch_flames[i].scale = Vector3(0.85 + flicker * 0.12, 1.2 + flicker * 0.24, 0.85 + flicker * 0.12)
 			torches[i].light_energy = 1.15 + flicker * 0.22
 	for n in range(animated_scenery.size()):
 		if not fx_enabled: break
