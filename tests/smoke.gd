@@ -52,6 +52,18 @@ func _run() -> void:
 	# Chess-first RPG movement: threat geometry, king safety and pinned pieces.
 	game.mode = "arena"
 	game._reset()
+	_assert_ok(game.valid_battle_arrays(game.pieces, game.health), "Fresh battle has valid pieces and HP arrays")
+	var malformed_board: Array = game.pieces.duplicate()
+	var malformed_hp: Array = game.health.duplicate()
+	malformed_board[0] = "not_a_chess_piece"
+	_assert_ok(not game.valid_battle_arrays(malformed_board, malformed_hp), "Malformed network piece is rejected")
+	malformed_board[0] = game.pieces[0]
+	malformed_hp[0] = -1
+	_assert_ok(not game.valid_battle_arrays(malformed_board, malformed_hp), "Negative network HP is rejected")
+	malformed_hp[0] = game.health[0]
+	malformed_hp[10] = 1000001
+	_assert_ok(not game.valid_battle_arrays(malformed_board, malformed_hp), "Excessive network HP is rejected")
+
 	var before_invalid_tap: Array = game.pieces.duplicate()
 	game._tap(-1)
 	game._tap(64)
