@@ -211,3 +211,15 @@ This development batch, committed directly to `main`:
 - **`9e9cf2a9c25f82510e24706cfa74e75bc98bdfb1`**, **`be22cc628784ca650cc69962ffcf3e342641032c`**: six character animation clips now include independent BodyRig pitch/lean rotation in addition to root translation and arm/leg motion; Python validator checks every clip.
 **Build status:** GitHub commits confirmed; GitHub workflow lookup connector filters to PR-triggered runs, whereas this repository workflow triggers on push, so an empty lookup result **cannot** establish CI status. No successful Python generator, Godot import or Android APK was observed.
 **Priority 1 remaining:** run and inspect actual Actions build, fix any generated GLB import/runtime failures, deliver production-quality skinned hero/enemy/boss rigs and polished textures/materials, finish 18 levels and Android device QA.
+
+## 23. Remove double geometry and harden real GLB rendering — 2026-11-21
+Changes committed to `main` in one batch:
+- **`b6898e9199caabe3d56cfc06c5b166f3576f9186`**: imported regional boss GLBs no longer receive an overlapping generic boss costume, crown or horns; procedural boss fallback remains.
+- **`9689796e8dc425ab2a070513231f0d2ce7091ac9`**: imported hero and enemy GLBs no longer receive overlapping static class armor and fallback hero costume. A small HeroIdentity marker/crest remains for roster identity. Fallback costumes remain for missing GLBs.
+- **`5d24c3a17445353fbb4fcaebba3f3b8cd01cadf6`**: Godot smoke now checks imported animated limb hierarchy rather than wrongly requiring procedural `Arm_L` and `Leg_L` nodes when GLBs exist.
+- **`3faf9fec8f2c9e2e3b7ec9b4588387dc4a591ca6`**: smoke checks imported hero and regional boss physical landmarks.
+- **`96c33fb001ab7f852137549847e12e4faa5a5707`**: GLB validator rejects invalid transform lengths/nonfinite values/nonunit static quaternions, cycles, orphans, multi-parent nodes, and unaligned binary views.
+- **`536183de98fb5bf5e38926fb538f343278296b0c`**, **`2a0bce4954199450db20d71103abb18e7b9a8db6`**: character and equipment generators now enable backface culling for 24-vertex outward-facing cube meshes, reducing double-sided overdraw.
+- **`338bb9d86bb29150cb7047139ab82ce278e22914`**, **`12796e075cfb727db77354d66e9aac96f2e1f285`**, **`1f5a0eae9ee63829968d5e524e4748c274e13753`**: validator decodes real binary vertex/index attributes and checks face winding against normals; validates single-sided PBR materials.
+**Verification:** commits confirmed. The tests and generator have **not been executed** in this session; actual Godot import, gameplay smoke and Android build are **not confirmed**. Generated 93 GLBs remain procedural blockouts. The workflow-run lookup currently exposes only PR-triggered runs, while the project builds on push.
+**Next:** inspect actual push-triggered Actions status/logs by an available method; fix any CI failures; build proper skinned 3D models, polished VFX, scene environments and on-device QA.
