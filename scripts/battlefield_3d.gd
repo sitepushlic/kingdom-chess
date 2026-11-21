@@ -683,7 +683,13 @@ func _load_authored_character(kind: String, parent: Node3D) -> bool:
 		if hero_id.is_valid_filename() and hero_id.begins_with("hero_"):
 			path = "res://assets/characters/%s.glb" % hero_id
 	if path != "":
+		# An absent individual hero/region asset must not downgrade the whole
+		# character to an OBJ: fall back to the class GLB before static meshes.
 		var scene: PackedScene = _get_character_scene(path)
+		if scene == null:
+			var fallback_path: String = str(CHARACTER_SCENE_PATHS.get(kind.to_upper(), ""))
+			if fallback_path != "" and fallback_path != path:
+				scene = _get_character_scene(fallback_path)
 		if scene != null:
 			var model: Node = scene.instantiate()
 			if model is Node3D:
