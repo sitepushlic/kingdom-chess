@@ -532,6 +532,45 @@ func _add_humanoid_costume(kind: String, white: bool, parent: Node3D) -> void:
 			_cylinder(0.045, 0.80, trim, parent, Vector3(0.38, 0.84, 0))
 			_sphere(0.09, trim, parent, Vector3(0.38, 1.30, 0))
 
+func _add_region_boss_costume(parent: Node3D) -> void:
+	# Six visually different boss profiles; stage changes the armor and weapon
+	# outline rather than relying on a generic crown and a palette swap.
+	var region: int = clampi(current_region, 0, 5)
+	var metal: Material = boss_crown
+	match region:
+		0: # Ash tyrant: heavy furnace pauldrons and paired horns.
+			for side in [-1.0, 1.0]:
+				_box(Vector3(0.29, 0.28, 0.38), metal, parent, Vector3(side * 0.34, 1.04, 0))
+				var horn := _cylinder(0.08, 0.56, metal, parent, Vector3(side * 0.22, 1.59, 0), 0.008)
+				horn.rotation.z = side * 0.30
+		1: # Ice revenant: sharp vertical ice spikes and frozen staff.
+			for i in range(5):
+				_cylinder(0.075, 0.35 + i * 0.12, metal, parent, Vector3((float(i) - 2.0) * 0.13, 1.47, 0), 0.008)
+			_cylinder(0.065, 1.15, metal, parent, Vector3(0.43, 0.91, 0), 0.01)
+		2: # Thorn colossus: branching antlers and wide root pauldrons.
+			for side in [-1.0, 1.0]:
+				var branch := _cylinder(0.07, 0.85, metal, parent, Vector3(side * 0.27, 1.62, 0), 0.02)
+				branch.rotation.z = side * 0.42
+				_box(Vector3(0.40, 0.15, 0.28), metal, parent, Vector3(side * 0.34, 1.0, 0))
+		3: # Rift oracle: three rotating arcane halos and tall mask.
+			for i in range(3):
+				var halo := _ring(0.25 + i * 0.10, 0.035, metal, parent, Vector3(0, 1.43 + i * 0.12, 0))
+				halo.rotation.x = 0.30 + float(i) * 0.25
+			_box(Vector3(0.22, 0.43, 0.10), metal, parent, Vector3(0, 1.33, -0.16))
+		4: # Storm warden: conducting antennae and blade-like wings.
+			for side in [-1.0, 1.0]:
+				var wing := _box(Vector3(0.13, 0.68, 0.32), metal, parent, Vector3(side * 0.43, 1.15, 0.15))
+				wing.rotation.z = side * 0.45
+				_cylinder(0.045, 0.73, metal, parent, Vector3(side * 0.20, 1.62, 0), 0.005)
+		5: # Void sovereign: split crown, four spines and eclipse disc.
+			for i in range(4):
+				var angle: float = TAU * float(i) / 4.0
+				var spike := _cylinder(0.07, 0.80, metal, parent, Vector3(cos(angle) * 0.27, 1.55, sin(angle) * 0.27), 0.005)
+				spike.rotation.z = cos(angle) * 0.32
+				spike.rotation.x = sin(angle) * 0.32
+			var disc := _ring(0.38, 0.06, metal, parent, Vector3(0, 1.40, 0.20))
+			disc.rotation.x = PI * 0.45
+
 func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	var unit := Node3D.new()
 	var white := letter == letter.to_upper()
@@ -561,6 +600,7 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	elif kind == "P":
 		_ring(0.145, 0.021, accent, unit, Vector3(0, 0.65, 0))
 	if is_boss:
+		_add_region_boss_costume(unit)
 		var shadow_ring := _cylinder(0.43, 0.035, boss_crown, unit, Vector3(0, 0.12, 0))
 		shadow_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		var dark_crown := _cylinder(0.33, 0.20, boss_crown, unit, Vector3(0, 1.23, 0))
