@@ -306,3 +306,8 @@ For EVERY future implementation session:
 - Commit `1c1176e9345f5ddf9ff75d880b6d0eaa7cfa00a7`: `tests/smoke.gd` now waits one `process_frame` after adding the scene, and explicitly checks battlefield initialization before chess/check-warning assertions. This changes test sequencing, not production chess rules.
 - **CI verification pending**: the GitHub Actions list had not yet shown a run for the new commit when checked. Do not claim smoke success or APK availability for this patch. Inspect the next run and fix any remaining failures. The latest confirmed successful run in this inspection was #278, prior to the new check-warning tests.
 - Next priorities: verify test scheduling and 3D warning rendering in headless CI; implement original rigged 3D assets and animation sets, Android LOD/material budgets and real-device performance testing. Commercial visual quality remains unverified.
+
+## Immediate development — Android 3D rendering budget (2026-11-21)
+- `48a2b61`: added runtime `set_visual_quality(0..2)` to the 3D renderer. Low disables dynamic torch lights, rim light, directional shadows and hazard-marker animation; medium (default) uses two of four torches with shadows disabled; high restores all four torches, rim light and directional shadows. This is a rendering-quality control, **not** proof of measured FPS improvement.
+- `a9d2294`: headless smoke assertions for all three light/shadow configurations and restoring medium defaults.
+- The setting is currently internal; **no player-facing graphics setting yet**. Need Android device benchmarking (GPU timings, thermal stability, battery), optional dynamic resolution, mesh/texture LOD, and commercial-quality authored GLB assets. CI results for these commits not yet checked.
