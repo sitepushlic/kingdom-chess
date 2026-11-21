@@ -72,8 +72,8 @@ def validate(path, require_animation=True):
             normal_view=gltf["bufferViews"][normal_img["bufferView"]]
             normal_start=json_end+8+normal_view["byteOffset"]
             normal_png=data[normal_start:normal_start+normal_view["byteLength"]]
-            assert normal_png.startswith(b"\\x89PNG\\r\\n\\x1a\\n"), f"{path}: invalid normal PNG signature"
-            assert len(normal_png)>80 and normal_png[-12:]==b"\\x00\\x00\\x00\\x00IEND\\xaeB\\x60\\x82", f"{path}: truncated normal PNG"
+            assert normal_png.startswith(b"\x89PNG\r\n\x1a\n"), f"{path}: invalid normal PNG signature"
+            assert len(normal_png)>80 and normal_png[-12:]==b"\x00\x00\x00\x00IEND\xaeB\x60\x82", f"{path}: truncated normal PNG"
             assert struct.unpack_from(">IIBB",normal_png,16)==(128,128,8,6), f"{path}: normal PNG dimensions mismatch"
             width,height,depth,color=struct.unpack_from(">IIBB",png,16)
             assert (width,height,depth,color)==(128,128,8,6), f"{path}: expected 128px RGBA material atlas"
