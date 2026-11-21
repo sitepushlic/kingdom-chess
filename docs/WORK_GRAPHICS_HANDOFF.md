@@ -375,3 +375,10 @@ Commits on `main`:
 - **`a4581d760eb2fe070e9f87f54dea92863ed8e8a1`**: structural GLB validator requires all six distal armor pieces to be children of their appropriate lower joint for every generated character.
 **Unverified:** Changes are committed, but no complete Python generation/validation run, Godot import, CI result or Android APK is observed in this environment. The runtime placement of the reparented plates needs visual confirmation in Godot and on Android. Do not call the game production-ready.
 **Next:** retrieve and diagnose GitHub Actions run logs; fix actual failures; verify Android export, skin deformation and armor alignment; continue full 3D silhouette/environment quality work.
+
+## 41. Independent armor bind-pose QA in both CI pipelines — 2026-11-21
+- **`8dafccc7679ad811b80609984d1def37a572698c`**: created `tools/art/test_rig_attachments.py`. Parses actual generated binary GLBs, walks node parent chains, checks distal bone parentage, expected lower-joint offsets and world-space rest pose for all six rigid armor plates per character (432 plates across 72 GLBs).
+- **`c8cd10bfd2d337042c2ec490e950de12d25d476b`**: corrected a test assertion during implementation: gauntlets legitimately have negative *local* Y under the elbow; check their known original *world* Y instead (0.66 gauntlets, 0.30 shin plates, 0.12 boots).
+- **`0cfd80c90cb5575c023c8e1d07e21e138cfb2c96`**, **`3da2a4aba39c72aa954ff2cc1d7862a2e6ebcf2e`**: integrated independent rig test into Android and fast art GitHub Actions workflows.
+**Verification limits:** source commits succeeded; no full CI logs, executed 72-model generator, Godot import or Android APK confirmed in this session. The new test is scheduled to run in CI, not claimed to have passed.
+**Next:** obtain actual GitHub Actions workflow status and logs, address failing tests, verify Android APK; visually inspect armor deformation and improve 3D models after confirmed import.
