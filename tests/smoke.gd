@@ -53,6 +53,12 @@ func _run() -> void:
 	if end_turn_buttons.size() == 1:
 		_assert_ok(end_turn_buttons[0].get_parent() is VBoxContainer, "End Turn remains in fixed portrait action footer")
 	_assert_ok(game.buttons.size() == 64, "Board creates 64 interactive buttons")
+	var previous_mode: String = game.mode
+	game.mode = "arena"
+	_assert_ok(game._item_stat("attack") == 0 and game._item_stat("hp") == 0, "PvP arena ignores RPG equipment bonuses")
+	_assert_ok(game._attack_bonus() == 0 and game._armor_bonus() == 0, "PvP arena normalizes hero power")
+	_assert_ok(not game._has_trait(3), "PvP arena disables legendary equipment traits")
+	game.mode = previous_mode
 	_assert_ok(game.unit_images.size() == 64, "Board creates 64 illustrated units")
 	_assert_ok(game.hazard_overlays.size() == 64, "Animated danger warning on every square")
 	_assert_ok(game.equipment_auras.size() == 64, "Equipment auras rendered on chess units")
