@@ -173,6 +173,15 @@ def validate(path, require_animation=True):
                 lower_node=gltf["nodes"][by_name[lower_name]]
                 child_names={gltf["nodes"][i].get("name") for i in lower_node.get("children",[])}
                 assert set(plates)<=child_names, f"{path}: distal armor not attached to {lower_name}"
+        # Shoulder plates must be driven by animated upper-arm pivots.
+        for side in ("1","-1"):
+            pauldron="RoyalShoulder"+side
+            if pauldron in by_name:
+                upper=gltf["nodes"][by_name["Arm"+side]]
+                assert by_name[pauldron] in upper.get("children",[]), f"{path}: {pauldron} not arm-mounted"
+        if "RaiderShoulder" in by_name:
+            upper=gltf["nodes"][by_name["Arm-1"]]
+            assert by_name["RaiderShoulder"] in upper.get("children",[]), f"{path}: raider pauldron not arm-mounted"
         # Extra forge-class knee plates must deform with their shin bones.
         for side in ("1","-1"):
             plate="ForgeKnee"+side
