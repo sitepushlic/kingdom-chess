@@ -202,3 +202,12 @@ A substantial continuous batch was committed directly to `main`:
 - **`fb371b426ac923ba721042cbaa9b35235bc80073`**: `tools/art/export_art_report.py` emits `build/art_manifest.json` listing all 93 GLBs with SHA-256, file size, rendered triangle count, node count, materials, clip names and geometry signatures.
 - **`47bf9afe3bb358a8f0a876741b484fdb76355e4b`**, **`2788bc1626eb97c6bd69588c4bed148f530bdf1f`**: Android workflow syntax-checks, generates and uploads this manifest alongside 93-GLB art pack and import/smoke diagnostics.
 - **Verification remains pending:** scripts and CI changes committed, but the actual Python run, Godot import and Android build have not been observed succeeding. No green status should be claimed.
+
+## 22. Role identity, mobile VFX, independent body lean — 2026-11-21
+This development batch, committed directly to `main`:
+- **`3bc617624901a91e9b1cb6024a4c79e63c877faa`**: removed overlapping legacy geometry when modular GLB equipment is available, preserving fallback when absent. Prevents doubled swords, armor and relics.
+- **`ce3437997777c2e0fe3edfce1530b70296b83e87`**, **`4158dd99190bdab4fb7c796238ce12a75c65d28e`**: all 30 heroes receive explicit chess-role physical heraldry (king crown, queen diadem, rook battlements, bishop mitre, knight winged helmet, pawn banner). Validator checks each hero's expected role marker.
+- **`01e34cde45b4dc80acd600482bbabc187cd92cca`**: rare equipment (tier 4+) gains up to 1–3 socket-bound magic halos depending on graphics quality. These are static low-cost mesh rings, not particle emitters.
+- **`9e9cf2a9c25f82510e24706cfa74e75bc98bdfb1`**, **`be22cc628784ca650cc69962ffcf3e342641032c`**: six character animation clips now include independent BodyRig pitch/lean rotation in addition to root translation and arm/leg motion; Python validator checks every clip.
+**Build status:** GitHub commits confirmed; GitHub workflow lookup connector filters to PR-triggered runs, whereas this repository workflow triggers on push, so an empty lookup result **cannot** establish CI status. No successful Python generator, Godot import or Android APK was observed.
+**Priority 1 remaining:** run and inspect actual Actions build, fix any generated GLB import/runtime failures, deliver production-quality skinned hero/enemy/boss rigs and polished textures/materials, finish 18 levels and Android device QA.
