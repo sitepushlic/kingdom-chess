@@ -21,6 +21,10 @@ def make_character(identifier, boss=False):
     num = int(identifier.split("_")[-1])
     family = (num-1) % 5
     signature = (num-1)//5
+    if identifier.startswith("enemy_"):
+        # Six class profiles per biome, plus a biome-specific crest treatment.
+        signature = (num - 31) % 6
+        family = ((num - 31) % 6 + (num - 31)//6) % 5
     if boss:
         family = num % 5
         signature = num
@@ -108,6 +112,12 @@ def make_character(identifier, boss=False):
         box("MaskSpike",(0,1.57,0),(.08,.33,.10),3)
     box("WeaponGrip",(.43,.75,0),(.09,.61,.09),3)
     box("WeaponBlade",(.43,1.18,0),(.12,.47,.10),1)
+    if identifier.startswith("enemy_"):
+        region = (num - 31)//6
+        for i in range(region + 1):
+            box("RegionMark"+str(i),(-.24 + i*.085,1.02,-.19),(.06,.11,.07),3)
+        if region >= 3:
+            box("RegionBackplate",(0,.85,.21),(.43,.53,.10),1)
     if boss:
         for i in range(4):
             angle=i*math.pi/2
