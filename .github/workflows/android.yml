@@ -69,6 +69,8 @@ jobs:
           preset.write_text(text)
           PY
           keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey
+      - name: Generate original GLB character blockouts
+        run: python3 tools/art/generate_blockouts.py
       - name: Import project
         run: ./Godot_v4.3-stable_linux.x86_64 --headless --path . --editor --quit
       - name: Run gameplay smoke tests
