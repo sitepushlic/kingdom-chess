@@ -162,6 +162,14 @@ def validate(path, require_animation=True):
                 lower_node=gltf["nodes"][by_name[lower_name]]
                 child_names={gltf["nodes"][i].get("name") for i in lower_node.get("children",[])}
                 assert set(plates)<=child_names, f"{path}: distal armor not attached to {lower_name}"
+        # The authored weapon must be parented to the animated wrist.
+        right_children={gltf["nodes"][i].get("name") for i in gltf["nodes"][by_name["Arm1Lower"]].get("children",[])}
+        assert "WeaponGrip" in right_children, f"{path}: weapon grip not attached to wrist"
+        assert any(name in right_children for name in (
+            "BossRelicBlade","EnemyBasicBlade","RoyalLongsword",
+            "RaiderAxeHead","RangerBowStave","ForgeHammerHead",
+            "MageCrystal","KnightLance","KingGreatblade"
+        )), f"{path}: authored weapon geometry not attached to wrist"
         for skin_index,skin_data in enumerate(gltf["skins"]):
             assert len(skin_data["joints"])==2, f"{path}: skin {skin_index} must use two joints"
             ibm_accessor=gltf["accessors"][skin_data["inverseBindMatrices"]]
