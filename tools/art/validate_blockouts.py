@@ -122,7 +122,7 @@ def validate(path, require_animation=True):
     def read_accessor(index):
         accessor=gltf["accessors"][index]
         view=gltf["bufferViews"][accessor["bufferView"]]
-        offset=json_end+8+8+view.get("byteOffset",0)+accessor.get("byteOffset",0)
+        offset=json_end+8+view.get("byteOffset",0)+accessor.get("byteOffset",0)
         component=accessor["componentType"]
         width=COMPONENTS[accessor["type"]]
         code={5126:"f",5123:"H",5125:"I"}[component]
