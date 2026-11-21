@@ -275,6 +275,11 @@ func _run() -> void:
 	_assert_ok(scenery_counts[0] != scenery_counts[1], "Fortress and frostland environments use different geometry")
 	game.battlefield_3d.set_region(0)
 	_assert_ok(game.battlefield_3d.region_scenery.get_child_count() == scenery_counts[0], "Switching regions rebuilds scenery without accumulation")
+	for class_letter in ["P", "R", "N", "B", "Q", "K"]:
+		_assert_ok(game.battlefield_3d.CHARACTER_SCENE_PATHS.has(class_letter), "Every chess class has an authored 3D asset path")
+		var sample: Node3D = game.battlefield_3d._build_piece(class_letter)
+		_assert_ok(sample.get_meta("health_fill", null) != null, "Imported-model fallback keeps the combat health bar")
+		sample.queue_free()
 	_assert_ok(Progression.CAMPAIGN.size() == 18, "Complete 18-mission story campaign")
 	var mission_titles: Dictionary = {}
 	for mission in Progression.CAMPAIGN:
