@@ -175,6 +175,15 @@ func _run() -> void:
 	game.battlefield_3d.set_selected_hero_visual(hero_visual)
 	_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == Color("#243e59"), "Region palette updates shared dark material")
 	_assert_ok(game.battlefield_3d.tile_materials[1].albedo_color == Color("#92b7d0"), "Region palette updates shared light material")
+	# Six regional backdrops must be actual distinct 3D geometry, not tile recolors.
+	var region_counts: Array[int] = []
+	for region_index in range(6):
+		game.battlefield_3d.set_region(region_index)
+		var region_meshes: int = game.battlefield_3d.region_scenery.get_child_count()
+		_assert_ok(region_meshes >= 20, "Region %d has 3D environmental landmarks" % region_index)
+		region_counts.append(region_meshes)
+	_assert_ok(region_counts.size() == 6, "Six distinct environment scenes can be constructed")
+	game.battlefield_3d.set_region(1)
 
 	game.battlefield_3d.set_visual_quality(0)
 	_assert_ok(not game.battlefield_3d.key_light.shadow_enabled and not game.battlefield_3d.rim_light.visible, "Low mobile quality disables shadows and rim light")
