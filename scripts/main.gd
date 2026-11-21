@@ -857,7 +857,7 @@ static func sanitize_hero_poison(raw: Variant, board: Array) -> Dictionary:
 		var ticks: int = int(raw[key])
 		if ticks < 1 or ticks > 2 or float(raw[key]) != float(ticks): continue
 		if typeof(board[cell]) != TYPE_STRING: continue
-		if str(board[cell]) == "" or str(board[cell]) != str(board[cell]).to_upper(): continue
+		if not str(board[cell]) in ["K", "Q", "R", "B", "N", "P"]: continue
 		clean[cell] = ticks
 	return clean
 
