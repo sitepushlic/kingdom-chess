@@ -83,7 +83,7 @@ def validate(path, require_animation=True):
         assert CLIPS.issubset(names), f"{path}: missing clips {CLIPS - names}"
     node_names = {node.get("name") for node in gltf["nodes"]}
     if require_animation:
-        assert len(gltf.get("skins",[]))==2, f"{path}: expected separate cape and torso skin rigs"
+        assert len(gltf.get("skins",[]))==6, f"{path}: expected cape, torso, two arms and two legs skinned rigs"
         skin=gltf["skins"][0]
         assert len(skin["joints"])==2 and skin.get("inverseBindMatrices") is not None, f"{path}: invalid two-bone mantle"
         assert gltf["accessors"][skin["inverseBindMatrices"]]["type"]=="MAT4", f"{path}: inverse bind matrices must be MAT4"
@@ -91,8 +91,8 @@ def validate(path, require_animation=True):
         for joint_index in skin["joints"]:
             assert 0<=joint_index<node_count, f"{path}: invalid skin joint"
         skinned=[node for node in gltf["nodes"] if "skin" in node]
-        assert len(skinned)==2 and {node["skin"] for node in skinned}=={0,1}, f"{path}: missing torso or cape skinned mesh"
-        assert {node.get("name") for node in skinned}=={"SkinnedCape","SkinnedTorso"}, f"{path}: unexpected skinned geometry"
+        assert len(skinned)==6 and {node["skin"] for node in skinned}==set(range(6)), f"{path}: missing skinned character meshes"
+        assert {node.get("name") for node in skinned}=={"SkinnedCape","SkinnedTorso","Arm1Mesh","Arm-1Mesh","Leg1Mesh","Leg-1Mesh"}, f"{path}: unexpected skinned geometry"
         torso_skin=gltf["skins"][1]
         assert len(torso_skin["joints"])==2, f"{path}: torso must use two bones"
         assert [gltf["nodes"][i].get("name") for i in torso_skin["joints"]]==["SpineHip","SpineChest"], f"{path}: missing torso skeleton bones"
@@ -138,9 +138,14 @@ def validate(path, require_animation=True):
         for joint_name in ("Arm1","Arm-1","Leg1","Leg-1"):
             joint_index = next(i for i,node in enumerate(gltf["nodes"]) if node.get("name")==joint_name)
             joint = gltf["nodes"][joint_index]
-            assert "mesh" not in joint and len(joint.get("children",[])) >= 2, f"{path}: {joint_name} must be a pivot with attached armor"
-            child = gltf["nodes"][joint["children"][0]]
-            assert child.get("name") == joint_name+"Mesh" and "mesh" in child, f"{path}: {joint_name} must own limb mesh"
+            assert "mesh" not in joint and len(joint.get("children",[])) >= 2, f"{path}: {joint_name} must be an articulated pivot"
+            assert any(gltf["nodes"][child].get("name")==joint_name+"Lower" for child in joint["children"]), f"{path}: missing elbow/knee bone"
+            limb_mesh=next(node for node in skinned if node.get("name")==joint_name+"Mesh")
+            assert "mesh" in limb_mesh and limb_mesh["skin"]>=2, f"{path}: missing deformable limb surface"
+            limb_skin=gltf["skins"][limb_mesh["skin"]]
+            assert len(limb_skin["joints"])==2 and limb_skin["joints"][0]==joint_index, f"{path}: invalid limb skeleton"
+            limb_primitive=gltf["meshes"][limb_mesh["mesh"]]["primitives"][0]
+            assert {"POSITION","NORMAL","JOINTS_0","WEIGHTS_0"}.issubset(limb_primitive["attributes"]), f"{path}: missing weighted limb geometry"
             expected_gear = ("Gauntlet" if joint_name.startswith("Arm") else "ShinPlate") + joint_name.replace("Arm","").replace("Leg","")
             attached = [gltf["nodes"][i].get("name") for i in joint["children"]]
             assert expected_gear in attached, f"{path}: {expected_gear} must follow animated limb"
@@ -152,6 +157,8 @@ def validate(path, require_animation=True):
             assert any(channel["target"]["path"]=="rotation" and gltf["nodes"][channel["target"]["node"]]["name"]=="CapeHem" for channel in channels), f"{path}: missing skinned mantle sway track"
             assert any(channel["target"]["path"]=="rotation" and gltf["nodes"][channel["target"]["node"]]["name"]=="Head" for channel in channels), f"{path}: missing head animation"
             assert any(channel["target"]["path"]=="rotation" and gltf["nodes"][channel["target"]["node"]]["name"]=="SpineChest" for channel in channels), f"{path}: missing animated skinned torso chest"
+            for limb_name in ("Arm1","Arm-1","Leg1","Leg-1"):
+                assert any(channel["target"]["path"]=="rotation" and gltf["nodes"][channel["target"]["node"]]["name"]==limb_name+"Lower" for channel in channels), f"{path}: missing animated elbow/knee {limb_name}"
         assert any(channel["target"]["path"] == "rotation" and gltf["nodes"][channel["target"]["node"]]["name"].startswith("Arm") for channel in channels), f"{path}: missing arm animation in {animation['name']}"
         if animation["name"] in ("move","death"):
             assert any(channel["target"]["path"] == "rotation" and gltf["nodes"][channel["target"]["node"]]["name"].startswith("Leg") for channel in channels), f"{path}: missing leg animation in {animation['name']}"
