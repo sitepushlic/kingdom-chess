@@ -210,7 +210,7 @@ func _run() -> void:
 	# Gear geometry belongs only to the selected hero bearer, never to
 	# every allied piece. Gear changes must not clear unrelated board units.
 	var prior_gear: Dictionary = game.battlefield_3d.hero_gear.duplicate(true)
-	game.battlefield_3d.hero_gear = {"Оружие": {"rarity": 3, "upgrade": 0}}
+	game.battlefield_3d.hero_gear = {"Оружие": {"rarity": 3, "upgrade": 0}, "Тело": {"rarity": 3, "upgrade": 0}, "Реликвия": {"rarity": 3, "upgrade": 0}}
 	var geared_bearer: Node3D = game.battlefield_3d._build_piece("K", false, true)
 	var plain_ally: Node3D = game.battlefield_3d._build_piece("K", false, false)
 	_assert_ok(geared_bearer.find_child("Rarity_Оружие", true, false) != null, "Selected bearer receives equipped weapon")
