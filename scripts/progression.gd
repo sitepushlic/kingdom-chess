@@ -2,6 +2,38 @@ extends RefCounted
 class_name KingdomProgression
 
 const SAVE_PATH = "user://kingdom_progress.json"
+# Cosmetic-only boards. Unlock thresholds are campaign victories, not
+# PvP rating; no item, unit or combat modifier reads these fields.
+const BOARD_COSTS = [0, 300, 900, 1800]
+const BOARD_WIN_REQUIREMENTS = [0, 2, 6, 12]
+
+static func sanitize_board_collection(raw: Variant) -> Array:
+	var owned: Array = [0]
+	if typeof(raw) != TYPE_ARRAY:
+		return owned
+	for entry in raw:
+		if typeof(entry) != TYPE_INT and typeof(entry) != TYPE_FLOAT:
+			continue
+		var number: float = float(entry)
+		if not is_finite(number) or number != float(int(number)):
+			continue
+		var index: int = int(number)
+		if index > 0 and index < BOARD_COSTS.size() and not owned.has(index):
+			owned.append(index)
+	owned.sort()
+	return owned
+
+static func board_unlock_reason(index: int, owned: Array, wins: int, gold: int) -> String:
+	if index < 0 or index >= BOARD_COSTS.size():
+		return "Неизвестная доска"
+	if owned.has(index):
+		return "В коллекции"
+	if wins < BOARD_WIN_REQUIREMENTS[index]:
+		return "Нужно побед в рейдах: %d/%d" % [wins, BOARD_WIN_REQUIREMENTS[index]]
+	if gold < BOARD_COSTS[index]:
+		return "Не хватает золота: %d/%d" % [gold, BOARD_COSTS[index]]
+	return "Доступно за %d золота" % BOARD_COSTS[index]
+
 const HeroRoster = preload("res://scripts/hero_roster.gd")
 const RARITIES = ["Обычный", "Необычный", "Редкий", "Эпический", "Легендарный", "Мифический", "Реликтовый"]
 const RARITY_WEIGHTS = [42, 28, 16, 8, 4, 1.5, 0.5]
@@ -79,6 +111,10 @@ static func sanitize_profile(parsed: Dictionary) -> Dictionary:
 	profile["wins"] = safe_save_int(profile["wins"], 0, 0, 1000000000)
 	profile["dry_streak"] = safe_save_int(profile["dry_streak"], 0, 0, 100)
 	profile["selected_hero"] = HeroRoster.valid_selection(str(profile.get("selected_hero", "hero_01")), int(profile["wins"]), int(profile["level"]))
+	profile["owned_boards"] = sanitize_board_collection(profile.get("owned_boards", [0]))
+	profile["selected_board"] = safe_save_int(profile.get("selected_board", 0), 0, 0, BOARD_COSTS.size() - 1)
+	if not profile["owned_boards"].has(profile["selected_board"]):
+		profile["selected_board"] = 0
 	if typeof(profile["items"]) != TYPE_ARRAY:
 		profile["items"] = []
 	if typeof(profile.get("slots")) != TYPE_DICTIONARY:
@@ -161,7 +197,7 @@ static func is_valid_equipment_item(item: Dictionary) -> bool:
 	return true
 
 static func default_profile() -> Dictionary:
-	return {"level":1, "xp":0, "gold":0, "potions":2, "items":[], "equipped":-1, "slots":{"Оружие":-1,"Тело":-1,"Реликвия":-1}, "wins":0, "dry_streak":0, "selected_hero":"hero_01"}
+	return {"level":1, "xp":0, "gold":0, "potions":2, "items":[], "equipped":-1, "slots":{"Оружие":-1,"Тело":-1,"Реликвия":-1}, "wins":0, "dry_streak":0, "selected_hero":"hero_01", "owned_boards":[0], "selected_board":0}
 
 static func save_profile(profile: Dictionary) -> bool:
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
