@@ -187,6 +187,12 @@ func _run() -> void:
 	geared_bearer.queue_free()
 	plain_ally.queue_free()
 	game.battlefield_3d.hero_gear = prior_gear
+	# Imported modular equipment must exist for all 21 tier/slot combinations.
+	for gear_slot in ["weapon", "armor", "relic"]:
+		for gear_tier in range(7):
+			var gear_asset: String = "res://assets/equipment/%s_tier_%d.glb" % [gear_slot, gear_tier]
+			_assert_ok(ResourceLoader.exists(gear_asset), "Modular equipment GLB exists: " + gear_asset)
+			_assert_ok(load(gear_asset) is PackedScene, "Modular equipment GLB imports: " + gear_asset)
 	# Every roster ID must generate a unique physical signature, not only a tint.
 	var hero_art_signatures: Dictionary = {}
 	for hero_number in range(1, 31):
@@ -203,14 +209,18 @@ func _run() -> void:
 	# Equipment rarity must change physical geometry for all three slots.
 	var saved_gear: Dictionary = game.battlefield_3d.hero_gear.duplicate(true)
 	for slot in ["Оружие", "Тело", "Реликвия"]:
-		var previous_count := -1
+		var previous_signature := ""
 		for tier in range(7):
 			game.battlefield_3d.hero_gear[slot] = {"rarity": tier, "upgrade": 0}
 			var equipment := Node3D.new()
 			game.battlefield_3d._add_equipment_geometry(slot, equipment)
-			var mesh_count: int = equipment.get_child_count()
-			_assert_ok(mesh_count > 0 and mesh_count != previous_count, "%s tier %d has distinct equipment geometry" % [slot, tier])
-			previous_count = mesh_count
+			var all_meshes: Array[Node] = equipment.find_children("*", "MeshInstance3D", true, false)
+			var names: PackedStringArray = []
+			for mesh_node in all_meshes:
+				names.append(str(mesh_node.name))
+			var geometry_signature: String = "|".join(names)
+			_assert_ok(all_meshes.size() > 0 and geometry_signature != previous_signature, "%s tier %d has distinct equipment geometry" % [slot, tier])
+			previous_signature = geometry_signature
 			equipment.free()
 	game.battlefield_3d.hero_gear = saved_gear
 	game.battlefield_3d.set_selected_hero_visual(hero_visual)
