@@ -481,3 +481,25 @@ For EVERY future implementation session:
 3. Implement and import original authored GLB heroes and animation sets; verify license and Android rendering.
 4. Expand deterministic battle simulation and progression tests for all unlock gates, check responses, and HP rules.
 5. Profile Android hardware, then update this full handoff with measured results and exact commits. Do not claim production readiness without real test evidence.
+
+## FULL HANDOFF — 2026-11-21, multiplayer/save state validation
+
+### Product requirements and architecture
+- Godot 4.3 Android portrait chess RPG: retain chess moves, king safety and win objective; RPG HP, AP, attacks, defense and skills; 30 named heroes with unlock gates; 7 gear rarity tiers; 18 missions across 6 regions; balanced PvP; LAN co-op; commercial-quality authored 3D characters/animations, VFX, equipment and environments.
+- `scripts/main.gd`: combat, chess legality, UI, multiplayer, saves; `scripts/battlefield_3d.gd`: 3D board, models, animation, region scenery and three Android quality tiers; `scripts/progression.gd`: progression, item gates; `scripts/hero_roster.gd`: 30 hero records; `tests/smoke.gd`: Godot headless tests; `.github/workflows/android.yml`: CI smoke/export. Previous full handoffs above retain implementation history.
+
+### Changes and exact commits
+1. `91760f4da272c9ede911dc80d6adb9399942e12c`: new `valid_battle_arrays(board, hp_values)` checks exact 64-square arrays, valid chess piece glyphs, numeric finite nonnegative HP <= 1,000,000, and zero HP on empty squares. Used to reject malformed LAN snapshots before replacing live board and to reject malformed disk battle saves before restoring state. This prevents a class of corrupted/hostile payloads from entering game state.
+2. `27f33df82d32160d1dd469510adc0e503679ae0d`: smoke regression tests for valid initial state, invalid piece ID, negative HP and excessively large HP.
+3. This documentation update is the full handoff for the session.
+
+### Validation status and risk
+- **Verified:** GitHub accepted source and test changes. **Not verified:** latest Actions smoke results, Godot runtime syntax and behavior, Android APK export, real-device FPS/thermal/memory, LAN sync on two phones. The new HP invariant must be checked against every real battle snapshot, including defeat, death and save migration.
+- Known issues: king HP/checkmate/AP semantics need comprehensive simulation and endgame rules; LAN snapshot sender trust, reconnection and replay still need QA; no commercial-quality rigged character pack yet; 3D effects and 6 regions need further authored art; no physical Android performance benchmark. Current procedural graphics are not finished commercial art.
+
+### Priority sequence for next autonomous run
+1. Inspect actual CI Actions run/job logs for the latest commits; fix parse errors and failed smoke tests first. Check snapshot validator against raid/arena defeat and empty-square HP invariants.
+2. Strengthen host-authoritative LAN RPC validation and state synchronization, with tests for invalid/duplicate actions.
+3. Complete HP-aware checkmate/king defeat logic and action economy, add deterministic scenarios.
+4. Continue original authored GLB characters, gear rarity visuals, region art, animation/VFX, then profile on real Android.
+5. Record confirmed CI/export results, exact commits and remaining blockers in the next full handoff. No claims of APK/game completion without verified builds and playtests.
