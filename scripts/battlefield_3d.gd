@@ -38,6 +38,7 @@ var dark_material: StandardMaterial3D
 var board_root: Node3D
 var region_scenery: Node3D
 var animated_scenery: Array[MeshInstance3D] = []
+var biome_landmark_motion: Array[Dictionary] = []
 var torches: Array[OmniLight3D] = []
 var world_environment: WorldEnvironment
 var key_light: DirectionalLight3D
@@ -1142,6 +1143,7 @@ func _build_castle_skyline(region: int, palette: Array) -> void:
 
 func _build_biome_landmarks(region: int, stone: Material, trim: Material, magic: Material) -> void:
 	# Six authored landmark compositions, each outside the 8x8 gameplay grid.
+	biome_landmark_motion.clear()
 	# They use shared primitive meshes and no extra dynamic light sources.
 	var landmark := Node3D.new()
 	landmark.name = "BiomeLandmark_%d" % region
@@ -1215,6 +1217,12 @@ func _build_biome_landmarks(region: int, stone: Material, trim: Material, magic:
 				var spike := _cylinder(0.10, 0.68, trim, landmark, Vector3(cos(theta) * 0.58, 2.68, 7.3 + sin(theta) * 0.28), 0.0)
 				spike.rotation.z = cos(theta) * 0.30
 				spike.rotation.x = sin(theta) * 0.30
+	# Animate only four accent meshes per biome; never animate every tree or wall.
+	for part in landmark.get_children():
+		if biome_landmark_motion.size() >= 4: break
+		if part is MeshInstance3D and (part as MeshInstance3D).material_override == magic:
+			var accent_mesh: MeshInstance3D = part as MeshInstance3D
+			biome_landmark_motion.append({"node": accent_mesh, "position": accent_mesh.position, "rotation": accent_mesh.rotation})
 
 func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
 	# All scenery remains outside the playable 8x8 grid; animate only four landmark accents.
@@ -1842,6 +1850,16 @@ func _process(delta: float) -> void:
 					mote.position = origin + Vector3(0.20 * cos(wave * 1.3), -0.25 * sin(wave * 0.8), 0.20 * sin(wave * 1.3))
 				_:
 					mote.position = origin
+	if fx_enabled:
+		for n in range(biome_landmark_motion.size()):
+			var accent: Dictionary = biome_landmark_motion[n]
+			var landmark_mesh: MeshInstance3D = accent["node"]
+			if not is_instance_valid(landmark_mesh): continue
+			var phase: float = clock * (0.65 + float(n) * 0.13) + float(n) * 1.27
+			var rest: Vector3 = accent["position"]
+			landmark_mesh.position = rest + Vector3(0, sin(phase) * 0.085, 0)
+			var rest_rotation: Vector3 = accent["rotation"]
+			landmark_mesh.rotation = rest_rotation + Vector3(0, sin(phase * 0.65) * 0.15, 0)
 	for n in range(animated_scenery.size()):
 		if not fx_enabled: break
 		var orb: MeshInstance3D = animated_scenery[n]
