@@ -1148,7 +1148,9 @@ func _on_hero_roster_selected(index: int) -> void:
 	if index < 0 or index >= HeroRoster.HEROES.size(): return
 	var hero: Dictionary = HeroRoster.HEROES[index]
 	var open: bool = HeroRoster.unlocked(hero, raid_wins, player_level)
-	hero_roster_details.text = "%s • %s\n%s\nРоль: %s | Атака +%d | Защита +%d | HP +%d | Крит +%d%%\n%s" % [hero["name"], HeroRoster.TIER_NAMES[int(hero["rarity"])], hero["story"], hero["role"], hero["attack"], hero["armor"], hero["hp"], hero["crit"], "ДОСТУПЕН" if open else "ЗАДАНИЕ: " + str(hero["quest"])]
+	var progress: Dictionary = HeroRoster.quest_progress(hero, raid_wins, player_level)
+	var unlock_text: String = "ДОСТУПЕН — можно выбрать" if open else "ЗАДАНИЕ: %s\nПобеды: %d/%d | Уровень: %d/%d" % [hero["quest"], progress["wins"], progress["required_wins"], progress["level"], progress["required_level"]]
+	hero_roster_details.text = "%s • %s\n%s\nРоль: %s | Атака +%d | Защита +%d | HP +%d | Крит +%d%%\n%s" % [hero["name"], HeroRoster.TIER_NAMES[int(hero["rarity"])], hero["story"], hero["role"], hero["attack"], hero["armor"], hero["hp"], hero["crit"], unlock_text]
 
 func _choose_hero() -> void:
 	var indices := hero_roster_list.get_selected_items()
