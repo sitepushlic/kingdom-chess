@@ -1498,12 +1498,14 @@ func _king_threatened(board: Array, team: int) -> bool:
 func _move_preserves_king(source: int, destination: int) -> bool:
 	if mode == "raid": return true
 	if pieces[destination] != "":
-		# Nonlethal attacks do not move; lethal captures do. Check both outcomes
-		# against the king's safety to avoid illegal RPG pin breaks.
-		var current_safe: bool = not _king_threatened(pieces, _team(pieces[source]))
+		# The attacker only relocates when damage kills the target. For a
+		# nonlethal RPG strike the current board remains in place.
+		var attacker_team: int = _team(pieces[source])
+		var current_safe: bool = not _king_threatened(pieces, attacker_team)
 		var capture_safe: bool = _king_destination_safe(source, destination)
-		if pieces[source].to_upper() == "K": return capture_safe
-		return current_safe and capture_safe
+		var damage: int = DAMAGE.get(pieces[source].to_upper(), 0)
+		var lethal: bool = health.size() == 64 and int(health[destination]) <= damage
+		return capture_safe if lethal else current_safe
 	return _king_destination_safe(source, destination)
 
 # Pure attack geometry: pawns threaten diagonals even when a square is empty.
