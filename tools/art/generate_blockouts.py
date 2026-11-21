@@ -478,6 +478,85 @@ def make_character(identifier, boss=False):
             box("NightThroneSeal",(0,.97,-.21),(.22,.22,.075),4)
             for side in (-1, 1):
                 box("NightThroneFang"+str(side),(side*.24,1.59,.05),(.10,.40,.12),0,side*.25)
+    # Character readability pass: distinct equipment silhouettes for every
+    # roster signature, enemy chess role and regional boss. All pieces share
+    # the existing five PBR materials and beveled mesh accessors, so this
+    # adds no texture fetches, shaders, skins or draw-call material variants.
+    if identifier.startswith("hero_"):
+        # Five character families x six signatures = 30 differentiated
+        # silhouettes; details are asymmetrical to remain recognizable.
+        box("IdentityBeltBuckle",(0,.64,-.242),(.13,.11,.045),3)
+        box("IdentityBackBanner",(0,1.00,.335),(.17,.72,.055),0)
+        if signature == 0:
+            for side in (-1,1):
+                box("IdentitySunRay"+str(side),(side*.17,1.73,.02),(.075,.28,.075),3,side*.22)
+            box("IdentitySunCore",(0,1.71,-.055),(.14,.17,.09),4)
+        elif signature == 1:
+            box("IdentityScoutVisor",(0,1.43,-.206),(.33,.075,.075),1)
+            for side in (-1,1):
+                box("IdentityFeather"+str(side),(side*.28,1.63,.08),(.065,.35,.10),0,side*.25)
+        elif signature == 2:
+            box("IdentityOracleLens",(0,1.41,-.22),(.13,.14,.055),4)
+            box("IdentityOracleFocus",(0,1.81,.035),(.11,.23,.11),3)
+        elif signature == 3:
+            for side in (-1,1):
+                box("IdentityVeteranHorn"+str(side),(side*.25,1.62,.09),(.13,.37,.12),1,side*.32)
+            box("IdentityVeteranBrow",(0,1.47,-.23),(.35,.07,.07),3)
+        elif signature == 4:
+            for side in (-1,1):
+                box("IdentityMoonBlade"+str(side),(side*.22,1.72,.06),(.08,.36,.10),4,side*.20)
+            box("IdentityMoonGem",(0,1.58,-.21),(.12,.12,.075),4)
+        else:
+            box("IdentityAscendantSpire",(0,1.86,.03),(.13,.45,.13),3)
+            for side in (-1,1):
+                box("IdentityAscendantWing"+str(side),(side*.37,1.48,.16),(.17,.39,.10),4,side*.28)
+        # Every hero also receives a personal badge based on its exact ID,
+        # not merely its class: 1..30 raised marks in a compact 5x6 grid.
+        for mark in range(1 + (num-1)%5):
+            box("IdentityBadge_%02d_%d"%(num,mark),
+                ((mark-2)*.065,1.055,-.265),(.04,.055,.036),3)
+        for tier in range((num-1)//5):
+            box("IdentityRank_%02d_%d"%(num,tier),
+                (.31,.92+tier*.09,-.09),(.05,.06,.05),4)
+    elif identifier.startswith("enemy_"):
+        enemy_role = "PRNBQK"[(num-31)%6]
+        # Roles have different large-scale silhouettes; the same enemy
+        # class in six regions keeps a stable combat-readable profile.
+        if enemy_role == "P":
+            box("EnemyPawnHood",(0,1.57,.015),(.40,.24,.32),0)
+            box("EnemyPawnDagger",(.43,.70,-.08),(.07,.55,.09),1,-.18)
+        elif enemy_role == "R":
+            for side in (-1,1):
+                box("EnemyRookTower"+str(side),(side*.24,1.64,.02),(.14,.35,.15),1)
+            box("EnemyRookBulwark",(-.45,.88,-.10),(.20,.72,.35),1)
+        elif enemy_role == "N":
+            box("EnemyKnightCrest",(0,1.77,.09),(.12,.48,.20),3,-.2)
+            box("EnemyKnightLance",(.47,.99,-.08),(.07,1.22,.07),1,-.22)
+        elif enemy_role == "B":
+            box("EnemyBishopMitre",(0,1.75,.02),(.21,.44,.22),4)
+            for side in (-1,1):
+                box("EnemyBishopCharm"+str(side),(side*.36,1.07,-.09),(.10,.17,.10),4)
+        elif enemy_role == "Q":
+            for spike in range(3):
+                box("EnemyQueenCrown"+str(spike),((spike-1)*.19,1.72,.015),
+                    (.10,.25+(spike%2)*.15,.12),3)
+            box("EnemyQueenScepter",(.47,1.07,-.09),(.08,1.03,.08),4)
+        else:
+            box("EnemyKingCrown",(0,1.65,.02),(.49,.19,.39),3)
+            box("EnemyKingSeal",(0,1.04,-.27),(.22,.23,.07),4)
+    elif boss:
+        # Each biome boss gets a uniquely placed crown architecture and
+        # a readable central power core, not just a recolored humanoid.
+        for horn in range(3+num):
+            angle = 2*math.pi*horn/(3+num)
+            box("BossCrownShard_%d_%d"%(num,horn),
+                (math.cos(angle)*.31,1.83+(.12 if horn%2 else 0),
+                 math.sin(angle)*.24),
+                (.095,.34+num*.045,.105),4,math.sin(angle)*.24)
+        box("BossHeartCore_%d"%num,(0,.98,-.31),(.21+num*.025,.22+num*.02,.09),4)
+        for side in (-1,1):
+            box("BossWingArmor_%d_%d"%(num,side),
+                (side*.57,1.25,.14),(.25,.55+num*.06,.16),0,side*.24)
     # Face-readable details at tactical camera distance. Heroes receive
     # expressive gold brows and clear eye highlights; enemy eyes are
     # emissive and bosses use a single ominous visor. All reuse existing
