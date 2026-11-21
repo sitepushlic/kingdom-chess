@@ -311,8 +311,8 @@ static func roll_item_for_progress(level: int, wins: int, boss: bool = false, lu
 		item["crit"] = mini(35, (2 + cap * 3 + int(adjusted_power / 12.0)) if slot == "Оружие" else (cap if slot == "Реликвия" else 0))
 		item["lifesteal"] = mini(24, 2 + cap * 2) if slot == "Реликвия" else 0
 		item["penetration"] = mini(40, 3 + cap * 4) if slot == "Оружие" else 0
-		item["block"] = mini(35, 3 + cap * 3) if slot == "Тело" else 0
-		item["bleed"] = 0
+		item["block"] = mini(35, 2 + cap * 3) if slot == "Тело" else 0
+		item["bleed"] = mini(30, cap * 2 + int(adjusted_power / 15.0)) if slot == "Оружие" and str(item.get("affix", "")) == str(AFFIXES[3]) else 0
 	return item
 
 static func roll_item(level: int, boss: bool = false, luck: int = 0) -> Dictionary:
