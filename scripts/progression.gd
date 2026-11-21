@@ -299,7 +299,7 @@ static func roll_item_for_progress(level: int, wins: int, boss: bool = false, lu
 	item["level"] = mini(int(item["level"]), player_level)
 	var rolled_rarity: int = int(item["rarity"])
 	if rolled_rarity > cap:
-		var adjusted_power: int = maxi(1, int(item["power"]) - (rolled_rarity - cap) * (4 + int(int(item["level"]) / 8.0)))
+		var adjusted_power: int = mini(4 + int(item["level"]) * 2 + cap * (4 + int(int(item["level"]) / 8.0)) + 5, maxi(1, int(item["power"]) - (rolled_rarity - cap) * (4 + int(int(item["level"]) / 8.0))))
 		item["power"] = adjusted_power
 		item["rarity"] = cap
 		item["set_id"] = -1 if cap < 3 else int(item["set_id"])
