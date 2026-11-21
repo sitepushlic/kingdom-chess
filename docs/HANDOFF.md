@@ -1,3 +1,22 @@
+## 2026-11-21 — LARGE CONTINUOUS GAMEPLAY + 3D ART PASS (LATEST)
+**User standing instructions:** Maximize actual work per turn; always update this HANDOFF; do NOT build/export APK or resume Android SDK/signing. Avoid repeated unverifiable Godot status narration. User expects substantive game completion and high-quality character/region art.
+
+### Code merged into main in this pass
+1. **Poison visual gameplay** `a0bef091` (battlefield), `1d21e9a1` (main): enemy poison stacks now render separately from allied poison debuffs, with independently bobbing markers, proper cleanup for zero/expired stacks, and synchronization from live raid state. Existing unit-following poison movement remains. **Tests `2b3ae7a3`** cover coexistence, expiration and cleanup.
+2. **Six 3D chess role plinth crests** `cc52cbb5`: distinct geometry for pawn studs, rook battlements, knight chevrons, bishop concentric halos, queen five-jewel crown, king cross-and-gem; drawn under feet for both factions and even with GLB imports. **Tests `1adc617c`** instantiate all 12 faction-role combinations and inspect non-empty crests.
+3. **Landmark animation** `35402d45`: each of six region-specific landmarks selects up to four magical meshes for gently bobbing and rotating motion; no additional lights, meshes, shaders or particle emitters; disabled in low quality; reset per biome rebuild. **Tests `a9f16f0f`** check 1..4 live animated accents in all six regions.
+4. **Castle PBR material cache** `1ac54b8c`: four materials per biome (masonry, roof, gilding, glass) now reused across scene rebuilds. **Tests `1a1f04de`** verify six stable cache entries and same object identity on revisiting region.
+5. **Boss phase-two aura** `7a7410c1`: rotating triple-crown halo and four floating crystal shards, automatically revealed on enrage and hidden in low graphics, sharing mesh and material resources. **Tests `ce560e3c`** check 7-part boss crown geometry and visibility when boss exists.
+
+### Prior recent work (still in main)
+- Six fully different region architecture compositions and motion-specific weather; shared region materials; class-tinted impact shockwaves, sparks and trail VFX caches; 72 generated rigged character GLBs and 21 modular equipment GLBs; loot normalization and broad regression matrix; CI now runs Godot-only smoke/art validations, APK intentionally excluded.
+
+### Verification / unresolved
+- All changes committed through GitHub connector. **No local Godot binary or verified passing current GitHub Actions run.** Do not assert runtime success. Actual renderer visual QA, game smoke and balancing still required. Latest status check query yielded no statuses; PR-triggered run query empty (does not prove CI did not run).
+- 3D assets are substantial procedural models, **not yet polished final production-quality character art**. Continue improvements to silhouettes, facial features, rigged animation and environments. Preserve mobile performance and class balance.
+- IMPORTANT potential regression to verify: new smoke test creates 12 extra _build_piece nodes then queue_free; all should be freed next frame. Ensure `_add_boss_enrage_aura` is called only for boss; `set_boss_phase` updates visibility and quality tier toggles it.
+- CI filename remains `.github/workflows/android.yml` for history, but APK/Android build steps removed. **Do not build APK.**
+
 ## LOOT FALLBACK / SIX WEATHER SYSTEMS / GRAPHICS CACHE — 2026-11-21
 - **Progression `9cb0c6a`, parser-safe followup `58354db`**: replaced rare invalid loot fallback with deterministic `normalize_progress_drop(original, player_level, rarity_limit)`. Normalizes item level/rarity, recomputes power using capped original 0..5 roll bonus and recalculates all combat stats, removes gated set/trait and rebuilds rarity display name. Fixes level-2 power remaining on level-1 common gear and inconsistent rarity downgrade. Original input remains unmodified. **Tests `2340e08`**: matrix of 7 rarities × 4 source levels × all slots, with power, stat, set, trait, name and immutability assertions, plus midgame cap case.
 - **Graphics performance `c0c6a42`**: cache three PBR materials per region across repeated 3D scene rebuilds (18 bounded material objects). **Tests `6178b57`**: exactly six region material sets, identity preserved when revisiting and cache does not grow.
