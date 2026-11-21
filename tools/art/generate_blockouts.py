@@ -104,6 +104,15 @@ def make_character(identifier, boss=False):
         idx=len(nodes)
         nodes.append({"name":name,"mesh":material,"translation":list(center),"scale":[v/2 for v in size],
                       "rotation":[0,0,math.sin(angle/2),math.cos(angle/2)]})
+        if name.startswith("Gauntlet") or name.startswith("ShinPlate") or name.startswith("Boot"):
+            side=name.split("Gauntlet")[-1] if name.startswith("Gauntlet") else (name.split("ShinPlate")[-1] if name.startswith("ShinPlate") else name.split("Boot")[-1])
+            pivot_name=("Arm" if name.startswith("Gauntlet") else "Leg")+side
+            pivot=next((n for n in nodes if n.get("name")==pivot_name),None)
+            if pivot is not None:
+                node=nodes[idx]
+                node["translation"]=[center[i]-pivot["translation"][i] for i in range(3)]
+                pivot["children"].append(idx)
+                return
         nodes[1]["children"].append(idx)
     # Pivot at feet; rig node animation moves all geometry.
     box("Torso",(0,0.88,0),(.39,.54,.26))
@@ -117,11 +126,10 @@ def make_character(identifier, boss=False):
     box("BeltBuckle",(0,.57,-.153),(.12,.10,.055),3)
     box("ChestInsignia",(0,.92,-.143),(.16,.19,.045),3)
     for side in (-1,1):
-        box("Gauntlet"+str(side),(side*.30,.66,-.03),(.15,.14,.19),1)
-        box("ShinPlate"+str(side),(side*.12,.30,-.095),(.145,.25,.06),1)
-    for side in (-1,1):
         box("Leg"+str(side),(side*.12,.30,0),(.13,.45,.15),1)
         box("Arm"+str(side),(side*.30,.84,0),(.13,.48,.17),1)
+        box("Gauntlet"+str(side),(side*.30,.66,-.03),(.15,.14,.19),1)
+        box("ShinPlate"+str(side),(side*.12,.30,-.095),(.145,.25,.06),1)
         box("Boot"+str(side),(side*.12,.12,-.05),(.17,.15,.25),1)
     # Distinct armor silhouettes: 5 body archetypes.
     if family==0:
