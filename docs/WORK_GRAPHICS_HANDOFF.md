@@ -232,3 +232,12 @@ This batch committed directly to `main`:
 - **`221e3dd84782f8c42999169edb218eb501b71474`**: captured character's death clip has time to play before the final disappearance, rather than being cut off at 0.5 seconds.
 **Verification:** source changes and commits confirmed; Godot and Actions runs not verified. GLB generation/import, Android APK and on-device graphics still require an observed green build.
 **Next:** real workflow status and logs, fix any failed imports or tests, true skinned meshes, polished textures and lighting, 18 distinct mission environments, Android performance measurements.
+
+## 25. First real skinned 3D cloth rig — 2026-11-21
+This batch is the first step beyond rigid joint-rotated blockouts toward genuine glTF GPU skinning:
+- **`257937604c66dd8f482f8ff95b4e6822956e511e`**: all 72 character GLB generators now add a physically modeled mantle mesh with glTF `skins`, two actual skin joints (`CapeShoulder`, `CapeHem`), `JOINTS_0`/normalized `WEIGHTS_0` per vertex, and inverse bind matrices. All six clips animate the hem joint with independent swaying. This is a **real skinned cloth component**, not yet a full humanoid skeleton.
+- **`9597333f8ee98ac2a1683b02fc8db68757e36261`**, **`3321f06bb3cbd319229cbf58ce848daa3811ed45`**: validator checks skin structure, bind matrices, mesh attributes, animation channels, actual decoded weights, blended influences and joint indices.
+- **`c6264d4faff85cf3555f45d9a7e3a625689850f0`**, **`0d3523fd414b45f798abcd216d62b28637a873ef`**: Godot smoke now checks for an imported `Skeleton3D` with the named cape bones, rather than treating glTF skin joints as ordinary scene nodes.
+- **`af315553438d85bc5b814deeb6d38cc90031cbef`**: tapered cape silhouette, shoulder clasps and broader lower hem for more readable deformation.
+**Verification:** all commits saved to GitHub; generator, Python validator, Godot skin import, smoke tests and Android APK **not yet observed passing**. The skinned mantle is an experimental first skinning step, not evidence of production-quality full-body rigging.
+**Next:** obtain a real passing CI build and validate `Skeleton3D` import; add skinned torso/arms/legs and jointed anatomy; polished character sculpting, material variation, environments and Android QA.
