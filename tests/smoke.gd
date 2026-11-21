@@ -1139,8 +1139,17 @@ func _run() -> void:
 
 	game.battlefield_3d.sync_board(game.pieces, -1, [], -1)
 	_assert_ok(game.battlefield_3d.piece_nodes.size() > 0, "3D chess models rebuild with equipped cosmetic gear")
+	var aura_test_boss: Node3D = game.battlefield_3d._build_piece("k", true, false)
+	var aura_group: Node3D = aura_test_boss.get_node_or_null("BossEnrageAura")
+	_assert_ok(aura_group != null and aura_group.get_child_count() == 7, "Boss has three crown rings and four orbiting crystal shards")
+	aura_test_boss.queue_free()
 	game.battlefield_3d.set_boss_phase(2)
 	_assert_ok(game.battlefield_3d.boss_enraged, "Boss enrage switches on cinematic 3D transformation")
+	if game.battlefield_3d.piece_nodes.has(4):
+		var active_boss: Node3D = game.battlefield_3d.piece_nodes[4]
+		var active_aura: Node3D = active_boss.get_node_or_null("BossEnrageAura")
+		if active_aura != null:
+			_assert_ok(active_aura.visible, "Boss enrage reveals animated crown aura")
 	game.battlefield_3d.set_boss_phase(1)
 	_assert_ok(not game.battlefield_3d.boss_enraged, "Boss enrage state resets correctly")
 	# Quality-tier combat regression: low graphics must never allocate
