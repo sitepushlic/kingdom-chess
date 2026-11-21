@@ -81,7 +81,25 @@ def main():
     doc,binary=read_glb(original)
     doc["bufferViews"][0]["byteOffset"]+=1
     must_reject(pack_glb(doc,binary),"misaligned glTF buffer view")
-    print("Validator regression tests: pristine GLB accepted; 6 corrupt GLBs rejected")
+    # Reject a NaN in the weighted torso position stream.
+    doc,binary=read_glb(original)
+    node=next(node for node in doc["nodes"] if node.get("name")=="SkinnedTorso")
+    primitive=doc["meshes"][node["mesh"]]["primitives"][0]
+    acc=doc["accessors"][primitive["attributes"]["POSITION"]]
+    view=doc["bufferViews"][acc["bufferView"]]
+    binary=bytearray(binary)
+    struct.pack_into("<f",binary,view.get("byteOffset",0)+acc.get("byteOffset",0),float("nan"))
+    must_reject(pack_glb(doc,bytes(binary)),"nonfinite skinned vertex position")
+    # Reject an out-of-range bone index in the torso's joint palette.
+    doc,binary=read_glb(original)
+    node=next(node for node in doc["nodes"] if node.get("name")=="SkinnedTorso")
+    primitive=doc["meshes"][node["mesh"]]["primitives"][0]
+    acc=doc["accessors"][primitive["attributes"]["JOINTS_0"]]
+    view=doc["bufferViews"][acc["bufferView"]]
+    binary=bytearray(binary)
+    binary[view.get("byteOffset",0)+acc.get("byteOffset",0)]=7
+    must_reject(pack_glb(doc,bytes(binary)),"out-of-range torso joint index")
+    print("Validator regression tests: pristine GLB accepted; 8 corrupt GLBs rejected")
 
 if __name__=="__main__":
     main()
