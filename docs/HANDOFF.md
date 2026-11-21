@@ -1,3 +1,21 @@
+## 2026-11-21 — VISIBLE 3D COMBAT HUD AND CHARACTER IMPORT CACHE (LATEST)
+**Permanent instructions:** Do the largest practical amount of work in one turn, update this handoff every turn, prioritize finishing graphics and gameplay. **APK build/export/signing remains explicitly forbidden until user reverses instruction.** Do not claim Godot or CI success without actual logs.
+
+### GitHub main commits this turn
+- `f9b8be24` **World-space 3D damage/healing numbers:** added `Battlefield3D.show_combat_number(index, amount, healing)`, creating billboarded `Label3D` at the attacked square, mint `+HP` or amber `−damage`, dark outline, no depth-test, upward easing and fade, automatic queue_free. Invalid square/zero amount creates nothing. Addresses the real bug where old 2D square grid was hidden, so combat numbers were invisible in 3D.
+- `db70bf8b` **Gameplay integration:** `Main._damage_popup` invokes `battlefield_3d.show_combat_number` for all combat events, including damage and heals, without changing damage calculations.
+- `2f0dcf06` **3D HUD tests:** verify world-space node count, Label3D text, depth visibility, healing sign, and invalid/zero inputs.
+- `3dd81fad` **72-character scene cache:** added `character_scene_cache` and `_get_character_scene(path)`, reused by `_load_authored_character` across hero, boss and region redraws, with safe missing-scene fallback. Imported PackedScene identity is stable, each instance remains independent.
+- `b9278803` **Art import smoke QA:** iterates all 30 hero, 36 region enemy, six boss GLBs; verifies non-null imported scenes and stable cache identities; checks missing resource fallback.
+- `3a6afb21` **Invisible UI optimization:** `_damage_popup` no longer creates hidden legacy 2D damage sprite/label/tweens when 3D viewport is active; keeps fallback when 2D grid visible. Actual 3D number and hit effects still execute.
+- `bf7bc469` **Integration QA:** test triggers real gameplay `_damage_popup` and checks visible 3D output with no invisible 2D button children.
+- `8c83f144` **Cache test robustness:** optional legacy class GLBs may add extra cache entries, so verify all 72 required paths rather than incorrectly demanding cache size exactly 72.
+
+### Verification and known risks
+- All changes committed to GitHub main; **no successful Godot 4.3 run, asset generation, or CI smoke result was observed during this turn**. These are source changes and unexecuted tests, not verified gameplay footage.
+- Potential runtime issue: Label3D properties and imported GLB names require real Godot 4.3 verification. CI still performs GLB generation/validation and Godot smoke on push. Inspect first failed step logs and fix before claiming working game.
+- Remaining: actual visual inspection, higher fidelity 72-character assets and animations, six biomes, mobile GPU profiling, full game progression QA. No APK work.
+
 ## 2026-11-21 — COMBAT VFX MEMORY, BOSS REDRAW AND RIG QA (LATEST)
 **Standing user instruction:** Do maximal substantive work per turn, always update HANDOFF, finish graphics and gameplay. **Never build/export APK until explicitly asked.** Minimize repetitive status narration; no claim of verified tests without logs.
 
