@@ -171,3 +171,9 @@ For EVERY future implementation session:
 - Checked Actions: #199 succeeded; #200 was **cancelled**, not a successful APK build; #201 was in progress at session start (https://github.com/sitepushlic/kingdom-chess/actions/runs/44868700226). A run number of 200 does not establish successful delivery.
 - Commit `1a114c9` (`tests/smoke.gd`): added gameplay smoke assertions that a two-tick persistent poison status can lethally defeat the allied king, removes the dead king from the board and clears remaining poison statuses. Existing poison cleanup and reset coverage remains.
 - CI for this new commit is not yet verified; check newest run and artifact upload, fix any failures before claiming a passing APK. Next: genuinely distinct mission objectives and victory rules, authored 3D models/animation, Android device and LAN QA, signed release pipeline. Prototype is not commercial-ready.
+
+## Milestone — successful Android build beyond #200 (2026-11-21)
+- **CI #203 PASSED**: https://github.com/sitepushlic/kingdom-chess/actions/runs/44868768648 . Godot gameplay smoke tests, Android debug APK export and artifact upload all completed successfully. Builds #200–202 were superseded/cancelled by subsequent commits; #203 is the verified milestone. This is a DEBUG APK, not production-ready.
+- Commit `adff40a` (`scripts/main.gd`): poisoned status restoration now permits only known allied chess glyphs K/Q/R/B/N/P, rather than any uppercase string.
+- Commit `79eb9dd` (`tests/smoke.gd`): regression tests for invalid glyph, enemy pawn and valid hero pawn status.
+- Next: finish unique mission objectives, authored character art and animations, real Android device QA, two-device Wi-Fi tests, production signing and release readiness. Do not confuse CI run count with completeness.
