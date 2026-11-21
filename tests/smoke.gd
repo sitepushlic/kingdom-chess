@@ -1450,6 +1450,12 @@ func _run() -> void:
 	_assert_ok(game.battlefield_3d.board_root.get_child_count() > medium_fx_before, "Medium graphics tier creates visible combat impact VFX")
 	# Repeated melee/magic attack beams must reuse imported GPU resources.
 	game.battlefield_3d.attack(60, 52, false)
+	var attack_actor: Node3D = game.battlefield_3d.piece_nodes.get(60, null)
+	_assert_ok(attack_actor != null and attack_actor.has_meta("attack_motion_tween"), "3D attacker tracks its active anticipation animation")
+	var first_attack_tween: Tween = attack_actor.get_meta("attack_motion_tween") if attack_actor != null else null
+	game.battlefield_3d.attack(60, 52, false)
+	var second_attack_tween: Tween = attack_actor.get_meta("attack_motion_tween") if attack_actor != null else null
+	_assert_ok(first_attack_tween != null and not first_attack_tween.is_running() and second_attack_tween != null and second_attack_tween != first_attack_tween, "Consecutive attacks cancel conflicting actor motion tweens")
 	var physical_beam_key: String = "attack_beam:0:1:100"
 	_assert_ok(game.battlefield_3d.primitive_mesh_cache.has(physical_beam_key), "Physical attack beam mesh cached by chessboard distance")
 	var physical_beam_mesh: Mesh = game.battlefield_3d.primitive_mesh_cache.get(physical_beam_key)
