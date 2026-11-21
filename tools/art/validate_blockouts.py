@@ -107,6 +107,18 @@ def main():
         assert path.is_file(), f"missing {path}"
         counts.append(validate(path))
     assert len(counts) == 72
+    # Hero IDs must retain their canonical chess-role silhouette markers.
+    role_by_id = {
+        1:"K",2:"N",3:"B",4:"R",5:"P",6:"Q",7:"N",8:"R",9:"B",10:"K",
+        11:"N",12:"R",13:"Q",14:"B",15:"N",16:"R",17:"Q",18:"B",19:"B",20:"N",
+        21:"K",22:"Q",23:"Q",24:"K",25:"N",26:"B",27:"Q",28:"N",29:"R",30:"K",
+    }
+    role_markers={"K":"KingCrownProng","Q":"QueenDiadem","R":"RookBattlement","B":"BishopMitre","N":"KnightWing","P":"PawnBanner"}
+    for hero_id,role in role_by_id.items():
+        data=(ART / f"hero_{hero_id:02d}.glb").read_bytes()
+        json_size=struct.unpack_from("<I",data,12)[0]
+        hero_gltf=json.loads(data[20:20+json_size])
+        assert any(node.get("name","").startswith(role_markers[role]) for node in hero_gltf["nodes"]), f"hero_{hero_id:02d}: missing {role} class heraldry"
     boss_landmarks=("EmberHorn", "GlacierSpire", "ThornBranch", "RunicTablet", "AstralWing", "CrimsonWing")
     for region, landmark in enumerate(boss_landmarks):
         data=(ART / f"boss_region_{region}.glb").read_bytes()
