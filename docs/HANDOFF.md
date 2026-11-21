@@ -3,6 +3,38 @@
 Updated: 2026-11-21 (manual material optimization). Repository: https://github.com/sitepushlic/kingdom-chess ; default branch: `main`.
 This file is the persistent handoff for the next development session. Update it after every substantial implementation, with actual commits and CI status; never label the game production-ready without device and playtesting evidence.
 
+## FULL HANDOFF UPDATE — 2026-11-21, mobile rendering pass
+
+### Product and acceptance criteria
+Portrait Godot 4.3 Android tactical chess RPG. Preserve legal chess movement, king safety/checkmate, HP/AP combat, skills, progression gates and fair PvP. Required: 30 heroes, seven equipment rarities, six regions, 18 missions, LAN co-op. Commercial acceptance requires original rigged 3D heroes and enemies, bespoke rarity gear, textured authored environments, VFX/animations/audio, tested Android performance, signed release and two-device multiplayer QA. NOT production-ready.
+
+### Actual architecture
+- scripts/main.gd: chess/RPG state, UI, save, LAN.
+- scripts/progression.gd: economy, rarity gates, mission data.
+- scripts/hero_roster.gd: hero collection and unlocks.
+- scripts/battlefield_3d.gd: 3D board, lights, 3 graphics tiers, region scenery, character GLB/OBJ fallback, 3D effects.
+- tests/smoke.gd: Godot headless regressions.
+- .github/workflows/android.yml: debug APK CI.
+
+### This run: accepted commits
+- 52697048a5c677f7d73f061cb5528e75777e9b82 — 64 legal-move highlight markers reuse one material.
+- be55b01ecc83498a055c74d82cf156116eef1b77 — smoke test verifies marker count and material identity.
+- 3772c8c3a2c2fcb38cadd488d0b69716d50b716a — skip torch animation/light updates when hidden or low tier.
+- 6046f9cdc925359e1887535237b46de97442ad02 — smoke regression checks low-tier static flame.
+- This handoff commit documents all changes; older detailed history is preserved below.
+
+### Verification and known risks
+GitHub accepted four code/test commits. Godot headless tests: NOT VERIFIED. Latest GitHub Actions: NOT VERIFIED (Actions page DisabledError; available connector only lists PR-triggered runs). Debug APK artifact: NOT VERIFIED. Real Android FPS, memory, thermals, input, multiplayer: NOT VERIFIED. Shared material reduces duplicate allocations but no measured FPS gain. Low-tier torch meshes still exist. Existing six original OBJ class silhouettes are low-poly/static; imported rigged GLBs and original enemies are NOT verified. Seven-rarity insignias and six region environments remain predominantly procedural placeholders. Chess HP/checkmate interactions, LAN authority/reconnect, balance and unique mission objectives remain risks.
+
+### Exact next execution
+1. Fetch main, read this entire document and latest source. Check newest noncancelled CI logs and APK artifact, fix regressions and rerun.
+2. Execute Godot 4.3 headless smoke tests. Verify all three graphics tiers, transitions, marker sharing, animation and import paths.
+3. Deliver original rigged GLB heroes/enemies and move/attack/ability clips with PBR textures and licensing; unique equipment meshes for all seven rarities; authored regional assets and VFX. Commit assets and tests.
+4. Measure real Android FPS/draw calls/memory/thermal behavior; test portrait touch and two-phone LAN. Test chess legality, HP/AP, progression locks and save compatibility.
+5. Update full handoff with exact commit IDs, verified/unknown CI, bugs, 3D asset status, Android status and remaining tasks. Preserve historical notes. No empty commits or unsupported quality claims.
+
+---
+
 ## FULL CURRENT HANDOFF — 2026-11-21 (read this first)
 
 ### Goal and acceptance criteria
