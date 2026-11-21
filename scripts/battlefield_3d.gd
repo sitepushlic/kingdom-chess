@@ -1740,16 +1740,24 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 	# camera shake; it still plays the complete actor animation.
 	if fx_enabled and visual_quality > 0 and board_root != null and distance_vector.length_squared() > 0.0001:
 		var beam := MeshInstance3D.new()
-		var beam_mesh := CylinderMesh.new()
-		beam_mesh.top_radius = 0.045 if magical else 0.075
-		beam_mesh.bottom_radius = 0.09 if magical else 0.13
-		beam_mesh.height = maxf(0.1, start.distance_to(end))
-		beam_mesh.radial_segments = 8 if visual_quality == 1 else 12
-		beam.mesh = beam_mesh
-		var color := Color("#a978ff") if magical else Color("#ffd08a")
-		var mat := _material(color, 0.15, 0.18, color)
-		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		beam.material_override = mat
+		# One beam mesh per attack type, quality and board distance.
+		# Avoid allocating new cylinder geometry and PBR material per hit.
+		var beam_key: String = "attack_beam:%d:%d:%d" % [int(magical), visual_quality, int(roundf(start.distance_to(end) * 100.0))]
+		if not primitive_mesh_cache.has(beam_key):
+			var beam_mesh := CylinderMesh.new()
+			beam_mesh.top_radius = 0.045 if magical else 0.075
+			beam_mesh.bottom_radius = 0.09 if magical else 0.13
+			beam_mesh.height = maxf(0.1, start.distance_to(end))
+			beam_mesh.radial_segments = 8 if visual_quality == 1 else 12
+			primitive_mesh_cache[beam_key] = beam_mesh
+		beam.mesh = primitive_mesh_cache[beam_key]
+		var material_key: String = "attack_beam_magic" if magical else "attack_beam_physical"
+		if not impact_materials.has(material_key):
+			var color := Color("#a978ff") if magical else Color("#ffd08a")
+			var mat := _material(color, 0.15, 0.18, color)
+			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			impact_materials[material_key] = mat
+		beam.material_override = impact_materials[material_key]
 		beam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		beam.position = (start + end) * 0.5 + Vector3(0, 0.8, 0)
 		beam.quaternion = Quaternion(Vector3.UP, direction)
