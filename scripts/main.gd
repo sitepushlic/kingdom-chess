@@ -1923,6 +1923,7 @@ func _draw() -> void:
 		var warning_type: String = str(raid_mission.get("modifier", "none"))
 		if forecast.size() > 0 and boss_forecast.size() > 0: warning_type = "boss"
 		battlefield_3d.set_hazards(forecast, warning_type)
+		battlefield_3d.set_poison_indicators(hero_poison if mode == "raid" and winner == "" else {})
 		battlefield_3d.sync_board(pieces, selected, legal_targets, boss_target if mode == "raid" and winner == "" else -1, health, max_health)
 	if winner != "" and not battle_result_shown:
 		call_deferred("_show_result")
