@@ -1,3 +1,17 @@
+## 2026-11-21 — CI ART VALIDATION ROOT CAUSE AND TIER-SIX ARMOR FIX (LATEST)
+**Scope:** Graphics only. Do not build/export/sign APK. Preserve existing gameplay. Continue large graphics batches and update handoff each turn.
+
+### Verified GitHub Actions evidence
+- Run 44934284491, job 136937453134: Godot gameplay and 3D art verification **failed** in `Validate all generated GLB assets` after successful generation of 72 character and 21 equipment GLBs.
+- Exact error in job logs: `AssertionError: .../assets/equipment/armor_tier_6.glb: final rarity missing ascendant silhouette` at `tools/art/validate_blockouts.py:552`. Godot import and smoke steps were skipped; no Godot success can be claimed.
+- Root cause: equipment generator emitted `WeaponAscendantBlade*` and `RelicAscendantRay*` at tier 6, but armor tier 6 had only generic `ArmorCrestFin*` and crystals, with no Ascendant-named physical geometry.
+
+### Committed fix
+- `4b027da6`: `tools/art/generate_equipment.py` now generates two distinct `ArmorAscendantWing*` mesh nodes at tier 6, satisfying the existing semantic validator with visible shoulder/back silhouette extensions. This changes real GLB geometry, not just the assertion. **CI rerun pending; not yet verified passing.**
+
+### Next steps
+- Inspect the new Actions run after commit; resolve any subsequent art validation failure, then Godot import/parser/smoke failures. Review all generated hero, enemy, boss, gear models and animation clips visually; continue substantial authored graphics improvements. Keep APK paused.
+
 ## 2026-11-21 — RIG QA AND INTERRUPTED ANIMATION SAFETY (LATEST)
 **Standing instructions:** Maximize substantive development per turn, update HANDOFF each time, continue game/3D graphics. **Do NOT build/export/sign APK** until explicitly requested. Do not claim Godot or CI passed without proof.
 
