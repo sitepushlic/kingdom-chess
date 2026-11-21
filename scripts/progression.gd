@@ -183,19 +183,23 @@ static func upgrade_cap(wins: int, level: int) -> int:
 static func can_equip(item: Dictionary, wins: int, level: int) -> bool:
 	return is_valid_equipment_item(item) and int(item["level"]) <= level and int(item["rarity"]) <= rarity_cap(wins, level) and int(item["upgrade"]) <= upgrade_cap(wins, level)
 
+static func limit_reward_to_progress(item: Dictionary, wins: int, level: int) -> Dictionary:
+	var result: Dictionary = item.duplicate(true)
+	var cap: int = rarity_cap(wins, level)
+	result["rarity"] = mini(int(result.get("rarity", 0)), cap)
+	if int(result["rarity"]) < 3: result["set_id"] = -1
+	if int(result["rarity"]) < 4: result["trait_id"] = -1
+	result["upgrade"] = mini(int(result.get("upgrade", 0)), upgrade_cap(wins, level))
+	return result
+
 static func roll_item_for_progress(level: int, wins: int, boss: bool = false, luck: int = 0) -> Dictionary:
 	var item: Dictionary = roll_item(level, boss, luck)
 	var cap: int = rarity_cap(wins, level)
-	if int(item["rarity"]) > cap:
-		# Re-roll within earned rarity tiers rather than awarding unusable late-game gear.
-		for attempt in range(40):
-			item = roll_item(level, boss, 0)
-			if int(item["rarity"]) <= cap: break
-		if int(item["rarity"]) > cap:
-			item["rarity"] = cap
-			item["set_id"] = -1
-			item["trait_id"] = -1
-	return item
+	if int(item["rarity"]) <= cap: return item
+	for attempt in range(40):
+		item = roll_item(level, boss, 0)
+		if int(item["rarity"]) <= cap: return item
+	return limit_reward_to_progress(item, wins, level)
 
 static func roll_item(level: int, boss: bool = false, luck: int = 0) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
