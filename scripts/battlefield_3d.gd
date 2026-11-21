@@ -809,6 +809,7 @@ func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
 				_cylinder(0.055, 1.65, trim, region_scenery, anchor_pos + Vector3(0, 0.63, 0))
 				var banner := _box(Vector3(0.47, 0.70, 0.075), magic, region_scenery, anchor_pos + Vector3(side * 0.20, 1.05, 0))
 				banner.rotation.z = side * 0.12
+				_sphere(0.09, magic, region_scenery, anchor_pos + Vector3(0, 1.55, 0))
 			1:
 				var obelisk := _cylinder(0.24, 1.85, stone, region_scenery, anchor_pos + Vector3(0, 0.68, 0), 0.05)
 				obelisk.rotation.z = side * 0.13
