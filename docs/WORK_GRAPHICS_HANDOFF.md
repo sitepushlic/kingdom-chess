@@ -241,3 +241,8 @@ This batch is the first step beyond rigid joint-rotated blockouts toward genuine
 - **`af315553438d85bc5b814deeb6d38cc90031cbef`**: tapered cape silhouette, shoulder clasps and broader lower hem for more readable deformation.
 **Verification:** all commits saved to GitHub; generator, Python validator, Godot skin import, smoke tests and Android APK **not yet observed passing**. The skinned mantle is an experimental first skinning step, not evidence of production-quality full-body rigging.
 **Next:** obtain a real passing CI build and validate `Skeleton3D` import; add skinned torso/arms/legs and jointed anatomy; polished character sculpting, material variation, environments and Android QA.
+
+## 26. Animated neck and facial accessories — 2026-11-21
+- **`cb6ac44d457f42f7c29fb19ef56d6fd1865d5bd3`**: all 72 characters gain an independent neck/head pivot; eyes, brow, cheek guards, crowns, helmets and relevant boss horns attach to it. Six animation clips include nod/head recoil keyframes.
+- **`212d7fdf7975ccf13100faf3945f6fb16874bcba`**: Python validator requires Head pivot, parented face geometry and rotation tracks in all clips.
+**Verification:** committed; not run locally or confirmed through Godot Actions. This is articulated rigid head motion, separate from the genuinely skinned two-joint cape. Full-body skeletal deformation still not implemented.
