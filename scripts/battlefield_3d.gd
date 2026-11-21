@@ -9,6 +9,8 @@ var clock := 0.0
 var camera: Camera3D
 var highlights: Array[MeshInstance3D] = []
 var hazard_markers: Array[MeshInstance3D] = []
+var king_warning: MeshInstance3D
+var checked_king_square := -1
 var poison_indicators: Dictionary = {}
 var active_hazards: Array[int] = []
 var hazard_type := ""
@@ -137,6 +139,11 @@ func _ready() -> void:
 		hazard_marker.visible = false
 		hazard_marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		hazard_markers.append(hazard_marker)
+	# Separate elevated crown warning: does not hide movement or hazard markers.
+	king_warning = _ring(0.48, 0.055, danger_material, board_root, Vector3.ZERO)
+	king_warning.name = "KingCheckWarning"
+	king_warning.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	king_warning.visible = false
 	for x in [-4.45, 4.45]:
 		for z in [-4.45, 4.45]:
 			_cylinder(0.24, 0.18, dark_material, board_root, Vector3(x, -0.12, z))
@@ -515,6 +522,13 @@ func set_poison_indicators(statuses: Dictionary) -> void:
 		marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		poison_indicators[cell] = marker
 
+func set_checked_king(index: int) -> void:
+	checked_king_square = index if index >= 0 and index < 64 else -1
+	if king_warning == null: return
+	king_warning.visible = checked_king_square >= 0
+	if king_warning.visible:
+		king_warning.position = _square_position(checked_king_square) + Vector3(0, 0.14, 0)
+
 func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int, health: Array = [], max_health: Array = []) -> void:
 	for index in range(64):
 		var piece: String = str(pieces[index])
@@ -683,6 +697,10 @@ func _process(delta: float) -> void:
 		if is_instance_valid(orb):
 			orb.position.y = 1.60 + sin(clock * 1.8 + float(n) * 1.57) * 0.15
 			orb.scale = Vector3.ONE * (0.85 + sin(clock * 2.7 + float(n)) * 0.12)
+	if king_warning != null and king_warning.visible:
+		var pulse: float = 1.0 + 0.12 * sin(clock * 7.0)
+		king_warning.scale = Vector3(pulse, 1.0, pulse)
+		king_warning.rotation.y = clock * 0.8
 	for marker in hazard_markers:
 		if marker.visible:
 			marker.scale = Vector3(0.91 + 0.07 * sin(clock * 5.0), 1.0, 0.91 + 0.07 * sin(clock * 5.0))
