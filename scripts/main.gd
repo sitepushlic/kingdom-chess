@@ -2,6 +2,7 @@ extends Control
 
 const Progression = preload("res://scripts/progression.gd")
 const Battlefield3D = preload("res://scripts/battlefield_3d.gd")
+const HeroRoster = preload("res://scripts/hero_roster.gd")
 
 const UNIT_TEXTURES = {
 	"K": preload("res://assets/units/k.svg"),
@@ -33,6 +34,10 @@ var winner := ""
 var heal_used := false
 var status: Label
 var mode := "arena"
+var selected_hero := "hero_01"
+var hero_roster_dialog: AcceptDialog
+var hero_roster_list: ItemList
+var hero_roster_details: Label
 var player_level := 1
 var experience := 0
 var gold := 0
@@ -398,6 +403,7 @@ func _ready() -> void:
 	multiplayer.connection_failed.connect(_on_lan_failed)
 	multiplayer.server_disconnected.connect(_on_lan_disconnected)
 	_create_inventory_popup()
+	_create_hero_roster_popup()
 	_create_shop_popup()
 	_create_result_popup()
 	_create_tutorial()
@@ -1007,6 +1013,7 @@ func _start_raid() -> void:
 func _load_profile() -> void:
 	var profile: Dictionary = Progression.load_profile()
 	player_level = int(profile["level"])
+	selected_hero = str(profile.get("selected_hero", "hero_01"))
 	experience = int(profile["xp"])
 	gold = int(profile["gold"])
 	potions = int(profile["potions"])
@@ -1023,11 +1030,72 @@ func _load_profile() -> void:
 		var index: int = int(equipped_slots.get(slot, -1))
 		if index < 0 or index >= equipment.size(): equipped_slots[slot] = -1
 
+func _create_hero_roster_popup() -> void:
+	hero_roster_dialog = AcceptDialog.new()
+	hero_roster_dialog.title = "ГЕРОИ КОРОЛЕВСТВА — 30 ПЕРСОНАЖЕЙ"
+	hero_roster_dialog.min_size = Vector2i(640, 850)
+	add_child(hero_roster_dialog)
+	var layout := VBoxContainer.new()
+	hero_roster_dialog.add_child(layout)
+	var intro := Label.new()
+	intro.text = "Редкие герои открываются за победы и уровни. Выбери одного лидера."
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(intro)
+	hero_roster_list = ItemList.new()
+	hero_roster_list.custom_minimum_size = Vector2(610, 510)
+	hero_roster_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	layout.add_child(hero_roster_list)
+	hero_roster_details = Label.new()
+	hero_roster_details.custom_minimum_size.y = 150
+	hero_roster_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(hero_roster_details)
+	hero_roster_list.item_selected.connect(_on_hero_roster_selected)
+	var choose := Button.new()
+	choose.text = "НАЗНАЧИТЬ ЛИДЕРОМ"
+	choose.custom_minimum_size.y = 58
+	choose.pressed.connect(_choose_hero)
+	layout.add_child(choose)
+
+func _open_hero_roster() -> void:
+	hero_roster_list.clear()
+	for hero in HeroRoster.HEROES:
+		var open: bool = HeroRoster.unlocked(hero, raid_wins, player_level)
+		var label: String = "%s %s • %s [%s]" % ["✓" if open else "🔒", hero["name"], hero["title"], HeroRoster.TIER_NAMES[int(hero["rarity"])]]
+		hero_roster_list.add_item(label)
+	hero_roster_list.select(0)
+	for index in range(HeroRoster.HEROES.size()):
+		if str(HeroRoster.HEROES[index]["id"]) == selected_hero:
+			hero_roster_list.select(index)
+			break
+	_on_hero_roster_selected(hero_roster_list.get_selected_items()[0])
+	hero_roster_dialog.popup_centered()
+
+func _on_hero_roster_selected(index: int) -> void:
+	if index < 0 or index >= HeroRoster.HEROES.size(): return
+	var hero: Dictionary = HeroRoster.HEROES[index]
+	var open: bool = HeroRoster.unlocked(hero, raid_wins, player_level)
+	hero_roster_details.text = "%s • %s\n%s\nРоль: %s | Атака +%d | Защита +%d | HP +%d | Крит +%d%%\n%s" % [hero["name"], HeroRoster.TIER_NAMES[int(hero["rarity"])], hero["story"], hero["role"], hero["attack"], hero["armor"], hero["hp"], hero["crit"], "ДОСТУПЕН" if open else "ЗАДАНИЕ: " + str(hero["quest"])]
+
+func _choose_hero() -> void:
+	var indices := hero_roster_list.get_selected_items()
+	if indices.is_empty(): return
+	var hero: Dictionary = HeroRoster.HEROES[indices[0]]
+	if not HeroRoster.unlocked(hero, raid_wins, player_level):
+		hero_roster_details.text += "\nСначала выполни задание для открытия героя."
+		return
+	if winner == "" and mode == "raid" and raid_round > 0:
+		hero_roster_details.text += "\nСменить лидера можно после завершения текущего рейда."
+		return
+	selected_hero = str(hero["id"])
+	_save_profile()
+	hero_roster_dialog.hide()
+	_draw()
+
 func _save_profile() -> void:
 	Progression.save_profile({
 		"level": player_level, "xp": experience, "gold": gold,
 		"potions": potions, "items": equipment,
-		"equipped": equipped, "slots": equipped_slots, "wins": raid_wins, "dry_streak": dry_loot_streak
+		"equipped": equipped, "slots": equipped_slots, "wins": raid_wins, "dry_streak": dry_loot_streak, "selected_hero": selected_hero
 	})
 
 func _item_stat(stat: String) -> int:
@@ -1061,7 +1129,7 @@ func _armor_bonus() -> int:
 	return _item_stat("armor")
 
 func _max_hp(piece: String, friendly: bool = true) -> int:
-	return HP[piece.to_upper()] + (_item_stat("hp") if friendly and mode == "raid" else 0)
+	return HP[piece.to_upper()] + (_item_stat("hp") + int(HeroRoster.get_hero(selected_hero)["hp"]) if friendly and mode == "raid" else 0)
 
 func _deal_damage(target: int, raw_damage: int, attacker_is_hero: bool) -> int:
 	var amount := maxi(1, raw_damage)
