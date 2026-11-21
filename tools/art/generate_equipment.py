@@ -120,9 +120,9 @@ def build(slot, tier):
     append(TRIANGLES,"36H",5123,36,"SCALAR",34963)
     while len(blob)%4: blob.append(0)
     materials=[
-        {"name":"TierMetal","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":PALETTE[tier],"metallicFactor":.75,"roughnessFactor":.34}},
-        {"name":"TierInlay","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":[.93,.79,.46,1],"metallicFactor":.8,"roughnessFactor":.25}},
-        {"name":"TierEnchantment","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":PALETTE[tier],"metallicFactor":.15,"roughnessFactor":.22},"emissiveFactor":[round(PALETTE[tier][i]*.8,3) for i in range(3)]},
+        {"name":"TierMetal","doubleSided":False,"pbrMetallicRoughness":{"baseColorFactor":PALETTE[tier],"metallicFactor":.75,"roughnessFactor":.34}},
+        {"name":"TierInlay","doubleSided":False,"pbrMetallicRoughness":{"baseColorFactor":[.93,.79,.46,1],"metallicFactor":.8,"roughnessFactor":.25}},
+        {"name":"TierEnchantment","doubleSided":False,"pbrMetallicRoughness":{"baseColorFactor":PALETTE[tier],"metallicFactor":.15,"roughnessFactor":.22},"emissiveFactor":[round(PALETTE[tier][i]*.8,3) for i in range(3)]},
     ]
     document={"asset":{"version":"2.0","generator":"Kingdom Chess modular equipment"},
               "scene":0,"scenes":[{"nodes":[0]}],"nodes":nodes,"meshes":meshes,
