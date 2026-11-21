@@ -341,10 +341,12 @@ def validate(path, require_animation=True):
             assert "POSITION" in attrs and "NORMAL" in attrs, f"{path}: missing flat-shading normals"
             position=gltf["accessors"][attrs["POSITION"]]
             normal=gltf["accessors"][attrs["NORMAL"]]
-            assert position["count"]==24 and normal["count"]==24, f"{path}: expected 24 independent face vertices"
+            expected_vertices=40 if mesh.get("name","").endswith("DeformingSurface") or mesh.get("name")=="SkinnedTorsoSurface" else 24
+            assert position["count"]==normal["count"]==expected_vertices, f"{path}: {mesh.get('name')} expected {expected_vertices} vertices"
             assert position["type"]=="VEC3" and normal["type"]=="VEC3", f"{path}: invalid vertex attribute type"
             index=gltf["accessors"][primitive["indices"]]
-            assert index["count"]==36 and index["type"]=="SCALAR", f"{path}: expected 12 cube triangles"
+            expected_indices=60 if expected_vertices==40 else 36
+            assert index["count"]==expected_indices and index["type"]=="SCALAR", f"{path}: {mesh.get('name')} expected {expected_indices} indices"
             triangles += index["count"] // 3
     # Verify triangle winding agrees with supplied outward normals; otherwise
     # backface culling can make entire faces disappear in Godot.
