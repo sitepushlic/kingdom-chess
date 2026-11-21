@@ -7,10 +7,12 @@ const MainScene = preload("res://scenes/main.tscn")
 func _initialize() -> void:
 	_run()
 
+var _failure_count: int = 0
+
 func _assert_ok(condition: bool, description: String) -> void:
 	if not condition:
+		_failure_count += 1
 		push_error("TEST FAILED: " + description)
-		quit(1)
 
 func _run() -> void:
 	_assert_ok(Progression.rarity_cap(0, 1) == 0, "New players can only obtain common gear")
@@ -883,6 +885,10 @@ func _run() -> void:
 	game.gold = old_gold
 	game.potions = old_potions
 	game._save_profile()
-	print("KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED")
 	game.queue_free()
-	quit(0)
+	if _failure_count > 0:
+		push_error("KINGDOM CHESS: %d SMOKE ASSERTIONS FAILED" % _failure_count)
+		quit(1)
+	else:
+		print("KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED")
+		quit(0)
