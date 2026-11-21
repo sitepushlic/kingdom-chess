@@ -60,8 +60,8 @@ def validate(path, require_animation=True):
             view=gltf["bufferViews"][img["bufferView"]]
             start=json_end+8+view["byteOffset"]
             png=data[start:start+view["byteLength"]]
-            assert png.startswith(b"\\x89PNG\\r\\n\\x1a\\n"), f"{path}: invalid embedded PNG header {png[:16]!r}, offset={view['byteOffset']}"
-            assert len(png)>80 and png[-12:]==b"\\x00\\x00\\x00\\x00IEND\\xaeB\\x60\\x82", f"{path}: truncated PNG"
+            assert png.startswith(b"\x89PNG\r\n\x1a\n"), f"{path}: invalid embedded PNG header {png[:16]!r}, offset={view['byteOffset']}"
+            assert len(png)>80 and png[-12:]==b"\x00\x00\x00\x00IEND\xaeB\x60\x82", f"{path}: truncated PNG"
         for mesh in gltf["meshes"]:
             for primitive in mesh["primitives"]:
                 attrs=primitive["attributes"]
