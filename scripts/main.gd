@@ -2147,6 +2147,7 @@ func _draw() -> void:
 			var piece: String = pieces[index]
 			max_health.append((240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35) if mode == "raid" and index == 4 else (_max_hp(piece, _team(piece) == 1) if piece != "" else 1))
 		battlefield_3d.set_region(clampi(raid_stage - 1, 0, 5) if mode == "raid" else 0)
+		battlefield_3d.set_mission_visual_variant(posmod(raid_wins, 3) if mode == "raid" else 0)
 		battlefield_3d.set_boss_phase(boss_phase if mode == "raid" else 1)
 		battlefield_3d.set_hero_gear(equipment, equipped_slots)
 		battlefield_3d.set_selected_hero_visual(HeroRoster.get_hero(selected_hero))
