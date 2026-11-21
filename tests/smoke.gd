@@ -57,6 +57,12 @@ func _run() -> void:
 	_assert_ok(game._king_threatened(game.pieces, 1) == false, "Friendly rook blocks rook check")
 	_assert_ok(not game._legal(52, 53), "Pinned rook cannot step aside and expose king")
 	_assert_ok(game._legal(52, 44), "Pinned rook can slide along the pin line")
+	game.pieces[44] = "p"
+	_assert_ok(game._legal(52, 44), "Pinned rook may attack enemy on the pin line")
+	game.pieces[44] = ""
+	game.pieces[53] = "p"
+	_assert_ok(not game._legal(52, 53), "Lethal RPG capture cannot expose own king")
+	game.pieces[53] = ""
 	game.pieces[52] = ""
 	_assert_ok(game._king_threatened(game.pieces, 1), "Rook gives check on open file")
 	_assert_ok(not game._legal(60, 52), "King cannot move onto attacked square")
@@ -455,6 +461,21 @@ func _run() -> void:
 	game.health[60] = 180
 	var damage_dealt: int = game._deal_damage(60, 30, false)
 	_assert_ok(damage_dealt == 26 and game.health[60] == 154, "Armor reduces actual chess-piece damage")
+	game.mode = "arena"
+	game._reset()
+	game.pieces[8] = "P"
+	game.health[8] = 37
+	game.pieces[0] = ""
+	game._move(8, 0)
+	_assert_ok(game.pieces[0] == "Q" and game.health[0] == 37, "White pawn promotes to queen preserving HP")
+	game._reset()
+	game.pieces[55] = "p"
+	game.health[55] = 22
+	game.pieces[63] = ""
+	game._move(55, 63)
+	_assert_ok(game.pieces[63] == "q" and game.health[63] == 22, "Black pawn promotes to queen preserving HP")
+	game.mode = "raid"
+	game._reset()
 	game._reset()
 	game.health[60] = 180
 	game.selected = 60
