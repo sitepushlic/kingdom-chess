@@ -163,6 +163,15 @@ def validate(path, require_animation=True):
                 assert len(set(counts))==1, f"{path}: skin attribute vertex count mismatch"
                 assert gltf["accessors"][attrs["JOINTS_0"]]["type"]=="VEC4", f"{path}: joints must be VEC4"
                 assert gltf["accessors"][attrs["WEIGHTS_0"]]["type"]=="VEC4", f"{path}: weights must be VEC4"
+                positions=unpack_accessor(attrs["POSITION"])
+                normals=unpack_accessor(attrs["NORMAL"])
+                weights=unpack_accessor(attrs["WEIGHTS_0"])
+                joints=unpack_accessor(attrs["JOINTS_0"])
+                joint_count=len(gltf["skins"][node["skin"]]["joints"])
+                assert all(all(math.isfinite(value) for value in vertex) for vertex in positions), f"{path}: nonfinite skinned position"
+                assert all(abs(sum(value*value for value in normal)-1)<1e-3 for normal in normals), f"{path}: nonunit skinned normal"
+                assert all(all(math.isfinite(value) and 0<=value<=1 for value in row) and abs(sum(row)-1)<1e-4 for row in weights), f"{path}: invalid skinned weights"
+                assert all(all(0<=value<joint_count for value in row) for row in joints), f"{path}: skinned vertex references invalid bone"
         skinned=[node for node in gltf["nodes"] if "skin" in node]
         assert len(skinned)==6 and {node["skin"] for node in skinned}==set(range(6)), f"{path}: missing skinned character meshes"
         assert {node.get("name") for node in skinned}=={"SkinnedCape","SkinnedTorso","Arm1Mesh","Arm-1Mesh","Leg1Mesh","Leg-1Mesh"}, f"{path}: unexpected skinned geometry"
