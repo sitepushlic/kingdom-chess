@@ -293,26 +293,60 @@ static func roll_item_for_progress(level: int, wins: int, boss: bool = false, lu
 		item = roll_item(player_level, boss, 0)
 		if int(item["rarity"]) <= cap and int(item["level"]) <= player_level:
 			return item
-	# Do not disguise a high-rarity, high-power roll as common loot.
-	# A guaranteed legal baseline drop is preferable to an overpowered fallback.
+	# The bounded reroll is normally enough. The deterministic fallback also
+	# recalculates every derived stat when item level or rarity is downgraded.
+	# Never retain a level-2/legendary power roll on a level-1/common item.
 	item = roll_item(player_level, false, 0)
-	item["level"] = mini(int(item["level"]), player_level)
-	var rolled_rarity: int = int(item["rarity"])
-	if rolled_rarity > cap:
-		var adjusted_power: int = mini(4 + int(item["level"]) * 2 + cap * (4 + int(int(item["level"]) / 8.0)) + 5, maxi(1, int(item["power"]) - (rolled_rarity - cap) * (4 + int(int(item["level"]) / 8.0))))
-		item["power"] = adjusted_power
-		item["rarity"] = cap
-		item["set_id"] = -1 if cap < 3 else int(item["set_id"])
-		item["trait_id"] = -1 if cap < 4 else int(item["trait_id"])
-		var slot: String = str(item["slot"])
-		item["attack"] = adjusted_power if slot == "Оружие" else int(adjusted_power * (0.18 if slot == "Тело" else 0.35))
-		item["armor"] = int(adjusted_power * (0.72 if slot == "Тело" else 0.08))
-		item["hp"] = adjusted_power * (3 if slot == "Тело" else (1 if slot == "Реликвия" else 0))
-		item["crit"] = mini(35, (2 + cap * 3 + int(adjusted_power / 12.0)) if slot == "Оружие" else (cap if slot == "Реликвия" else 0))
-		item["lifesteal"] = mini(24, 2 + cap * 2) if slot == "Реликвия" else 0
-		item["penetration"] = mini(40, 3 + cap * 4) if slot == "Оружие" else 0
-		item["block"] = mini(35, 2 + cap * 3) if slot == "Тело" else 0
-		item["bleed"] = mini(30, cap * 2 + int(adjusted_power / 15.0)) if slot == "Оружие" and str(item.get("affix", "")) == str(AFFIXES[3]) else 0
+	return normalize_progress_drop(item, player_level, cap)
+
+static func normalize_progress_drop(original: Dictionary, player_level: int, rarity_limit: int) -> Dictionary:
+	# Public deterministic helper for validating downgrade edge cases.
+	var item: Dictionary = original.duplicate(true)
+	var final_level: int = clampi(int(item.get("level", 1)), 1, clampi(player_level, 1, 50))
+	var final_rarity: int = clampi(int(item.get("rarity", 0)), 0, clampi(rarity_limit, 0, 6))
+	var previous_level: int = maxi(1, int(item.get("level", 1)))
+	var previous_rarity: int = maxi(0, int(item.get("rarity", 0)))
+	var previous_power: int = maxi(1, int(item.get("power", 1)))
+	var original_base: int = 4 + previous_level * 2 + previous_rarity * (4 + int(previous_level / 8.0))
+	var roll_bonus: int = clampi(previous_power - original_base, 0, 5)
+	var final_power: int = 4 + final_level * 2 + final_rarity * (4 + int(final_level / 8.0)) + roll_bonus
+	item["level"] = final_level
+	item["rarity"] = final_rarity
+	item["power"] = final_power
+	item["set_id"] = -1 if final_rarity < 3 else int(item.get("set_id", -1))
+	item["trait_id"] = -1 if final_rarity < 4 else int(item.get("trait_id", -1))
+	var slot: String = str(item.get("slot", "Оружие"))
+	item["attack"] = final_power if slot == "Оружие" else int(final_power * (0.18 if slot == "Тело" else 0.35))
+	item["armor"] = int(final_power * (0.72 if slot == "Тело" else 0.08))
+	item["hp"] = final_power * (3 if slot == "Тело" else (1 if slot == "Реликвия" else 0))
+	item["crit"] = mini(35, (2 + final_rarity * 3 + int(final_power / 12.0)) if slot == "Оружие" else (final_rarity if slot == "Реликвия" else 0))
+	item["lifesteal"] = mini(24, (2 + final_rarity * 2) if slot == "Реликвия" else 0)
+	item["penetration"] = mini(45, (final_rarity * 3 + int(final_power / 9.0)) if slot == "Оружие" else 0)
+	item["block"] = mini(35, (2 + final_rarity * 3) if slot == "Тело" else 0)
+	item["bleed"] = mini(30, (final_rarity * 2 + int(final_power / 15.0)) if slot == "Оружие" and str(item.get("affix", "")) == str(AFFIXES[3]) else 0)
+	# Rebuild rarity-derived display name: never label common loot as legendary.
+	var base_name: String = str(item.get("name", "Предмет"))
+	for set_name in SET_NAMES:
+		var prefix: String = str(set_name) + ": "
+		if base_name.begins_with(prefix):
+			base_name = base_name.substr(prefix.length())
+	for prefix_name in PREFIXES:
+		var prefix: String = str(prefix_name) + " "
+		if base_name.begins_with(prefix):
+			base_name = base_name.substr(prefix.length())
+	for trait_name in TRAITS:
+		base_name = base_name.replace(" • " + str(trait_name), "")
+	for affix_name in AFFIXES:
+		base_name = base_name.replace(" • " + str(affix_name), "")
+	if final_rarity >= 2:
+		base_name = str(PREFIXES[final_rarity]) + " " + base_name
+	if final_rarity >= 4:
+		base_name += " • " + str(item.get("affix", ""))
+	if int(item["set_id"]) >= 0:
+		base_name = str(SET_NAMES[int(item["set_id"])]) + ": " + base_name
+	if int(item["trait_id"]) >= 0:
+		base_name += " • " + str(TRAITS[int(item["trait_id"])])
+	item["name"] = base_name
 	return item
 
 static func roll_item(level: int, boss: bool = false, luck: int = 0) -> Dictionary:
