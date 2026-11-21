@@ -1109,7 +1109,11 @@ func _run() -> void:
 		game.battlefield_3d.set_region(2)
 		var rebuilt_fill: MeshInstance3D = (game.battlefield_3d.piece_nodes[damaged_enemy_cell] as Node3D).get_meta("health_fill")
 		_assert_ok(rebuilt_fill != old_fill and absf(rebuilt_fill.scale.x - 0.5) < 0.001, "Enemy HP bar survives full biome mesh replacement")
-	game.battlefield_3d.sync_board(game.pieces, -1, [], -1, game.hp, game.max_hp)
+	var restored_max_health: Array = []
+	for restore_cell in range(64):
+		var restore_piece: String = str(game.pieces[restore_cell])
+		restored_max_health.append(game._max_hp(restore_piece, game._team(restore_piece) == 1) if restore_piece != "" else 1)
+	game.battlefield_3d.sync_board(game.pieces, -1, [], -1, game.health, restored_max_health)
 
 	var scenery_counts: Array[int] = []
 	var region_light_colors: Array[Color] = []
