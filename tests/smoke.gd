@@ -1219,6 +1219,13 @@ func _run() -> void:
 	game.battlefield_3d.hit(60, false)
 	game.battlefield_3d.hit(60, true)
 	_assert_ok(game.battlefield_3d.impact_materials["damage"] == hit_material and game.battlefield_3d.impact_materials["heal"] == heal_material, "Repeated heals and damage reuse cached VFX materials")
+	_assert_ok(game.battlefield_3d.primitive_mesh_cache.has("hit_spark_sphere"), "Healing and damage sparks reuse one low-poly sphere mesh")
+	_assert_ok(game.battlefield_3d.impact_materials.has("heal_sparks") and game.battlefield_3d.impact_materials.has("damage_sparks"), "Spark VFX uses shared mint and amber PBR resources")
+	var spark_mesh: Mesh = game.battlefield_3d.primitive_mesh_cache["hit_spark_sphere"]
+	var spark_mat: Material = game.battlefield_3d.impact_materials["heal_sparks"]
+	game.battlefield_3d.hit(60, true)
+	_assert_ok(game.battlefield_3d.primitive_mesh_cache["hit_spark_sphere"] == spark_mesh and game.battlefield_3d.impact_materials["heal_sparks"] == spark_mat, "Repeated healing reuses particle geometry and material")
+
 
 	game.battlefield_3d.set_visual_quality(0)
 	var low_self_before: int = game.battlefield_3d.board_root.get_child_count()
