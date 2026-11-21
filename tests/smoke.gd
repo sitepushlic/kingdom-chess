@@ -65,6 +65,12 @@ func _run() -> void:
 	game.pieces[53] = ""
 	game.pieces[52] = ""
 	_assert_ok(game._king_threatened(game.pieces, 1), "Rook gives check on open file")
+	game.turn = 1
+	game.ap = 0
+	game.acted = [60]
+	game._end_turn()
+	_assert_ok(game.turn == 1 and game.ap == 1 and game.winner == "", "Checked side receives a defensive action instead of passing")
+	_assert_ok(game.acted.is_empty(), "Check response clears prior action restrictions")
 	_assert_ok(not game._legal(60, 52), "King cannot move onto attacked square")
 	_assert_ok(game._legal(60, 59), "King can escape check to safe square")
 	game.pieces[4] = ""
