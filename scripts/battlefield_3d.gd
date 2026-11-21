@@ -30,6 +30,7 @@ var key_light: DirectionalLight3D
 var rim_light: OmniLight3D
 var torch_flames: Array[MeshInstance3D] = []
 var current_region := -1
+var mission_visual_variant: int = 0
 var gear_signature := ""
 var hero_gear: Dictionary = {}
 var selected_hero_visual: Dictionary = {}
@@ -799,6 +800,24 @@ func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
 				spike.rotation.z = side * 0.22
 			var eclipse := _ring(0.95, 0.10, magic, region_scenery, Vector3(0, 2.70, 7.30))
 			eclipse.rotation.x = PI * 0.5
+	# Mission-specific visual dressing outside the playable 8x8 board.
+	# Layout 0: standards, layout 1: runic obelisks, layout 2: ward circles.
+	for side in [-1.0, 1.0]:
+		var anchor_pos := Vector3(side * 5.65, 0, 2.15)
+		match mission_visual_variant:
+			0:
+				_cylinder(0.055, 1.65, trim, region_scenery, anchor_pos + Vector3(0, 0.63, 0))
+				var banner := _box(Vector3(0.47, 0.70, 0.075), magic, region_scenery, anchor_pos + Vector3(side * 0.20, 1.05, 0))
+				banner.rotation.z = side * 0.12
+			1:
+				var obelisk := _cylinder(0.24, 1.85, stone, region_scenery, anchor_pos + Vector3(0, 0.68, 0), 0.05)
+				obelisk.rotation.z = side * 0.13
+				_sphere(0.13, magic, region_scenery, anchor_pos + Vector3(0, 1.72, 0))
+			2:
+				for circle_index in range(3):
+					var ward := _ring(0.31 + circle_index * 0.16, 0.035, magic, region_scenery, anchor_pos + Vector3(0, -0.09 + circle_index * 0.02, 0))
+					ward.rotation.x = 0.0
+				_cylinder(0.14, 0.62, trim, region_scenery, anchor_pos + Vector3(0, 0.12, 0))
 	# Four larger landmarks establish a silhouette behind the arena without obstructing play.
 	for corner_x in [-1.0, 1.0]:
 		for corner_z in [-1.0, 1.0]:
@@ -809,6 +828,16 @@ func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
 				var orb := _sphere(0.13, magic, region_scenery, corner + Vector3(0, 1.60, 0))
 				orb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 				animated_scenery.append(orb)
+
+func set_mission_visual_variant(variant: int) -> void:
+	# Three deterministic arena dressing layouts per biome: 18 mission looks.
+	var next_variant: int = clampi(variant, 0, 2)
+	if mission_visual_variant == next_variant: return
+	mission_visual_variant = next_variant
+	if current_region >= 0 and region_scenery != null and tile_materials.size() >= 2:
+		var accent: Color = rim_light.light_color
+		_rebuild_region_scenery(current_region, [tile_materials[0].albedo_color, tile_materials[1].albedo_color, accent])
+		region_scenery.visible = visual_quality > 0
 
 func set_region(region_index: int) -> void:
 	if current_region == region_index: return
