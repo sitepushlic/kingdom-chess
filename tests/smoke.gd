@@ -1385,7 +1385,19 @@ func _run() -> void:
 			game.battlefield_3d.set_boss_phase(2)
 			_assert_ok(active_aura.visible and active_boss.scale.x > 1.4, "Reapplying same boss phase restores visuals after actor rebuild")
 
-	game.battlefield_3d.set_boss_phase(1)
+	# Rapid boss phase toggles must cancel the old scale tween instead
+	# of letting a stale enrage animation overwrite the latest state.
+	if game.battlefield_3d.piece_nodes.has(4):
+		var phase_boss: Node3D = game.battlefield_3d.piece_nodes[4]
+		var first_phase_tween: Tween = phase_boss.get_meta("phase_scale_tween", null) as Tween
+		game.battlefield_3d.set_boss_phase(1)
+		_assert_ok(first_phase_tween == null or not first_phase_tween.is_running(), "Boss phase reset cancels pending enrage scale animation")
+		var second_phase_tween: Tween = phase_boss.get_meta("phase_scale_tween", null) as Tween
+		game.battlefield_3d.set_boss_phase(2)
+		_assert_ok(second_phase_tween == null or not second_phase_tween.is_running(), "Re-enrage cancels previous recovery animation")
+		game.battlefield_3d.set_boss_phase(1)
+	else:
+		game.battlefield_3d.set_boss_phase(1)
 	_assert_ok(not game.battlefield_3d.boss_enraged, "Boss enrage state resets correctly")
 	if game.battlefield_3d.piece_nodes.has(4):
 		_assert_ok(absf((game.battlefield_3d.piece_nodes[4] as Node3D).position.y) < 0.001, "Boss returns to board height after enrage")
