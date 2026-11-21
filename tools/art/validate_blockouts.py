@@ -74,6 +74,16 @@ def validate(path, require_animation=True):
         if animation["name"] in ("move","death"):
             assert any(channel["target"]["path"] == "rotation" and gltf["nodes"][channel["target"]["node"]]["name"].startswith("Leg") for channel in channels), f"{path}: missing leg animation in {animation['name']}"
     assert len(gltf["nodes"]) >= (12 if require_animation else 3), f"{path}: no geometry nodes"
+    for mesh in gltf["meshes"]:
+        for primitive in mesh["primitives"]:
+            attrs=primitive["attributes"]
+            assert "POSITION" in attrs and "NORMAL" in attrs, f"{path}: missing flat-shading normals"
+            position=gltf["accessors"][attrs["POSITION"]]
+            normal=gltf["accessors"][attrs["NORMAL"]]
+            assert position["count"]==24 and normal["count"]==24, f"{path}: expected 24 independent face vertices"
+            assert position["type"]=="VEC3" and normal["type"]=="VEC3", f"{path}: invalid vertex attribute type"
+            index=gltf["accessors"][primitive["indices"]]
+            assert index["count"]==36 and index["type"]=="SCALAR", f"{path}: expected 12 cube triangles"
     for node in gltf["nodes"]:
         if "mesh" in node:
             assert 0 <= node["mesh"] < len(gltf["meshes"])
