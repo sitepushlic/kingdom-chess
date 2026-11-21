@@ -74,6 +74,10 @@ def validate(path, require_animation=True):
         if animation["name"] in ("move","death"):
             assert any(channel["target"]["path"] == "rotation" and gltf["nodes"][channel["target"]["node"]]["name"].startswith("Leg") for channel in channels), f"{path}: missing leg animation in {animation['name']}"
     assert len(gltf["nodes"]) >= (12 if require_animation else 3), f"{path}: no geometry nodes"
+    # Mobile budget: no runaway geometry, uncompressed GLB, or excessive nodes.
+    assert len(data) < 250_000, f"{path}: GLB exceeds 250KB blockout budget"
+    assert len(gltf["nodes"]) <= 160, f"{path}: excessive draw-call nodes"
+    triangles=0
     for mesh in gltf["meshes"]:
         for primitive in mesh["primitives"]:
             attrs=primitive["attributes"]
@@ -84,6 +88,10 @@ def validate(path, require_animation=True):
             assert position["type"]=="VEC3" and normal["type"]=="VEC3", f"{path}: invalid vertex attribute type"
             index=gltf["accessors"][primitive["indices"]]
             assert index["count"]==36 and index["type"]=="SCALAR", f"{path}: expected 12 cube triangles"
+            triangles += index["count"] // 3
+    # Each mesh is instanced by nodes; estimate actual rendered triangle load.
+    estimated_triangles=sum(sum(gltf["accessors"][p["indices"]]["count"]//3 for p in gltf["meshes"][node["mesh"]]["primitives"]) for node in gltf["nodes"] if "mesh" in node)
+    assert estimated_triangles <= 2000, f"{path}: excessive mobile triangle count {estimated_triangles}"
     for node in gltf["nodes"]:
         if "mesh" in node:
             assert 0 <= node["mesh"] < len(gltf["meshes"])
