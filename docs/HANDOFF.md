@@ -430,3 +430,30 @@ For EVERY future implementation session:
 3. Continue authored GLB/rigged 3D asset pipeline with verified licenses and imported animation clips; verify appearance in Android build.
 4. Test on real low-end/midrange Android devices; measure FPS, memory, touch readability and thermals for graphics tiers.
 5. Update this full handoff after each development run with actual commit SHAs, confirmed CI status and concrete blockers.
+
+## FULL HANDOFF — 2026-11-21, defensive board validation
+
+### Mission and architecture
+- Product goal remains Godot 4.3 Android portrait 3D chess/RPG with chess victory, king safety, HP/skills/AP, balanced normalized arena, 30 unlockable heroes, 7 rarity tiers of equipment, 18 campaign missions in 6 regions, authored characters and animation, visual effects and two-phone LAN.
+- Primary modules: `scripts/main.gd` (game rules, UI, LAN, save), `scripts/battlefield_3d.gd` (3D board and graphics quality tiers), `scripts/progression.gd` (items, rewards, gating), `scripts/hero_roster.gd` (30 hero definitions), `tests/smoke.gd` (regressions). The preceding full handoffs and commit history above remain authoritative.
+
+### Changes this session
+- `66b9bcd196dfa60bf1f2e7ff1d4153e5d341a3ec`: `_tap` now rejects indices outside 0..63 **before** sending LAN RPC or accessing pieces; `_legal` now rejects incomplete 64-square board or HP arrays before indexing. This hardens untrusted or malformed action input without changing legal chess movement.
+- `d56a9e2490c7cc938ab917354c25110cb067c62a`: smoke assertions verify that invalid negative/overflow taps cannot change board and that invalid moves are rejected.
+- This handoff update records exact source changes and remaining work.
+
+### Validation
+- Confirmed GitHub accepted source/test commits. `get_commit_combined_status` for `d56a9e2` returned **no statuses**, which is **not** evidence that Actions passed or failed.
+- Not verified: current headless Godot smoke execution, Android debug APK export, runtime performance, two-device networking, UI touch controls. CI requires checking actual Actions runs/jobs and logs.
+
+### Known issues and limitations
+- Chess/RPG hybrid still needs robust HP-aware checkmate, action economy, stalemate and king defeat tests. Current arena legality models basic lethal versus nonlethal attacks, but abilities and future modifiers require more complete simulation.
+- Procedural 3D assets are not commercial-grade rigged characters; need original meshes, rigging, animation clips, gear variation, better six-region environments and VFX. Existing quality tiers and material sharing are unbenchmarked on phones.
+- Network reconnect, host authority and action replay need two-device testing; profile/save migrations, accessibility, onboarding, sound, balancing and campaign variety need QA.
+
+### Next execution — autonomous priorities
+1. Inspect GitHub Actions workflow run for the latest commit and logs, repair errors, verify smoke and Android export.
+2. Build full chess/RPG defensive turn and checkmate simulation including AP/HP and regression tests; ensure no softlocks.
+3. Add authored/licensed 3D characters and animations, optimize render resources and profile on Android.
+4. Run reproducible campaign progression/balance simulations; verify rarity and hero unlocks at all gates.
+5. Record exact commits and verified/unverified test outcomes in the next full handoff, without claiming finished game or FPS.
