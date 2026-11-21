@@ -147,3 +147,9 @@ For EVERY future implementation session:
 - Commit `d4d38a9` (`tests/smoke.gd`): smoke regressions for poison following movement, periodic damage, expiry, dead-unit cleanup and reset.
 - New CI after these commits **must be checked**; #187 only validates the preceding version. Check https://github.com/sitepushlic/kingdom-chess/actions and verify debug APK upload. Fix parser/test errors before treating feature as validated.
 - Known limitations: poison state is not yet serialized in LAN snapshots or battle autosaves, and no status VFX/UI indicator exists. Implement those next; continue distinct mission win conditions and commercial-grade 3D art/device testing. Do not claim production readiness.
+
+## Automated development — poison persistence and LAN sync (2026-11-21)
+- Verified **CI #190 success** before edits: https://github.com/sitepushlic/kingdom-chess/actions/runs/44855073299 . This is a debug Android APK, not a signed production release.
+- Commit `58a2be0` (`scripts/main.gd`): battle snapshots now include `hero_poison` for both autosave and LAN host-to-client state. Battle restore and LAN snapshot reception sanitize recovered poison statuses against board occupancy, square indices and remaining duration; older saves without status remain compatible.
+- Commit `21e0485` (`tests/smoke.gd`): added smoke regression confirming poison status is present in the serialized battle snapshot and that an unauthenticated snapshot is ignored.
+- Verify the latest Actions run after these commits before asserting they pass; if it fails, inspect logs and fix. Remaining tasks: distinct mission objectives, poison VFX/status icons, authored 3D assets, actual two-phone Wi-Fi QA, release pipeline.
