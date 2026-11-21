@@ -189,3 +189,9 @@ For EVERY future implementation session:
 - Commit `9db26ce` (`tests/smoke.gd`): tests region scenery generation across six regions, different geometry between fortress and frostlands, and deterministic cleanup/rebuild.
 - Commit `7799927` (`scripts/battlefield_3d.gd`): adds four gently floating emissive landmark orbs in frost/arcane/storm/void regions, animated in `_process` without per-frame mesh allocation.
 - Remaining: authored imported rigged character GLBs and skeletal animations, high-quality texture and lighting, character-class action animations, richer VFX, visual inspection/screenshots, mobile performance profiling, and actual device QA. Do not claim commercially complete 3D graphics based on these procedural meshes.
+
+## Focused 3D character import pipeline and CI repair (2026-11-21)
+- Inspected **CI #210 failure**: Godot 4.3 smoke test parser could not infer the type of `scenery` at tests/smoke.gd:272. Commit `60b89bf` fixes it with explicit `Node3D` type. CI success for this repair is not yet confirmed.
+- Commit `1f3266e` adds `CHARACTER_SCENE_PATHS` mapping for six chess classes (pawn, rook, knight, bishop, queen, king), `_load_authored_character` to load imported GLB PackedScenes and fallback to existing procedural geometry if absent or invalid. This establishes a direct replacement path for art without rewriting board/HP/combat mechanics; **no authored GLB models have been supplied yet**. Imported model must fit a 1x1 tile, face local -Z, with base at local Y=0.
+- Commit `4efab6f` adds smoke checks for six class asset slots and fallback model HP bar.
+- Verify newest CI, correct any remaining GDScript parser/runtime failures and inspect artifact upload. Next actual asset work: create and import six ORIGINAL rigged GLBs, class animations and PBR materials, add rarity-specific armor and weapon meshes, benchmark on Android. This is a pipeline, not completed character art.
