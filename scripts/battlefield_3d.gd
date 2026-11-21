@@ -1018,8 +1018,15 @@ func animate_move(source: int, target: int) -> void:
 	if piece_nodes.has(target):
 		if hero_model_cell == target: hero_model_cell = -1
 		var victim: Node3D = piece_nodes[target]
+		var victim_rig: Node3D = victim.get_meta("visual_rig", null)
+		if victim_rig != null:
+			_play_authored_clip(victim_rig, "death")
+			_animate_limbs(victim_rig, "hit")
+		# Leave enough time to read the death pose, without delaying the
+		# chess move or keeping the captured unit in the logical board.
 		var vanish := create_tween()
-		vanish.tween_property(victim, "scale", Vector3.ZERO, 0.18)
+		vanish.tween_property(victim, "scale", victim.scale * 0.92, 0.19)
+		vanish.tween_property(victim, "scale", Vector3.ZERO, 0.31).set_trans(Tween.TRANS_CUBIC)
 		vanish.tween_callback(victim.queue_free)
 		piece_nodes.erase(target)
 		piece_types.erase(target)
