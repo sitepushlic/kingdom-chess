@@ -52,6 +52,11 @@ func _run() -> void:
 	# Chess-first RPG movement: threat geometry, king safety and pinned pieces.
 	game.mode = "arena"
 	game._reset()
+	var before_invalid_tap: Array = game.pieces.duplicate()
+	game._tap(-1)
+	game._tap(64)
+	_assert_ok(game.pieces == before_invalid_tap, "Invalid board tap indices cannot mutate battle")
+	_assert_ok(not game._legal(-1, 0) and not game._legal(0, 64), "Out-of-range chess moves are rejected")
 	var empty_board: Array = []
 	empty_board.resize(64)
 	empty_board.fill("")
