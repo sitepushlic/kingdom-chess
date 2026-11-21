@@ -1,6 +1,7 @@
 extends SceneTree
 
 const Progression = preload("res://scripts/progression.gd")
+const HeroRoster = preload("res://scripts/hero_roster.gd")
 const MainScene = preload("res://scenes/main.tscn")
 
 func _initialize() -> void:
@@ -12,6 +13,20 @@ func _assert_ok(condition: bool, description: String) -> void:
 		quit(1)
 
 func _run() -> void:
+	_assert_ok(HeroRoster.HEROES.size() == 30, "30 unique authored heroes are available")
+	var hero_ids: Dictionary = {}
+	var rarity_counts: Dictionary = {}
+	for hero in HeroRoster.HEROES:
+		_assert_ok(not hero_ids.has(hero["id"]), "Every hero has a unique persistent ID")
+		hero_ids[hero["id"]] = true
+		rarity_counts[hero["rarity"]] = int(rarity_counts.get(hero["rarity"], 0)) + 1
+		_assert_ok(str(hero["story"]).length() > 20, "Each hero has a written backstory")
+		_assert_ok(int(hero["attack"]) > 0 and int(hero["hp"]) > 0, "Each hero has combat stats")
+	_assert_ok(rarity_counts.size() == 7, "All seven character value tiers are represented")
+	_assert_ok(HeroRoster.available_count(0, 1) == 6, "Six starter heroes provide initial choice")
+	_assert_ok(HeroRoster.available_count(25, 35) == 30, "Every hero can be earned through quests")
+	_assert_ok(not HeroRoster.unlocked(HeroRoster.HEROES[29], 18, 35), "Strongest hero cannot be claimed by campaign clear alone")
+	_assert_ok(HeroRoster.valid_selection("hero_30", 0, 1) == "hero_01", "Locked hero cannot be injected into save")
 	var game = MainScene.instantiate()
 	root.add_child(game)
 	await process_frame
