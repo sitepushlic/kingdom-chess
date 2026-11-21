@@ -102,10 +102,9 @@ func set_visual_quality(tier: int) -> void:
 		mote.visible = visual_quality >= 2
 	for cell in piece_nodes.keys():
 		var actor: Node3D = piece_nodes[cell]
-		for part in actor.get_children():
-			if part is Node3D and str(part.name).begins_with("HeroIdentity_"):
-				var rarity_halo: Node3D = part.get_node_or_null("HeroRarityHalo")
-				if rarity_halo != null: rarity_halo.visible = visual_quality > 0
+		if not is_instance_valid(actor): continue
+		var rarity_halo: Node3D = actor.find_child("HeroRarityHalo", true, false) as Node3D
+		if rarity_halo != null: rarity_halo.visible = visual_quality > 0
 
 
 var hero_model_cell: int = -1
@@ -1957,12 +1956,10 @@ func _process(delta: float) -> void:
 		var actor: Node3D = piece_nodes[index]
 		if is_instance_valid(actor):
 			if visual_quality > 0 and bool(actor.get_meta("selected_hero_piece", false)):
-				for part in actor.get_children():
-					if part is Node3D and str(part.name).begins_with("HeroIdentity_"):
-						var halo: Node3D = part.get_node_or_null("HeroRarityHalo")
-						if halo != null:
-							halo.rotation.y = clock * 0.65
-							halo.position.y = 1.14 + 0.05 * sin(clock * 1.8)
+				var halo: Node3D = actor.find_child("HeroRarityHalo", true, false) as Node3D
+				if halo != null:
+					halo.rotation.y = clock * 0.65
+					halo.position.y = 1.14 + 0.05 * sin(clock * 1.8)
 			var idle_phase: float = clock * (0.83 if index == 4 else 1.15) + float(index) * 0.41
 			actor.rotation.y = sin(idle_phase) * (0.09 if index == 4 and boss_enraged else 0.035)
 			# Distinct subtle idle silhouettes: breathing and weight shift only.
