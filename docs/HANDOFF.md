@@ -1,3 +1,8 @@
+## CI validation repair — 2026-11-21
+- Commit `6225aa2e7b5c3d388b428a4039950fe7a3ca6c6e`: changed `tools/art/validate_blockouts.py` to select the cape primitive by explicit `skin == 0` and `SkinnedCape` name instead of relying on the first skinned node's ordering. The prior assertion required exactly 24 cape vertices and failed for `hero_01.glb` with "skinning vertex count mismatch". Generic per-primitive count checks remain intact. This is a validator selection correction, not a change to the generated meshes.
+- CI after commit: queued at inspection; Android APK and Godot tests NOT YET VERIFIED. Check https://github.com/sitepushlic/kingdom-chess/actions/runs/44916494129 and https://github.com/sitepushlic/kingdom-chess/actions/runs/44916494123 . If failure persists, inspect actual cape accessor counts and generated node order rather than relaxing GLB integrity checks.
+- Next: verify all 93 GLBs, Godot import/smoke tests, Android debug APK artifact, then continue 3D art and gameplay QA. No claim of production readiness.
+
 # KINGDOM CHESS — DEVELOPMENT HANDOFF
 
 Updated: 2026-11-21 (torch mesh visibility and shadow pass). Repository: https://github.com/sitepushlic/kingdom-chess ; branch `main`.
