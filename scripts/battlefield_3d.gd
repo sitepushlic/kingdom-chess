@@ -1102,6 +1102,82 @@ func _build_castle_skyline(region: int, palette: Array) -> void:
 	# Region color, not building power, drives the backdrop.
 	skyline.set_meta("region", region)
 
+func _build_biome_landmarks(region: int, stone: Material, trim: Material, magic: Material) -> void:
+	# Six authored landmark compositions, each outside the 8x8 gameplay grid.
+	# They use shared primitive meshes and no extra dynamic light sources.
+	var landmark := Node3D.new()
+	landmark.name = "BiomeLandmark_%d" % region
+	region_scenery.add_child(landmark)
+	match region:
+		0: # Forge city: two furnaces with layered iron stacks and molten basins.
+			for side in [-1.0, 1.0]:
+				var x: float = side * 4.95
+				_box(Vector3(0.96, 0.42, 0.94), stone, landmark, Vector3(x, 0.04, -2.8))
+				_box(Vector3(0.76, 1.16, 0.70), trim, landmark, Vector3(x, 0.76, -2.8))
+				_cylinder(0.23, 1.1, stone, landmark, Vector3(x, 1.78, -2.8), 0.17)
+				_ring(0.38, 0.06, magic, landmark, Vector3(x, 0.31, -2.8))
+				for tooth in range(4):
+					var theta: float = float(tooth) * TAU / 4.0
+					_box(Vector3(0.16, 0.27, 0.16), stone, landmark, Vector3(x + cos(theta) * 0.34, 1.47, -2.8 + sin(theta) * 0.30))
+		1: # Frost cathedral: fractured glacier fins and a suspended frozen core.
+			for side in [-1.0, 1.0]:
+				for tier in range(4):
+					var height: float = 1.15 + float(tier) * 0.46
+					var x: float = side * (4.9 + float(tier % 2) * 0.34)
+					var z: float = -3.2 + float(tier) * 0.74
+					var fin := _cylinder(0.22, height, stone if tier % 2 == 0 else magic, landmark, Vector3(x, height * 0.5 - 0.20, z), 0.0)
+					fin.rotation.z = side * (0.16 + float(tier) * 0.05)
+				_ring(0.46, 0.045, trim, landmark, Vector3(side * 5.15, 0.08, -2.25))
+			_sphere(0.34, magic, landmark, Vector3(0, 2.75, 7.15))
+		2: # Ancient forest: braided roots, branch crowns and floating pollen.
+			for side in [-1.0, 1.0]:
+				var x: float = side * 5.15
+				_cylinder(0.32, 2.45, trim, landmark, Vector3(x, 0.97, -2.5), 0.18)
+				for branch_index in range(5):
+					var theta: float = float(branch_index) * TAU / 5.0
+					var branch := _cylinder(0.10, 1.15, trim, landmark, Vector3(x + cos(theta) * 0.36, 2.16, -2.5 + sin(theta) * 0.36), 0.02)
+					branch.rotation.z = cos(theta) * 0.68
+					branch.rotation.x = sin(theta) * 0.68
+					_sphere(0.34, stone if branch_index % 2 == 0 else magic, landmark, Vector3(x + cos(theta) * 0.80, 2.52, -2.5 + sin(theta) * 0.80))
+				for root_index in range(3):
+					var root := _cylinder(0.11, 0.85, trim, landmark, Vector3(x + (float(root_index) - 1.0) * 0.33, 0.06, -2.5), 0.03)
+					root.rotation.z = (float(root_index) - 1.0) * 0.56
+		3: # Astral observatory: four rune pylons and concentric portal gates.
+			for side in [-1.0, 1.0]:
+				var x: float = side * 5.05
+				for tier in range(3):
+					_box(Vector3(0.56 - float(tier) * 0.09, 0.60, 0.56 - float(tier) * 0.09), stone, landmark, Vector3(x, 0.20 + float(tier) * 0.58, -2.55))
+					_ring(0.34 - float(tier) * 0.04, 0.025, magic, landmark, Vector3(x, 0.54 + float(tier) * 0.58, -2.55))
+				_sphere(0.20, magic, landmark, Vector3(x, 2.14, -2.55))
+			for ring_index in range(3):
+				var portal := _ring(0.75 + float(ring_index) * 0.22, 0.05, magic, landmark, Vector3(0, 2.35, 7.3))
+				portal.rotation.x = PI * 0.5 + float(ring_index) * 0.13
+		4: # Storm battery: twin lightning capacitors and crossed conductors.
+			for side in [-1.0, 1.0]:
+				var x: float = side * 5.15
+				_cylinder(0.31, 0.65, stone, landmark, Vector3(x, 0.12, -2.7))
+				for tier in range(3):
+					_ring(0.29 + float(tier) * 0.06, 0.055, magic, landmark, Vector3(x, 0.72 + float(tier) * 0.43, -2.7))
+					_cylinder(0.08, 0.43, trim, landmark, Vector3(x, 0.77 + float(tier) * 0.43, -2.7), 0.06)
+				_sphere(0.27, magic, landmark, Vector3(x, 2.28, -2.7))
+				for prong in [-1.0, 1.0]:
+					var antenna := _cylinder(0.055, 0.9, trim, landmark, Vector3(x + prong * 0.25, 2.58, -2.7), 0.0)
+					antenna.rotation.z = prong * 0.23
+		5: # Void crypt: broken gravestones, ritual discs and a shattered crown.
+			for side in [-1.0, 1.0]:
+				var x: float = side * 5.2
+				for tier in range(4):
+					var height: float = 0.75 + float(tier % 3) * 0.35
+					var grave := _box(Vector3(0.36, height, 0.18), stone, landmark, Vector3(x + (float(tier) - 1.5) * 0.36, height * 0.35, -3.15 + float(tier % 2) * 0.67))
+					grave.rotation.z = (float(tier) - 1.5) * 0.12
+				for circle_index in range(3):
+					_ring(0.36 + float(circle_index) * 0.19, 0.035, magic, landmark, Vector3(x, 0.04 + float(circle_index) * 0.015, -2.5))
+			for spike_index in range(7):
+				var theta: float = TAU * float(spike_index) / 7.0
+				var spike := _cylinder(0.10, 0.68, trim, landmark, Vector3(cos(theta) * 0.58, 2.68, 7.3 + sin(theta) * 0.28), 0.0)
+				spike.rotation.z = cos(theta) * 0.30
+				spike.rotation.x = sin(theta) * 0.30
+
 func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
 	# All scenery remains outside the playable 8x8 grid; animate only four landmark accents.
 	animated_scenery.clear()
@@ -1189,6 +1265,7 @@ func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
 				spike.rotation.z = side * 0.22
 			var eclipse := _ring(0.95, 0.10, magic, region_scenery, Vector3(0, 2.70, 7.30))
 			eclipse.rotation.x = PI * 0.5
+	_build_biome_landmarks(region, stone, trim, magic)
 	_build_castle_skyline(region, palette)
 	# A bounded halo of 12 drifting particles around the arena.
 	# Geometry only, no particle emitter or extra light source. Hidden
