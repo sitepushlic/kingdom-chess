@@ -228,6 +228,16 @@ func _run() -> void:
 	_assert_ok(game.hero_poison.is_empty(), "Poison clears for removed unit")
 	game._reset()
 	_assert_ok(game.hero_poison.is_empty(), "Poison clears on new encounter")
+	game.mode = "raid"
+	game._reset()
+	game.pieces[48] = "P"
+	game.health[48] = 100
+	game.hero_poison[48] = 2
+	var poison_snapshot: Dictionary = game._snapshot()
+	_assert_ok(int(poison_snapshot["hero_poison"][48]) == 2, "Poison status survives battle snapshot for save and LAN")
+	game.hero_poison.clear()
+	game._send_snapshot(poison_snapshot)
+	_assert_ok(game.hero_poison.is_empty(), "Remote snapshot is ignored when LAN client is not connected")
 	_assert_ok(Progression.CAMPAIGN.size() == 18, "Complete 18-mission story campaign")
 	var mission_titles: Dictionary = {}
 	for mission in Progression.CAMPAIGN:
