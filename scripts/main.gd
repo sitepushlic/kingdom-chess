@@ -659,6 +659,8 @@ func _inventory_select(index: int) -> void:
 	var item: Dictionary = equipment[index]
 	var rarity: int = clampi(int(item.get("rarity", 0)), 0, 6)
 	inventory_details.text = "%s • %s • Ур. %d • Усиление +%d/12\nАтака +%d  Защита +%d  HP +%d\nКрит %d%%  Вампиризм %d%%\nПробитие %d  Блок %d%%  Кровотечение %d%%\nСила %d • Цена усиления %d" % [item.get("name", "Артефакт"), Progression.RARITIES[rarity], int(item.get("level", 1)), int(item.get("upgrade", 0)), int(item.get("attack", 0)), int(item.get("armor", 0)), int(item.get("hp", 0)), int(item.get("crit", 0)), int(item.get("lifesteal", 0)), int(item.get("penetration", 0)), int(item.get("block", 0)), int(item.get("bleed", 0)), Progression.item_score(item), Progression.upgrade_cost(item)]
+	if not Progression.can_equip(item, raid_wins, player_level):
+		inventory_details.text += "\n🔒 Недоступно: требуется больше побед и уровней для этой редкости/усиления."
 	var trait_id: int = int(item.get("trait_id", -1))
 	if trait_id >= 0 and trait_id < Progression.TRAITS.size():
 		inventory_details.text += "\nОСОБОЕ СВОЙСТВО: " + Progression.TRAITS[trait_id] + "\n" + Progression.TRAIT_DESCRIPTIONS[trait_id]
@@ -1106,7 +1108,12 @@ func _item_stat(stat: String) -> int:
 		var index: int = int(equipped_slots.get(slot, -1))
 		if index >= 0 and index < equipment.size() and Progression.can_equip(equipment[index], raid_wins, player_level):
 			total += maxi(0, int(equipment[index].get(stat, 0)))
-	var set_stats: Dictionary = Progression.set_bonus(equipment, equipped_slots)
+	var eligible_slots: Dictionary = equipped_slots.duplicate()
+	for slot in Progression.ITEM_SLOTS:
+		var item_index: int = int(eligible_slots.get(slot, -1))
+		if item_index < 0 or item_index >= equipment.size() or not Progression.can_equip(equipment[item_index], raid_wins, player_level):
+			eligible_slots[slot] = -1
+	var set_stats: Dictionary = Progression.set_bonus(equipment, eligible_slots)
 	total += int(set_stats.get(stat, 0))
 	return total
 
