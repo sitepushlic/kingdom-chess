@@ -162,6 +162,22 @@ def validate(path, require_animation=True):
                            if node.get("name","").startswith(headgear_prefixes)}
         assert authored_headgear, f"{path}: missing signature headgear"
         assert authored_headgear<=face_children, f"{path}: signature headgear detached from animated head"
+        # Art identity regression: every hero gets class-specific equipment,
+        # and every regional enemy must have a recognizable biome silhouette.
+        name=path.stem
+        if name.startswith("hero_"):
+            assert {"HeroBootToe1","HeroBootToe-1","HeroWristBand1","HeroWristBand-1"}<=node_names, f"{path}: missing class armor detail"
+            assert any(part in node_names for part in (
+                "RoyalGorget","RaiderChestScar","RangerHoodBrow",
+                "ForgeChestVent","MageFocusChain"
+            )), f"{path}: missing hero class silhouette"
+        if name.startswith("enemy_"):
+            region=int(name.rsplit("_",1)[-1])
+            region_marker=("AshFurnaceSpike1","IceCollar1","DeepSeaChestPearl",
+                           "ObsidianRidge1","SkyStormBeacon","NightThroneSeal")[region]
+            assert region_marker in node_names, f"{path}: missing biome identity"
+        if name.startswith("boss_"):
+            assert "BossHeartCore" in node_names, f"{path}: missing emissive boss core"
         # Distal rigid armor must inherit the lower bone transform.
         # A plate left under the shoulder/hip floats during joint flex.
         by_name={node.get("name"):i for i,node in enumerate(gltf["nodes"])}
