@@ -77,6 +77,8 @@ var gear_material_cache: Dictionary = {}
 var equipment_scene_cache: Dictionary = {}
 var character_scene_cache: Dictionary = {}
 var health_bar_materials: Dictionary = {}
+var combat_number_serial: int = 0
+var combat_number_limit: int = 18
 var castle_material_cache: Dictionary = {}
 # Smooth biome lighting transitions without allocating materials or extra lights.
 var region_light_target: Color = Color("#7c92b1")
@@ -1733,8 +1735,24 @@ func show_combat_number(index: int, amount: int, healing: bool = false) -> void:
 	# Render actual readable world-space numbers instead of invisible 2D labels.
 	if board_root == null or index < 0 or index >= 64 or amount <= 0:
 		return
+	# Limit burst spam and stagger consecutive labels on the same tile.
+	# This keeps rapid multi-hit combat readable and bounds transient 3D nodes.
+	var existing_numbers: Array[Label3D] = []
+	var same_square: int = 0
+	for child in board_root.get_children():
+		if child is Label3D and child.name.begins_with("CombatNumber"):
+			var previous: Label3D = child as Label3D
+			existing_numbers.append(previous)
+			if int(previous.get_meta("combat_cell", -1)) == index:
+				same_square += 1
+	if existing_numbers.size() >= combat_number_limit:
+		var oldest: Label3D = existing_numbers[0]
+		oldest.queue_free()
+		board_root.remove_child(oldest)
+	combat_number_serial += 1
 	var number := Label3D.new()
-	number.name = "CombatNumber"
+	number.name = "CombatNumber_%d" % combat_number_serial
+	number.set_meta("combat_cell", index)
 	number.text = ("+" if healing else "−") + str(amount)
 	number.font_size = 52
 	number.pixel_size = 0.006
@@ -1743,7 +1761,7 @@ func show_combat_number(index: int, amount: int, healing: bool = false) -> void:
 	number.outline_modulate = Color("#111725")
 	number.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	number.no_depth_test = true
-	number.position = _square_position(index) + Vector3(0.0, 1.9, 0.0)
+	number.position = _square_position(index) + Vector3(0.22 * float(same_square % 3 - 1), 1.9 + 0.20 * float(same_square % 4), 0.0)
 	board_root.add_child(number)
 	var float_tween := create_tween()
 	float_tween.set_parallel(true)
