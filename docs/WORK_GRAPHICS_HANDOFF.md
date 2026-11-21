@@ -332,3 +332,13 @@ Commits:
 - **`ab728d445491c24e68f56177c9d381a244cbcb21`**: motion validator now checks all **36 enemy characters** across six animations and seven deforming/animated joints, including attack recovery, in addition to 30 heroes and six bosses.
 **Important status:** GitHub source commits succeeded. No successful CI run, local Python execution, Godot import or Android APK observed. The expanded tests are unverified until a runner executes them. This work improves defect detection, not visual production quality.
 **Next:** read actual GitHub Actions failures, repair the generator/import/validator as required, confirm APK; then prioritize improved original character topology, materials and mobile device visual QA.
+
+## 36. Real elbow/knee geometry subdivision — 2026-11-21
+This batch makes a substantive 3D geometry change, rather than only adding validation:
+- **`e1c5ab8a54e155798949f9017e5b2470f81dfbeb`**: reworked the four skinned limb meshes of each of the 72 generated characters. Each arm/leg now has a distinct middle cross-section at the elbow/knee, 40 face-normal vertices and 20 triangles (previously 24 vertices and 12 triangles), with three smoothly blended joint-weight bands (upper, middle 50/50, lower). Preserves single-sided outward-facing triangle winding and separate upper/lower bone animation. This should bend more naturally than a single long cube.
+- **`6492cd165125262292c6af1d0a8fee663f0abdc0`**: binary GLB validator now requires the extra elbow/knee ring and middle blend for every character.
+- **`7c9a92ef9cafc3290fcec234087123ada453d4ff`**: independent `tools/art/test_limb_geometry.py` inspects all 288 generated limbs, checks triangle winding, three distinct weight bands, 40 vertices and 20 triangles per limb.
+- **`a4cf28e4620d7c1339585c36410a7963433c64b9`**, **`92eca82e6246885760d0c61518b32c358b4b5069`**: both Python art CI and Android CI run the new geometry test before Godot import.
+**Local partial verification:** independently executed the face-splitting algorithm in Python in this session: it generated ten 4-vertex quads per limb and every triangle had positive outward-facing winding. This is *not* execution of the full repository generator or validation suite.
+**Still unverified:** no observed completed Actions run, 72 GLB import into Godot, animation playback on hardware or valid Android APK. The meshes remain stylized low-poly blockouts, not finished art.
+**Next:** observe CI results and correct any real failures, verify skeletal bends and equipment offsets in Godot/Android, then create more detailed character meshes, distinct materials and level environments.
