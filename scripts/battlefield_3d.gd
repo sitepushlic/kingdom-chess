@@ -70,6 +70,7 @@ var primitive_mesh_cache: Dictionary = {}
 var impact_materials: Dictionary = {}
 var attack_trail_materials: Dictionary = {}
 var biome_material_cache: Dictionary = {}
+var castle_material_cache: Dictionary = {}
 # Smooth biome lighting transitions without allocating materials or extra lights.
 var region_light_target: Color = Color("#7c92b1")
 var region_background_target: Color = Color("#0b1422")
@@ -1042,10 +1043,18 @@ func _build_castle_skyline(region: int, palette: Array) -> void:
 	# Five distinct architectural landmarks beyond the tactical board.
 	# Purely visual: never intersect squares, hit tests or combat rules.
 	# Named anchors let smoke tests assert real geometry, not placeholders.
-	var masonry: StandardMaterial3D = _material(palette[0].lightened(0.11), 0.18, 0.75)
-	var roof: StandardMaterial3D = _material(palette[1].darkened(0.13), 0.35, 0.38)
-	var gilding: StandardMaterial3D = _material(palette[2].lightened(0.17), 0.76, 0.24)
-	var glass: StandardMaterial3D = _material(palette[2], 0.24, 0.18, palette[2] * 0.38)
+	if not castle_material_cache.has(region):
+		castle_material_cache[region] = [
+			_material(palette[0].lightened(0.11), 0.18, 0.75),
+			_material(palette[1].darkened(0.13), 0.35, 0.38),
+			_material(palette[2].lightened(0.17), 0.76, 0.24),
+			_material(palette[2], 0.24, 0.18, palette[2] * 0.38)
+		]
+	var castle_materials: Array = castle_material_cache[region]
+	var masonry: StandardMaterial3D = castle_materials[0]
+	var roof: StandardMaterial3D = castle_materials[1]
+	var gilding: StandardMaterial3D = castle_materials[2]
+	var glass: StandardMaterial3D = castle_materials[3]
 	var skyline := Node3D.new()
 	skyline.name = "CastleSkyline"
 	region_scenery.add_child(skyline)
