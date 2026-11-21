@@ -490,6 +490,7 @@ def make_character(identifier, boss=False):
     box("CapeClaspLeft",(-.21,1.10,.19),(.11,.10,.11),3)
     box("CapeClaspRight",(.21,1.10,.19),(.11,.10,.11),3)
     cape_positions=[]
+    cape_uvs=[]
     cape_weights=[]
     cape_joints=[]
     for xyz in CUBE_VERTS:
@@ -498,6 +499,7 @@ def make_character(identifier, boss=False):
         # The lower corners spread as the two-bone skin bends.
         cape_width=.26 if y>0 else .43
         cape_positions.extend((x*cape_width, .74+y*.38, .20+z*.035))
+        cape_uvs.extend(((x+1)*.5,(y+1)*.5))
         hem_weight=.72 if y<0 else .08
         cape_weights.extend((1.0-hem_weight,hem_weight,0.0,0.0))
         cape_joints.extend((0,1,0,0))
@@ -518,11 +520,12 @@ def make_character(identifier, boss=False):
         assert magnitude>1e-8, "Degenerate tapered cape face"
         cape_normals.extend([component/magnitude for component in cross]*4)
     cape_normal=accessor(cape_normals,"72f",24,5126,"VEC3",34962)
+    cape_uv=accessor(cape_uvs,"48f",24,5126,"VEC2",34962,([0,0],[1,1]))
     cape_joint=accessor(cape_joints,"96B",24,5121,"VEC4",34962)
     cape_weight=accessor(cape_weights,"96f",24,5126,"VEC4",34962)
     meshes.append({"name":"DeformingMantle","primitives":[{
         "attributes":{"POSITION":cape_pos,"NORMAL":cape_normal,
-                      "JOINTS_0":cape_joint,"WEIGHTS_0":cape_weight},
+                      "TEXCOORD_0":cape_uv,"JOINTS_0":cape_joint,"WEIGHTS_0":cape_weight},
         "indices":indices,"material":0}]})
     # Column-major 4x4 matrices: inverse world bind transforms for
     # CapeShoulder (y=1.11,z=.17) and CapeHem (y=.53,z=.17).
