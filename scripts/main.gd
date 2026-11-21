@@ -908,6 +908,25 @@ static func valid_battle_arrays(board: Variant, hp_values: Variant) -> bool:
 		if board[index] == "" and value != 0.0: return false
 	return true
 
+static func valid_raid_snapshot(data: Variant) -> bool:
+	if typeof(data) != TYPE_DICTIONARY: return false
+	if not valid_battle_arrays(data.get("pieces"), data.get("health")): return false
+	for key in ["ap", "turn", "boss_hp", "boss_phase", "raid_round", "raid_stage", "boss_target", "enemy_wave"]:
+		if typeof(data.get(key)) != TYPE_INT: return false
+	if int(data["ap"]) < 0 or int(data["ap"]) > 2: return false
+	if int(data["turn"]) != 1 and int(data["turn"]) != -1: return false
+	if int(data["boss_hp"]) < 0 or int(data["boss_hp"]) > 1000000: return false
+	if int(data["boss_phase"]) < 1 or int(data["boss_phase"]) > 2: return false
+	if int(data["raid_round"]) < 0 or int(data["raid_round"]) > 100000: return false
+	if int(data["raid_stage"]) < 1 or int(data["raid_stage"]) > 6: return false
+	if int(data["boss_target"]) < -1 or int(data["boss_target"]) > 63: return false
+	if int(data["enemy_wave"]) < 0 or int(data["enemy_wave"]) > 100000: return false
+	if typeof(data.get("winner")) != TYPE_STRING or typeof(data.get("battle_log")) != TYPE_STRING: return false
+	if typeof(data.get("acted")) != TYPE_ARRAY: return false
+	for square in data["acted"]:
+		if typeof(square) != TYPE_INT or square < 0 or square >= 64: return false
+	return true
+
 func _snapshot() -> Dictionary:
 	return {
 		"pieces": pieces.duplicate(), "health": health.duplicate(),
@@ -935,7 +954,7 @@ func _broadcast_snapshot() -> void:
 @rpc("authority", "call_remote", "reliable")
 func _send_snapshot(data: Dictionary) -> void:
 	if lan_host or not lan_connected: return
-	if not valid_battle_arrays(data.get("pieces"), data.get("health")): return
+	if not valid_raid_snapshot(data): return
 	pieces = data["pieces"].duplicate()
 	health = data["health"].duplicate()
 	hero_poison = sanitize_hero_poison(data.get("hero_poison", {}), pieces)
