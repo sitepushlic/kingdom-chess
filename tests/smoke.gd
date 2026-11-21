@@ -1015,6 +1015,14 @@ func _run() -> void:
 	game.battlefield_3d.set_poison_indicators({48: 2}, {9: 1, 10: 0})
 	_assert_ok(not game.battlefield_3d.enemy_poison_indicators.has(8) and not game.battlefield_3d.enemy_poison_indicators.has(10), "Expired and zero-stack enemy poison markers are removed")
 	_assert_ok(game.battlefield_3d.enemy_poison_indicators.size() == 1, "Enemy poison marker cache tracks only live statuses")
+	var stack_marker: MeshInstance3D = game.battlefield_3d.enemy_poison_indicators[9]
+	var one_stack_scale: float = stack_marker.scale.x
+	game.battlefield_3d.set_poison_indicators({48: 2}, {9: 5})
+	_assert_ok(game.battlefield_3d.enemy_poison_indicators[9] == stack_marker, "Poison intensity update reuses marker node")
+	_assert_ok(stack_marker.scale.x > one_stack_scale and int(stack_marker.get_meta("stacks")) == 5, "Poison intensity changes visible marker size")
+	game.battlefield_3d.set_poison_indicators({48: 2}, {9: 100})
+	_assert_ok(int(stack_marker.get_meta("stacks")) == 5, "Poison visual intensity is capped")
+
 
 	game.battlefield_3d.set_poison_indicators({})
 	_assert_ok(game.battlefield_3d.poison_indicators.is_empty(), "Poison status markers disappear when cleared")
