@@ -39,6 +39,11 @@ def validate(path, require_animation=True):
             rigid_primitive=rigid_mesh["primitives"][0]
             vertex_count=gltf["accessors"][rigid_primitive["attributes"]["POSITION"]]["count"]
             triangle_count=gltf["accessors"][rigid_primitive["indices"]]["count"]//3
+            assert "TEXCOORD_0" in rigid_primitive["attributes"], f"{path}: rigid mesh missing UV charts"
+            uv_acc=gltf["accessors"][rigid_primitive["attributes"]["TEXCOORD_0"]]
+            assert uv_acc["type"]=="VEC2" and uv_acc["componentType"]==5126, f"{path}: invalid UV format"
+            assert uv_acc["count"]==vertex_count, f"{path}: UV and vertex count mismatch"
+            assert uv_acc["min"]==[0,0] and uv_acc["max"]==[1,1], f"{path}: invalid UV coordinate range"
             assert vertex_count>=96 and triangle_count>=40, f"{path}: rigid geometry still cube blockout"
     for acc in gltf["accessors"]:
         view = gltf["bufferViews"][acc["bufferView"]]
