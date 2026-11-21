@@ -214,7 +214,14 @@ def validate(path, require_animation=True):
         assert any(.05<row[1]<.95 for row in skin_weights), f"{path}: cloth does not actually blend two bones"
         torso_weights=decode_attribute(torso_primitive["attributes"]["WEIGHTS_0"])
         torso_joints=decode_attribute(torso_primitive["attributes"]["JOINTS_0"])
-        assert len(torso_weights)==len(torso_joints)==24, f"{path}: invalid skinned torso vertex count"
+        assert len(torso_weights)==len(torso_joints)==40, f"{path}: missing tapered torso middle ring"
+        torso_positions=decode_attribute(torso_primitive["attributes"]["POSITION"])
+        torso_normals=decode_attribute(torso_primitive["attributes"]["NORMAL"])
+        torso_triangles=decode_attribute(torso_primitive["indices"])
+        assert len(torso_positions)==len(torso_normals)==40 and len(torso_triangles)==60, f"{path}: incorrect tapered torso geometry"
+        assert any(abs(row[1]-.5)<1e-5 for row in torso_weights), f"{path}: missing spine mid-ring blending"
+        assert max(row[0] for row in torso_positions)>0.22 and min(row[0] for row in torso_positions)<-0.22, f"{path}: missing shoulder breadth"
+        assert all(abs(sum(x*x for x in normal)-1)<1e-3 for normal in torso_normals), f"{path}: invalid tapered torso normals"
         assert all(abs(sum(row)-1)<1e-5 for row in torso_weights), f"{path}: torso weights are not normalized"
         assert all(all(j<2 for j in row) for row in torso_joints), f"{path}: torso joint index out of range"
         assert any(.05<row[1]<.95 for row in torso_weights), f"{path}: torso does not blend between bones"
