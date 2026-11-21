@@ -55,15 +55,28 @@ static func load_profile() -> Dictionary:
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return default_profile()
+	return sanitize_profile(parsed)
+
+static func safe_save_int(value: Variant, fallback: int, minimum: int, maximum: int) -> int:
+	# Never coerce malformed JSON strings, booleans, fractions or huge numbers.
+	if typeof(value) != TYPE_INT and typeof(value) != TYPE_FLOAT:
+		return fallback
+	var number := float(value)
+	if not is_finite(number) or absf(number) > 1000000000.0 or number != float(int(number)):
+		return fallback
+	return clampi(int(number), minimum, maximum)
+
+static func sanitize_profile(parsed: Dictionary) -> Dictionary:
 	var profile: Dictionary = default_profile()
 	for key in profile.keys():
 		if parsed.has(key):
 			profile[key] = parsed[key]
-	profile["level"] = clampi(int(profile["level"]), 1, 50)
-	profile["xp"] = maxi(0, int(profile["xp"]))
-	profile["gold"] = maxi(0, int(profile["gold"]))
-	profile["potions"] = clampi(int(profile["potions"]), 0, 99)
-	profile["dry_streak"] = clampi(int(profile.get("dry_streak", 0)), 0, 100)
+	profile["level"] = safe_save_int(profile["level"], 1, 1, 50)
+	profile["xp"] = safe_save_int(profile["xp"], 0, 0, 1000000000)
+	profile["gold"] = safe_save_int(profile["gold"], 0, 0, 1000000000)
+	profile["potions"] = safe_save_int(profile["potions"], 2, 0, 99)
+	profile["wins"] = safe_save_int(profile["wins"], 0, 0, 1000000000)
+	profile["dry_streak"] = safe_save_int(profile["dry_streak"], 0, 0, 100)
 	if typeof(profile["items"]) != TYPE_ARRAY:
 		profile["items"] = []
 	if typeof(profile.get("slots")) != TYPE_DICTIONARY:
