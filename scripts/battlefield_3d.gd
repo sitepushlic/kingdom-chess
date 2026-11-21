@@ -41,6 +41,8 @@ var world_environment: WorldEnvironment
 var key_light: DirectionalLight3D
 var rim_light: OmniLight3D
 var torch_flames: Array[MeshInstance3D] = []
+var board_gems: Array[MeshInstance3D] = []
+var board_gem_halos: Array[MeshInstance3D] = []
 var current_region := -1
 var mission_visual_variant: int = 0
 var gear_signature := ""
@@ -72,6 +74,8 @@ func set_visual_quality(tier: int) -> void:
 			torch_flames[index].visible = light.visible
 	if rim_light != null:
 		rim_light.visible = visual_quality > 0
+	for halo in board_gem_halos:
+		halo.visible = visual_quality >= 2
 
 
 var hero_model_cell: int = -1
@@ -207,6 +211,15 @@ func _ready() -> void:
 			var gem: MeshInstance3D = _sphere(0.085, corner_gem, board_root, corner_at + Vector3(0, 0.22, 0))
 			gem.name = "BoardCornerGem_%d_%d" % [corner_x, corner_z]
 			gem.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			board_gems.append(gem)
+			# High-quality-only emissive rings add animated arcane detail
+			# without spawning four additional dynamic lights.
+			var halo: MeshInstance3D = _ring(0.14, 0.018, corner_gem, board_root, corner_at + Vector3(0, 0.22, 0))
+			halo.name = "BoardGemHalo_%d_%d" % [corner_x, corner_z]
+			halo.rotation.x = PI * 0.5
+			halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			halo.visible = false
+			board_gem_halos.append(halo)
 	for index in range(8):
 		var coordinate: String = "ABCDEFGH".substr(index, 1)
 		var rank_text: String = str(8 - index)
@@ -1398,6 +1411,17 @@ func _process(delta: float) -> void:
 			var flicker := sin(clock * (6.0 + float(i) * 0.27) + float(i) * 1.7)
 			torch_flames[i].scale = Vector3(0.85 + flicker * 0.12, 1.2 + flicker * 0.24, 0.85 + flicker * 0.12)
 			torches[i].light_energy = 1.15 + flicker * 0.22
+	# Shared shader-free gem animation: no per-frame material allocation,
+	# no physics, and no extra dynamic lights on mobile.
+	if fx_enabled:
+		for gem_index in range(board_gems.size()):
+			var gem: MeshInstance3D = board_gems[gem_index]
+			var phase: float = clock * 1.9 + float(gem_index) * 1.57
+			gem.scale = Vector3.ONE * (1.0 + 0.10 * sin(phase))
+			if visual_quality >= 2 and gem_index < board_gem_halos.size():
+				var halo: MeshInstance3D = board_gem_halos[gem_index]
+				halo.rotation.z = clock * 0.45 + float(gem_index)
+				halo.scale = Vector3.ONE * (0.88 + 0.14 * sin(phase + 0.8))
 	for n in range(animated_scenery.size()):
 		if not fx_enabled: break
 		var orb: MeshInstance3D = animated_scenery[n]
