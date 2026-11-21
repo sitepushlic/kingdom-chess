@@ -908,6 +908,22 @@ func _run() -> void:
 	_assert_ok(game.battlefield_3d.hazard_markers[3].visible and not game.battlefield_3d.hazard_markers[0].visible, "3D hazard markers match forecasted squares")
 	game.battlefield_3d.set_hazards(Progression.hazard_cells("none", 1), "none")
 	_assert_ok(not game.battlefield_3d.hazard_markers[3].visible, "3D hazard markers clear after danger")
+	# Enemy poison is a unit status, not a permanent square hazard.
+	game._reset()
+	game.pieces[8] = "p"
+	game.health[8] = 45
+	game.pieces[16] = ""
+	game.health[16] = 0
+	game.poison_marks[8] = 3
+	game._move(8, 16)
+	_assert_ok(not game.poison_marks.has(8) and int(game.poison_marks.get(16, 0)) == 3, "Poison stacks follow moving enemy")
+	game.poison_marks[24] = 2
+	game.pieces[24] = "p"
+	game.health[24] = 10
+	game._move(16, 24)
+	_assert_ok(not game.poison_marks.has(16) and int(game.poison_marks.get(24, 0)) == 3, "Moving enemy replaces captured unit poison instead of inheriting it")
+	game._reset()
+	_assert_ok(game.poison_marks.is_empty(), "New encounter clears enemy poison stacks")
 	# Persistent mission poison follows the unit and expires after two enemy turns.
 	game._reset()
 	game.hero_poison[60] = 2
