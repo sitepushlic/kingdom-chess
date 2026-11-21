@@ -267,3 +267,9 @@ For EVERY future implementation session:
 - Commit `9ef48fa`: king attacks onto occupied enemy squares must also satisfy safe-destination simulation, preventing a lethal king capture onto an attacked square.
 - Commit `e0364f5`: `tests/smoke.gd` now includes rook pin, check escape, knight and pawn attack geometry regression cases.
 - **CI/runtime not verified.** Inspect latest GitHub Actions build and smoke tests before release. This batch is partial chess safety, not complete checkmate or chess rules. Remaining major work: enforce mandatory responses to check across multi-AP RPG turns, pin-safe lethal captures by non-king units, castling/en passant/promotion, AI and boss threat semantics, robust PvP end conditions, Android device QA and 3D assets.
+
+## Chess-RPG lethal-capture safety, pawn promotion and check UI — 2026-11-21
+- Commit `b48d6a0` updates `scripts/main.gd`: arena RPG captures must leave the friendly king safe even if the target dies; pawn reaching last rank auto-promotes to queen while preserving current HP. This is **automatic queen promotion**, not yet player-selectable underpromotion.
+- Commit `6ecbea4` adds smoke regression assertions for lethal pinned captures and white/black pawn promotion with HP preservation.
+- Commit `924a552` shows **ШАХ!** in arena status when the active king is geometrically threatened.
+- **CI not verified; no Android APK or device validation claimed.** Must check GitHub Actions and fix errors before declaring playable. The current arena still has two action points per turn, and the check indicator does not yet force a legal check resolution. Boss raid uses its own rules. Next: check-resolution turn gate, persistent combat states and safe end conditions; castling, en passant, underpromotion and balance remain open.
