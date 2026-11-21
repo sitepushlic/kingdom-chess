@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate all generated GLB files without third-party dependencies."""
 import json
+import math
 import struct
 from pathlib import Path
 
@@ -32,6 +33,28 @@ def validate(path, require_animation=True):
         view = gltf["bufferViews"][acc["bufferView"]]
         byte_len = acc["count"] * COMPONENT_SIZE[acc["componentType"]] * COMPONENTS[acc["type"]]
         assert acc.get("byteOffset",0) + byte_len <= view["byteLength"], f"{path}: accessor overflow"
+    # Check glTF node graph and animation sampler consistency before Godot.
+    node_count=len(gltf["nodes"])
+    for node in gltf["nodes"]:
+        for child in node.get("children",[]):
+            assert isinstance(child,int) and 0 <= child < node_count, f"{path}: invalid child index"
+    for scene in gltf.get("scenes",[]):
+        for root in scene["nodes"]:
+            assert 0 <= root < node_count, f"{path}: invalid scene root"
+    for animation in gltf.get("animations",[]):
+        assert animation.get("samplers") and animation.get("channels"), f"{path}: empty animation"
+        for channel in animation["channels"]:
+            assert 0 <= channel["sampler"] < len(animation["samplers"]), f"{path}: bad sampler index"
+            assert 0 <= channel["target"]["node"] < node_count, f"{path}: bad animation target"
+            assert channel["target"]["path"] in ("translation","rotation","scale"), f"{path}: unsupported target"
+        for sampler in animation["samplers"]:
+            input_acc=gltf["accessors"][sampler["input"]]
+            output_acc=gltf["accessors"][sampler["output"]]
+            assert input_acc["type"]=="SCALAR" and input_acc["componentType"]==5126, f"{path}: invalid animation timeline"
+            assert output_acc["count"]==input_acc["count"], f"{path}: animation keyframe count mismatch"
+            assert input_acc["count"]>=2, f"{path}: animation must have multiple keyframes"
+            if "max" in input_acc:
+                assert math.isfinite(input_acc["max"][0]) and input_acc["max"][0]>0, f"{path}: invalid duration"
     names = {a["name"] for a in gltf.get("animations",[])}
     if require_animation:
         assert CLIPS.issubset(names), f"{path}: missing clips {CLIPS - names}"
