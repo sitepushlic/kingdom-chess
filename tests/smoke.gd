@@ -184,6 +184,12 @@ func _run() -> void:
 	var plain_ally: Node3D = game.battlefield_3d._build_piece("K", false, false)
 	_assert_ok(geared_bearer.find_child("Rarity_Оружие", true, false) != null, "Selected bearer receives equipped weapon")
 	_assert_ok(plain_ally.find_child("Rarity_Оружие", true, false) == null, "Other allied unit has no selected hero gear")
+	# Imported GLB gear must follow animated arm joints, not float at
+	# world-space offsets while the hero swings or casts.
+	var weapon_socket: Node = geared_bearer.find_child("GearSocket_weapon", true, false)
+	_assert_ok(weapon_socket != null, "Equipped weapon creates an authored GLB socket")
+	if weapon_socket != null:
+		_assert_ok(weapon_socket.get_parent().name == "Arm1", "Weapon is attached to the moving right arm")
 	geared_bearer.queue_free()
 	plain_ally.queue_free()
 	game.battlefield_3d.hero_gear = prior_gear
