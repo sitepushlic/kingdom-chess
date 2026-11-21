@@ -278,6 +278,43 @@ def make_character(identifier, boss=False):
                 box("CrimsonWing"+str(side),(side*.62,1.11,.22),(.39,.85,.12),0,side*.43)
                 box("CrimsonFang"+str(side),(side*.20,1.65,-.15),(.11,.39,.13),4,side*.18)
             box("CrimsonCore",(0,.93,-.27),(.30,.33,.10),4)
+    # First actual GPU-skinned component: a two-bone cloth mantle. The
+    # 24-vertex cape is bound to shoulder and hem joints with blended weights.
+    # Unlike the articulated rigid boxes above, this uses glTF skinning
+    # (JOINTS_0, WEIGHTS_0, inverseBindMatrices) and deforms between bones.
+    cape_root_index=len(nodes)
+    nodes.append({"name":"CapeShoulder","translation":[0,1.11,.17],"children":[cape_root_index+1]})
+    nodes.append({"name":"CapeHem","translation":[0,-.58,0]})
+    nodes[1]["children"].append(cape_root_index)
+    cape_mesh_index=len(nodes)
+    nodes.append({"name":"SkinnedCape","mesh":len(meshes),"skin":0})
+    nodes[1]["children"].append(cape_mesh_index)
+    cape_positions=[]
+    cape_weights=[]
+    cape_joints=[]
+    for xyz in CUBE_VERTS:
+        x,y,z=xyz
+        cape_positions.extend((x*.34, .74+y*.38, .20+z*.035))
+        hem_weight=.72 if y<0 else .08
+        cape_weights.extend((1.0-hem_weight,hem_weight,0.0,0.0))
+        cape_joints.extend((0,1,0,0))
+    cape_pos=accessor(cape_positions,"72f",24,5126,"VEC3",34962,
+                      ([-.34,.36,.165],[.34,1.12,.235]))
+    cape_normal=normals
+    cape_joint=accessor(cape_joints,"96B",24,5121,"VEC4",34962)
+    cape_weight=accessor(cape_weights,"96f",24,5126,"VEC4",34962)
+    meshes.append({"name":"DeformingMantle","primitives":[{
+        "attributes":{"POSITION":cape_pos,"NORMAL":cape_normal,
+                      "JOINTS_0":cape_joint,"WEIGHTS_0":cape_weight},
+        "indices":indices,"material":0}]})
+    # Column-major 4x4 matrices: inverse world bind transforms for
+    # CapeShoulder (y=1.11,z=.17) and CapeHem (y=.53,z=.17).
+    inverse_bind=[]
+    for y,z in ((1.11,.17),(.53,.17)):
+        inverse_bind.extend((1,0,0,0, 0,1,0,0, 0,0,1,0, 0,-y,-z,1))
+    ibm=accessor(inverse_bind,"32f",2,5126,"MAT4")
+    skins=[{"name":"MantleSkin","joints":[cape_root_index,cape_root_index+1],
+            "skeleton":cape_root_index,"inverseBindMatrices":ibm}]
     # Six named glTF clips animate the full character pivot. These are
     # rigid transform clips, NOT skeletal animations.
     clips = {
@@ -321,6 +358,18 @@ def make_character(identifier, boss=False):
         body_output=accessor(body_values,str(len(body_values))+"f",len(body_quats),5126,"VEC4")
         samplers.append({"input":t,"output":body_output,"interpolation":"LINEAR"})
         channels.append({"sampler":len(samplers)-1,"target":{"node":1,"path":"rotation"}})
+        # Mantle hem sways independently of the body in every animation.
+        hem_angles={
+            "idle":[0,.05,0], "move":[0,.22,-.16],
+            "attack":[0,-.34,.27,0], "hit":[0,.30,0],
+            "death":[0,.45,.70], "cast":[0,-.24,.12],
+        }[name]
+        hem_poses=[(math.sin(v/2),0,0,math.cos(v/2)) for v in hem_angles]
+        hem_output=accessor([v for q in hem_poses for v in q],
+                            str(len(hem_poses)*4)+"f",len(hem_poses),5126,"VEC4")
+        samplers.append({"input":t,"output":hem_output,"interpolation":"LINEAR"})
+        channels.append({"sampler":len(samplers)-1,
+                         "target":{"node":cape_root_index+1,"path":"rotation"}})
         for limb, angles in limb_poses[name].items():
             if limb not in node_ids:
                 continue
@@ -344,7 +393,7 @@ def make_character(identifier, boss=False):
         animations.append({"name":name,"samplers":samplers,"channels":channels})
     gltf={"asset":{"version":"2.0","generator":"KingdomChess deterministic blockout generator"},
           "scene":0,"scenes":[{"nodes":[0]}],"nodes":nodes,"meshes":meshes,"materials":mats,
-          "buffers":[{"byteLength":len(blob)}],"bufferViews":views,"accessors":accessors,"animations":animations}
+          "buffers":[{"byteLength":len(blob)}],"bufferViews":views,"accessors":accessors,"skins":skins,"animations":animations}
     json_bytes=json.dumps(gltf,ensure_ascii=False,separators=(",",":")).encode("utf-8")
     json_bytes+=b" " * ((-len(json_bytes))%4)
     blob.extend(b"\x00"*((-len(blob))%4))
