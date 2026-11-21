@@ -177,3 +177,8 @@ For EVERY future implementation session:
 - Commit `adff40a` (`scripts/main.gd`): poisoned status restoration now permits only known allied chess glyphs K/Q/R/B/N/P, rather than any uppercase string.
 - Commit `79eb9dd` (`tests/smoke.gd`): regression tests for invalid glyph, enemy pawn and valid hero pawn status.
 - Next: finish unique mission objectives, authored character art and animations, real Android device QA, two-device Wi-Fi tests, production signing and release readiness. Do not confuse CI run count with completeness.
+
+## Visual-art priority session — 2026-11-21
+- User explicitly prioritized continuing development until **full high-quality 3D visuals**, not merely a CI run number. The existing hourly development automation was updated accordingly.
+- Commit `ad191d7` (`scripts/battlefield_3d.gd`): added 3D torus cast-metal plinth trim and distinct elevated class heraldry (knight ears, bishop halo, queen finial, pawn collar) to improve silhouette readability. These are actual 3D meshes; still procedural and **not** commercial-grade authored character models.
+- Verify the newest CI before claiming Android export success. Next: replace primitive piece models with imported rigged original GLB characters, skeletal animation and animation trees, high-quality PBR textures and material variation, six distinct environments, VFX, mobile performance testing. Do not claim complete 3D art until assets are implemented and visually inspected on target phones.
