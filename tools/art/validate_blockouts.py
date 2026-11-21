@@ -157,6 +157,11 @@ def validate(path, require_animation=True):
         face_children={gltf["nodes"][i].get("name") for i in gltf["nodes"][face_head].get("children",[])}
         assert {"NoseBridge","NoseTip","Mouth","Pupil1","Pupil-1",
                 "Ear1","Ear-1","LowerCheek1","LowerCheek-1"}<=face_children, f"{path}: missing animated facial detail"
+        headgear_prefixes=("Crown","Antler","HighHelm","Crest","Halo","Mask")
+        authored_headgear={node.get("name") for node in gltf["nodes"]
+                           if node.get("name","").startswith(headgear_prefixes)}
+        assert authored_headgear, f"{path}: missing signature headgear"
+        assert authored_headgear<=face_children, f"{path}: signature headgear detached from animated head"
         # Distal rigid armor must inherit the lower bone transform.
         # A plate left under the shoulder/hip floats during joint flex.
         by_name={node.get("name"):i for i,node in enumerate(gltf["nodes"])}
