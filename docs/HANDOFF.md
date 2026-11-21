@@ -293,3 +293,9 @@ For EVERY future implementation session:
 - Commit `abf110a` (`scripts/battlefield_3d.gd`): resolve imported GLB clips by enumerating AnimationPlayer libraries and requesting the exact library-qualified clip; missing animations still fall back safely.
 - **Verification status:** #273 was inspected via the GitHub connector and was **cancelled**, not successful. The connector currently cannot list push-triggered workflow runs globally; direct Actions page fetch was unavailable. This batch is committed but its Godot parser, smoke tests and Android debug APK **have not been confirmed passing**. The next session must inspect the first completed CI run containing `abf110a`, obtain job logs, fix any remaining failing assertions, and verify artifact upload.
 - **Product gaps unchanged:** commercial rigged models, six authored regions, animation/VFX polish, actual Android GPU profiling, two-phone co-op QA and release build are unfinished. Do not equate repaired test fixtures with validated gameplay or commercial graphics.
+
+## Immediate manual session — 2026-11-21: 3D king threat readability
+- `c5fb6e8`: added a dedicated elevated, animated 3D ring around the king in check (`set_checked_king`, `KingCheckWarning`). The indicator rotates and pulses independently of 3D hazard and legal-move markers, and does not cast shadows.
+- `0747298`: connected arena king-threat state to the 3D renderer; clears on raid mode and after a win.
+- `59d0fd2`: smoke assertions verify visible indicator on checked square and cleanup when check clears.
+- This is procedural geometry for gameplay clarity, **not authored commercial-quality character art**. Godot runtime and CI for these commits have **not been verified**. Confirm headless smoke test and Android debug export in Actions; inspect actual Android viewport for legibility and overdraw.
