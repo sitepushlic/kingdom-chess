@@ -38,6 +38,12 @@ def validate(path, require_animation=True):
     node_names = {node.get("name") for node in gltf["nodes"]}
     if require_animation:
         assert {"Arm1","Arm-1","Leg1","Leg-1"}.issubset(node_names), f"{path}: missing independent limbs"
+        for joint_name in ("Arm1","Arm-1","Leg1","Leg-1"):
+            joint_index = next(i for i,node in enumerate(gltf["nodes"]) if node.get("name")==joint_name)
+            joint = gltf["nodes"][joint_index]
+            assert "mesh" not in joint and len(joint.get("children",[])) == 1, f"{path}: {joint_name} must be a pivot"
+            child = gltf["nodes"][joint["children"][0]]
+            assert child.get("name") == joint_name+"Mesh" and "mesh" in child, f"{path}: {joint_name} must own limb mesh"
     for animation in gltf.get("animations",[]):
         channels = animation["channels"]
         assert any(channel["target"]["path"] == "translation" for channel in channels), f"{path}: missing root motion"
