@@ -239,7 +239,11 @@ def validate(path, require_animation=True):
             assert {"POSITION","NORMAL","JOINTS_0","WEIGHTS_0"}.issubset(limb_primitive["attributes"]), f"{path}: missing weighted limb geometry"
             limb_weights=decode_attribute(limb_primitive["attributes"]["WEIGHTS_0"])
             limb_joints=decode_attribute(limb_primitive["attributes"]["JOINTS_0"])
-            assert len(limb_weights)==len(limb_joints)==24, f"{path}: invalid limb vertex count"
+            assert len(limb_weights)==len(limb_joints)==40, f"{path}: missing subdivided elbow/knee vertex ring"
+            limb_positions=decode_attribute(limb_primitive["attributes"]["POSITION"])
+            limb_indices=decode_attribute(limb_primitive["indices"])
+            assert len(limb_positions)==40 and len(limb_indices)==60, f"{path}: expected 40 vertices / 20 triangles per deforming limb"
+            assert any(abs(weights[1]-.5)<1e-5 for weights in limb_weights), f"{path}: missing balanced elbow/knee ring weights"
             assert all(abs(sum(weights)-1)<1e-5 for weights in limb_weights), f"{path}: nonnormalized limb skin weights"
             assert all(all(0<=joint<2 for joint in joints) for joints in limb_joints), f"{path}: invalid limb skin joint index"
             assert any(.05<weights[1]<.95 for weights in limb_weights), f"{path}: missing blended elbow/knee vertices"
