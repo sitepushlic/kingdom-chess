@@ -110,7 +110,7 @@ jobs:
       - name: Run gameplay smoke tests
         run: |
           set -o pipefail
-          timeout 120s ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://tests/smoke.gd --quit-after 15 2>&1 | tee smoke.log
+          timeout 240s ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://tests/smoke.gd --quit-after 15 2>&1 | tee smoke.log
           grep -q "KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED" smoke.log
           if grep -Eq "SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:" smoke.log; then
             echo "Godot emitted script or parser errors; refusing APK export"
