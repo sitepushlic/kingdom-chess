@@ -1164,6 +1164,41 @@ def make_character(identifier, boss=False):
                 chunk(b"IHDR",struct.pack(">IIBBBBB",size,size,8,6,0,0,0))+
                 chunk(b"IDAT",zlib.compress(bytes(rows),9))+
                 chunk(b"IEND",b""))
+    def normal_png(material_index):
+        # Tangent-space normal detail: woven cloth, brushed metal, skin
+        # pores, chased gold and arcane circuitry. Normals are deliberately
+        # subtle so they do not distort silhouettes or shimmer on mobile.
+        size=128
+        pixels=bytearray()
+        def relief(x,y):
+            x%=size
+            y%=size
+            if material_index==0:
+                return (10 if x%8 in (0,1) else 0)+(7 if y%8 in (0,1) else 0)
+            if material_index==1:
+                return (11 if x%13==0 else 0)+(3 if y%3==0 else 0)
+            if material_index==2:
+                return 7 if (x*11+y*7)%17<2 else 0
+            if material_index==3:
+                return (13 if (x-y)%24<2 else 0)+(8 if (x+y)%24<2 else 0)
+            return 15 if x%32<2 or y%32<2 else 0
+        for y in range(size):
+            pixels.append(0)
+            for x in range(size):
+                dx=relief(x-1,y)-relief(x+1,y)
+                dy=relief(x,y-1)-relief(x,y+1)
+                nx=dx*.025
+                ny=dy*.025
+                norm=math.sqrt(nx*nx+ny*ny+1)
+                pixels.extend((max(0,min(255,round(127.5*(1+nx/norm)))),
+                               max(0,min(255,round(127.5*(1+ny/norm)))),
+                               max(0,min(255,round(127.5*(1+1/norm)))),255))
+        def chunk(kind,data):
+            return struct.pack(">I",len(data))+kind+data+struct.pack(">I",zlib.crc32(kind+data)&0xffffffff)
+        return (b"\\x89PNG\\r\\n\\x1a\\n"+
+                chunk(b"IHDR",struct.pack(">IIBBBBB",size,size,8,6,0,0,0))+
+                chunk(b"IDAT",zlib.compress(bytes(pixels),9))+
+                chunk(b"IEND",b""))
     images=[]
     textures=[]
     for material_index in range(5):
@@ -1177,6 +1212,17 @@ def make_character(identifier, boss=False):
                        "bufferView":len(views)-1,"mimeType":"image/png"})
         textures.append({"source":material_index,"sampler":0})
         mats[material_index]["pbrMetallicRoughness"]["baseColorTexture"]={"index":material_index,"texCoord":0}
+    for material_index in range(5):
+        while len(blob)%4:
+            blob.append(0)
+        start=len(blob)
+        png=normal_png(material_index)
+        blob.extend(png)
+        views.append({"buffer":0,"byteOffset":start,"byteLength":len(png)})
+        images.append({"name":mats[material_index]["name"]+"Normal",
+                       "bufferView":len(views)-1,"mimeType":"image/png"})
+        textures.append({"source":5+material_index,"sampler":0})
+        mats[material_index]["normalTexture"]={"index":5+material_index,"texCoord":0,"scale":0.65}
     gltf={"asset":{"version":"2.0","generator":"KingdomChess deterministic blockout generator"},
           "scene":0,"scenes":[{"nodes":[0]}],"nodes":nodes,"meshes":meshes,"materials":mats,
           "buffers":[{"byteLength":len(blob)}],"bufferViews":views,"accessors":accessors,"skins":skins,"animations":animations,
