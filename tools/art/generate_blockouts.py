@@ -265,6 +265,36 @@ def make_character(identifier, boss=False):
         box("Gauntlet"+str(side),(side*.30,.66,-.03),(.15,.14,.19),1)
         box("ShinPlate"+str(side),(side*.12,.30,-.095),(.145,.25,.06),1)
         box("Boot"+str(side),(side*.12,.12,-.05),(.17,.15,.25),1)
+    # Layered hard-surface construction: raised gorget, articulated
+    # vambrace cuffs, plated greaves and embossed belt trim. These are
+    # physically modeled facets, not a single painted box silhouette.
+    box("GorgetLower",(0,1.075,-.135),(.36,.085,.22),1)
+    box("GorgetUpper",(0,1.135,-.105),(.30,.055,.19),3)
+    box("BreastplateRidge",(0,.98,-.214),(.055,.27,.055),3)
+    box("BeltTrim",(0,.54,-.174),(.39,.038,.046),3)
+    for side in (-1,1):
+        box("HeroWristBand"+str(side),(side*.30,.62,-.03),(.17,.055,.21),3)
+        box("HeroBootToe"+str(side),(side*.12,.11,-.18),(.20,.085,.18),1)
+        box("ShoulderRivet"+str(side),(side*.32,1.055,-.16),(.065,.065,.06),3)
+    # Class-specific head silhouettes and engraved insignia that remain
+    # visible at gameplay camera distance.
+    if family==0:
+        box("RoyalBrowCrown",(0,1.49,-.01),(.42,.12,.33),3)
+        for side in (-1,1):
+            box("RoyalCrownWing"+str(side),(side*.18,1.58,0),(.10,.20,.13),3)
+    elif family==1:
+        box("RaiderVisor",(0,1.43,-.17),(.34,.095,.12),1)
+        for side in (-1,1):
+            box("RaiderHelmetHorn"+str(side),(side*.20,1.57,0),(.085,.29,.09),3,side*.26)
+    elif family==2:
+        box("RangerHoodBrim",(0,1.47,-.20),(.40,.08,.19),0)
+        box("RangerFaceMask",(0,1.24,-.19),(.25,.12,.055),0)
+    elif family==3:
+        box("ForgeHelmetCrest",(0,1.53,0),(.13,.28,.29),3)
+        box("ForgeVisor",(0,1.36,-.18),(.38,.12,.09),1)
+    else:
+        box("MageCirclet",(0,1.48,0),(.38,.075,.32),3)
+        box("MageForeheadGem",(0,1.48,-.18),(.105,.12,.06),4)
     # Distinct armor silhouettes: 5 body archetypes.
     if family==0:
         box("Mantle",(0,.87,.17),(.58,.62,.11))
