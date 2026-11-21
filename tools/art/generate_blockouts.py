@@ -59,6 +59,7 @@ def make_character(identifier, boss=False):
         {"name":"Steel","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":[0.61,0.67,0.72,1],"metallicFactor":0.82,"roughnessFactor":0.31}},
         {"name":"Skin","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":[0.72,0.50,0.37,1],"metallicFactor":0.0,"roughnessFactor":0.8}},
         {"name":"Gold","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":[0.88,0.67,0.29,1],"metallicFactor":0.85,"roughnessFactor":0.28}},
+        {"name":"ArcaneGlow","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":[accent[0],accent[1],accent[2],1],"metallicFactor":0.1,"roughnessFactor":0.25},"emissiveFactor":[min(1,accent[0]*.85),min(1,accent[1]*.85),min(1,accent[2]*.85)]},
     ]
     nodes = [{"name":"Root","children":[1]},{"name":"BodyRig","children":[]}]
     meshes = []
@@ -81,8 +82,8 @@ def make_character(identifier, boss=False):
     pos=accessor(positions,"72f",24,5126,"VEC3",34962,([-1,-1,-1],[1,1,1]))
     normals=accessor([v for normal in CUBE_NORMALS for v in normal],"72f",24,5126,"VEC3",34962)
     indices=accessor(CUBE_TRI,"36H",36,5123,"SCALAR",34963)
-    for m in range(4):
-        meshes.append({"name":["ArmorBox","SteelBox","SkinBox","GoldBox"][m],"primitives":[{"attributes":{"POSITION":pos,"NORMAL":normals},"indices":indices,"material":m}]})
+    for m in range(5):
+        meshes.append({"name":["ArmorBox","SteelBox","SkinBox","GoldBox","ArcaneGlowBox"][m],"primitives":[{"attributes":{"POSITION":pos,"NORMAL":normals},"indices":indices,"material":m}]})
     def box(name, center, size, material=0, angle=0):
         # Put articulated limbs under an actual shoulder/hip pivot so
         # rotation tracks swing around joints rather than around box centers.
@@ -151,7 +152,7 @@ def make_character(identifier, boss=False):
         # Bosses carry monumental, region-distinct relic weapons.
         box("BossRelicBlade",(.43,1.22,0),(.19+num*.03,.58+num*.07,.12),1)
         for i in range(num):
-            box("BossRelicProng"+str(i),(.30+i*.09,1.57+num*.03,0),(.08,.20,.10),3)
+            box("BossRelicProng"+str(i),(.30+i*.09,1.57+num*.03,0),(.08,.20,.10),4)
     elif identifier.startswith("enemy_"):
         box("EnemyBasicBlade",(.43,1.18,0),(.12,.47,.10),1)
     else:
@@ -172,9 +173,9 @@ def make_character(identifier, boss=False):
             box("ForgeHammerHead",(.43,1.46,0),(.49,.20,.22),1)
         else:
             box("MageStaff",(.43,1.15,0),(.08,.75,.08),1)
-            box("MageCrystal",(.43,1.58,0),(.25,.28,.23),3)
+            box("MageCrystal",(.43,1.58,0),(.25,.28,.23),4)
         for i in range(signature):
-            box("WeaponRune"+str(i),(.43,1.02+i*.07,-.09),(.055,.055,.045),3)
+            box("WeaponRune"+str(i),(.43,1.02+i*.07,-.09),(.055,.055,.045),4)
     if identifier.startswith("enemy_"):
         region = (num - 31)//6
         enemy_class = (num - 31)%6
@@ -186,7 +187,7 @@ def make_character(identifier, boss=False):
         elif enemy_class == 2:
             box("KnightLance",(.43,1.26,0),(.09,1.12,.09),1)
         elif enemy_class == 3:
-            box("BishopFocus",(-.44,1.45,-.07),(.22,.24,.18),3)
+            box("BishopFocus",(-.44,1.45,-.07),(.22,.24,.18),4)
         elif enemy_class == 4:
             for side in (-1,1):
                 box("QueenTwinBlade"+str(side),(side*.46,1.16,-.10),(.11,.66,.10),1)
