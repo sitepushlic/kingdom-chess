@@ -117,6 +117,15 @@ def make_character(identifier, boss=False):
                 nodes[idx]["translation"]=[center[i]-head_pivot["translation"][i] for i in range(3)]
                 head_pivot["children"].append(idx)
                 return
+        # Shoulder pauldrons follow the upper-arm swing rather than
+        # hovering beside the torso. Preserve world-space rest positions.
+        if name.startswith("RoyalShoulder") or name=="RaiderShoulder":
+            side=(name[len("RoyalShoulder"):] if name.startswith("RoyalShoulder") else "-1")
+            pivot=next((n for n in nodes if n.get("name")=="Arm"+side),None)
+            if pivot is not None:
+                nodes[idx]["translation"]=[center[i]-pivot["translation"][i] for i in range(3)]
+                pivot["children"].append(idx)
+                return
         # Forged knee plates are rigid armor and must follow knee flex,
         # just like shin guards; keep their bind-space center unchanged.
         if name.startswith("ForgeKnee"):
