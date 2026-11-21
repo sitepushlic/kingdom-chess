@@ -342,3 +342,11 @@ This batch makes a substantive 3D geometry change, rather than only adding valid
 **Local partial verification:** independently executed the face-splitting algorithm in Python in this session: it generated ten 4-vertex quads per limb and every triangle had positive outward-facing winding. This is *not* execution of the full repository generator or validation suite.
 **Still unverified:** no observed completed Actions run, 72 GLB import into Godot, animation playback on hardware or valid Android APK. The meshes remain stylized low-poly blockouts, not finished art.
 **Next:** observe CI results and correct any real failures, verify skeletal bends and equipment offsets in Godot/Android, then create more detailed character meshes, distinct materials and level environments.
+
+## 37. Substantive 3D silhouette upgrade: deforming tapered torsos — 2026-11-21
+- **`9021951a52f709cecf6964f5baaf21fadfbf47c8`**: replaced the former rectangular 24-vertex weighted torso with a 40-vertex/20-triangle three-ring torso. Shoulders broaden to 0.225 half-width; waist narrows to 0.165; depth also varies. Center ring blends SpineHip/SpineChest at 50/50; flat-shaded normals are computed from the actual sloping panel geometry, not copied from a cube. All 72 characters regenerate with the new mesh.
+- **`cbb29e3e9c97c0507a37ef3599eebd0a1186510e`**: updated binary GLB structural validator for the new torso topology, center spine ring and shoulder width.
+- **`9d6d23345d6559106c6384a8d6aab6c39a3698cc`**: expanded independent binary geometry test to 72 torsos plus 288 limbs, including waist/shoulder dimensions and triangle winding.
+- Local isolated Python geometry check completed successfully: 40 vertices, 10 panels, nondegenerate normals. This is not a full execution of the generator or Godot importer.
+**Limitations:** current art remains procedural low-poly and needs silhouette/texture polish. GitHub Actions run status, actual Godot import and APK build are still not observable from the connected tools; no successful build is claimed.
+**Next:** verify the complete Python GLB generation/test chain in CI, inspect Godot import and mobile visuals, and fix any actual errors before calling the Android build ready.
