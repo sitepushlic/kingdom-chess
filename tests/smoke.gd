@@ -106,6 +106,17 @@ func _run() -> void:
 		_assert_ok(game.battlefield_3d.board_gem_halos[0].visible, "High quality enables gemstone halos")
 		game.battlefield_3d.set_visual_quality(1)
 		_assert_ok(not game.battlefield_3d.board_gem_halos[0].visible, "Default quality disables expensive halo geometry")
+		var skyline: Node3D = game.battlefield_3d.region_scenery.get_node_or_null("CastleSkyline")
+		_assert_ok(skyline != null, "3D kingdom skyline is constructed outside the chess arena")
+		if skyline != null:
+			_assert_ok(skyline.get_node_or_null("CastleCurtainWall") != null, "Castle has a curtain wall")
+			_assert_ok(skyline.get_node_or_null("CastleWatchtower_-1") != null, "Castle has west watchtower")
+			_assert_ok(skyline.get_node_or_null("CastleWatchtower_1") != null, "Castle has east watchtower")
+			_assert_ok(skyline.get_node_or_null("CastleBanner_-1") != null, "Castle has left gatehouse banner")
+			for building_index in range(5):
+				_assert_ok(skyline.get_node_or_null("CastleBuilding_%d" % building_index) != null, "Castle has visually distinct building %d" % building_index)
+			for merlon_index in range(20):
+				_assert_ok(skyline.get_node_or_null("CastleMerlon_%02d" % merlon_index) != null, "Castle curtain has crenellation %d" % merlon_index)
 		_assert_ok(game.battlefield_3d.ambient_motes.size() <= 12, "Ambient effects remain bounded on Android")
 		if game.battlefield_3d.ambient_motes.size() > 0:
 			game.battlefield_3d.set_visual_quality(2)
