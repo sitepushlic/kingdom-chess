@@ -25,6 +25,12 @@ jobs:
           echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+      - name: Diagnose runner resources before Godot
+        run: |
+          df -h . "$HOME"
+          free -h
+          python3 --version
+          java -version
       - name: Download Godot and export templates
         run: |
           curl -fL -o godot.zip https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
@@ -131,6 +137,13 @@ jobs:
             assets/equipment/*.glb
           if-no-files-found: error
           retention-days: 14
+      - name: Verify Godot executable and templates
+        run: |
+          ./Godot_v4.3-stable_linux.x86_64 --headless --version
+          test -s "$HOME/.local/share/godot/export_templates/4.3.stable/android_debug.apk"
+          test -s "$HOME/.local/share/godot/export_templates/4.3.stable/android_release.apk"
+          test -f project.godot
+          test -f export_presets.cfg
       - name: Import project
         run: |
           set -o pipefail
