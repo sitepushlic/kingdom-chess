@@ -1063,11 +1063,14 @@ func _run() -> void:
 	game.battlefield_3d.set_region(0)
 	_assert_ok(game.battlefield_3d.region_scenery.get_child_count() == scenery_counts[0], "Switching regions rebuilds scenery without accumulation")
 	_assert_ok(game.battlefield_3d.biome_material_cache.size() == 6, "Six biomes share six stable material sets")
+	_assert_ok(game.battlefield_3d.castle_material_cache.size() == 6, "Castle skyline materials are cached for all six regions")
+	var cached_castle_material: Material = game.battlefield_3d.castle_material_cache[0][0]
 	var cached_forge_material: Material = game.battlefield_3d.biome_material_cache[0][0]
 	game.battlefield_3d.set_region(1)
 	game.battlefield_3d.set_region(0)
 	_assert_ok(game.battlefield_3d.biome_material_cache[0][0] == cached_forge_material, "Revisiting a region reuses existing PBR materials")
 	_assert_ok(game.battlefield_3d.biome_material_cache.size() == 6, "Region switching does not grow material cache")
+	_assert_ok(game.battlefield_3d.castle_material_cache.size() == 6 and game.battlefield_3d.castle_material_cache[0][0] == cached_castle_material, "Castle skyline reuses its original material after biome revisit")
 	for asset_name in ["pawn", "rook", "knight", "bishop", "queen", "king"]:
 		var mesh_path: String = "res://assets/characters/%s.obj" % asset_name
 		_assert_ok(ResourceLoader.exists(mesh_path), "Original 3D mesh exists for " + asset_name)
