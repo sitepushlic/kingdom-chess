@@ -1786,7 +1786,21 @@ func _process(delta: float) -> void:
 				continue
 			var origin: Vector3 = ambient_mote_origins[mote_index]
 			var wave: float = clock * (0.7 + float(mote_index % 4) * 0.12) + float(mote_index) * 0.91
-			mote.position = origin + Vector3(0.09 * sin(wave * 0.7), 0.18 * sin(wave), 0.09 * cos(wave * 0.7))
+			match current_region:
+				0: # Forge embers rise in uneven hot-air columns.
+					mote.position = origin + Vector3(0.12 * sin(wave), 0.35 * sin(wave * 0.7), 0.08 * cos(wave))
+				1: # Snow crystals fall slowly and drift horizontally.
+					mote.position = origin + Vector3(0.28 * sin(wave * 0.4), -0.32 * sin(wave * 0.6), 0.14 * cos(wave * 0.5))
+				2: # Fireflies circle the forest canopy.
+					mote.position = origin + Vector3(0.23 * cos(wave), 0.16 * sin(wave * 1.2), 0.23 * sin(wave))
+				3: # Arcane dust orbits on slow ellipses.
+					mote.position = origin + Vector3(0.33 * sin(wave * 0.9), 0.21 * cos(wave), 0.17 * cos(wave * 0.9))
+				4: # Charged motes jitter rapidly in storm gusts.
+					mote.position = origin + Vector3(0.16 * sin(wave * 4.1), 0.10 * sin(wave * 6.2), 0.18 * cos(wave * 3.6))
+				5: # Void ash descends in a spiralling vortex.
+					mote.position = origin + Vector3(0.20 * cos(wave * 1.3), -0.25 * sin(wave * 0.8), 0.20 * sin(wave * 1.3))
+				_:
+					mote.position = origin
 	for n in range(animated_scenery.size()):
 		if not fx_enabled: break
 		var orb: MeshInstance3D = animated_scenery[n]
