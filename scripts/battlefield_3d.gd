@@ -370,13 +370,22 @@ func _add_humanoid_costume(kind: String, white: bool, parent: Node3D) -> void:
 	# Legs, boots, torso, articulated arms and a face give a recognizable
 	# humanoid silhouette instead of the earlier abstract chess totem.
 	for side in [-1.0, 1.0]:
-		_cylinder(0.072, 0.34, steel, parent, Vector3(side * 0.115, 0.43, 0), 0.085)
-		_box(Vector3(0.16, 0.12, 0.22), trim, parent, Vector3(side * 0.115, 0.29, -0.055))
-		var shoulder := _sphere(0.125, steel, parent, Vector3(side * 0.255, 0.93, 0))
+		var suffix: String = "L" if side < 0.0 else "R"
+		var leg_pivot := Node3D.new()
+		leg_pivot.name = "Leg_" + suffix
+		leg_pivot.position = Vector3(side * 0.115, 0.60, 0)
+		parent.add_child(leg_pivot)
+		_cylinder(0.072, 0.34, steel, leg_pivot, Vector3(0, -0.17, 0), 0.085)
+		_box(Vector3(0.16, 0.12, 0.22), trim, leg_pivot, Vector3(0, -0.31, -0.055))
+		var arm_pivot := Node3D.new()
+		arm_pivot.name = "Arm_" + suffix
+		arm_pivot.position = Vector3(side * 0.255, 0.93, 0)
+		parent.add_child(arm_pivot)
+		var shoulder := _sphere(0.125, steel, arm_pivot, Vector3.ZERO)
 		shoulder.scale = Vector3(1.0, 0.76, 1.12)
-		var arm := _cylinder(0.065, 0.38, cloth, parent, Vector3(side * 0.295, 0.72, 0))
+		var arm := _cylinder(0.065, 0.38, cloth, arm_pivot, Vector3(side * 0.04, -0.21, 0))
 		arm.rotation.z = side * 0.17
-		_sphere(0.065, skin, parent, Vector3(side * 0.32, 0.52, -0.025))
+		_sphere(0.065, skin, arm_pivot, Vector3(side * 0.065, -0.41, -0.025))
 	_cylinder(0.21, 0.51, cloth, parent, Vector3(0, 0.75, 0), 0.17)
 	_box(Vector3(0.36, 0.16, 0.28), steel, parent, Vector3(0, 0.93, 0))
 	_box(Vector3(0.28, 0.05, 0.06), trim, parent, Vector3(0, 0.72, -0.175))
@@ -695,6 +704,7 @@ func animate_move(source: int, target: int) -> void:
 		lean.tween_property(move_rig, "rotation:z", 0.08, 0.18)
 		lean.tween_property(move_rig, "rotation:z", 0.0, 0.10)
 		_play_authored_clip(move_rig, "move")
+		_animate_limbs(move_rig, "move")
 	var tween := create_tween()
 	tween.tween_property(actor, "position", destination + Vector3(0, 0.9, 0), 0.19).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(actor, "position", destination, 0.22).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
@@ -713,6 +723,7 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 		swing.tween_property(rig, "rotation", Vector3(0.22, -0.28 if magical else 0.32, 0.30), 0.13).set_trans(Tween.TRANS_QUART)
 		swing.tween_property(rig, "rotation", Vector3.ZERO, 0.18).set_trans(Tween.TRANS_BACK)
 		_play_authored_clip(rig, "attack")
+		_animate_limbs(rig, "attack")
 	var anticipation := create_tween()
 	anticipation.tween_property(attacker, "position", start - direction * 0.16 + Vector3(0, 0.10, 0), 0.11).set_trans(Tween.TRANS_CUBIC)
 	anticipation.tween_property(attacker, "position", start + direction * 0.25 + Vector3(0, 0.19, 0), 0.12).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
@@ -828,6 +839,8 @@ func hit(index: int, healing: bool = false) -> void:
 	shock_tween.tween_property(shock, "transparency", 1.0, 0.42)
 	shock_tween.chain().tween_callback(shock.queue_free)
 	var actor: Node3D = piece_nodes[index]
+	var hit_rig: Node3D = actor.get_meta("visual_rig", null)
+	if hit_rig != null: _animate_limbs(hit_rig, "heal" if healing else "hit")
 	var start_scale: Vector3 = actor.scale
 	var tween := create_tween()
 	tween.tween_property(actor, "scale", start_scale * (1.18 if healing else 0.78), 0.10)
@@ -844,6 +857,43 @@ func pick_square(pixel: Vector2) -> int:
 	var row := int(floor(point.z + 4.0))
 	if col < 0 or col > 7 or row < 0 or row > 7: return -1
 	return row * 8 + col
+
+func _animate_limbs(rig: Node3D, clip: String) -> void:
+	# Procedural articulated clips for fallback characters; authored animation
+	# players remain responsible for imported rigged GLB characters.
+	if rig.get_node_or_null("AuthoredCharacter") != null: return
+	var left_arm: Node3D = rig.get_node_or_null("Arm_L")
+	var right_arm: Node3D = rig.get_node_or_null("Arm_R")
+	var left_leg: Node3D = rig.get_node_or_null("Leg_L")
+	var right_leg: Node3D = rig.get_node_or_null("Leg_R")
+	if left_arm == null or right_arm == null or left_leg == null or right_leg == null: return
+	var duration: float = 0.36 if clip == "move" else 0.20
+	if clip == "move":
+		for limb in [left_arm, right_leg]:
+			var motion := create_tween()
+			motion.tween_property(limb, "rotation:x", -0.55, duration * 0.4)
+			motion.tween_property(limb, "rotation:x", 0.42, duration * 0.35)
+			motion.tween_property(limb, "rotation:x", 0.0, duration * 0.25)
+		for limb in [right_arm, left_leg]:
+			var motion := create_tween()
+			motion.tween_property(limb, "rotation:x", 0.55, duration * 0.4)
+			motion.tween_property(limb, "rotation:x", -0.42, duration * 0.35)
+			motion.tween_property(limb, "rotation:x", 0.0, duration * 0.25)
+	elif clip == "attack":
+		var swing := create_tween()
+		swing.tween_property(right_arm, "rotation:x", -1.35, 0.10)
+		swing.tween_property(right_arm, "rotation:x", 0.65, 0.13)
+		swing.tween_property(right_arm, "rotation:x", 0.0, 0.18).set_trans(Tween.TRANS_BACK)
+	elif clip == "hit":
+		for limb in [left_arm, right_arm]:
+			var recoil := create_tween()
+			recoil.tween_property(limb, "rotation:x", -0.72, 0.09)
+			recoil.tween_property(limb, "rotation:x", 0.0, 0.22)
+	elif clip == "heal":
+		for limb in [left_arm, right_arm]:
+			var cast := create_tween()
+			cast.tween_property(limb, "rotation:z", 0.85 if limb == left_arm else -0.85, 0.18)
+			cast.tween_property(limb, "rotation:z", 0.0, 0.28)
 
 func _process(delta: float) -> void:
 	clock += delta
