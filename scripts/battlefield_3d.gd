@@ -37,6 +37,22 @@ var base_camera_position := Vector3(0, 11.8, 8.7)
 var boss_enraged := false
 var selection_material: StandardMaterial3D
 var danger_material: StandardMaterial3D
+# Low tier limits dynamic lights and costly shadows for Android GPUs.
+var visual_quality := 1
+var fx_enabled := true
+
+func set_visual_quality(tier: int) -> void:
+	visual_quality = clampi(tier, 0, 2)
+	fx_enabled = visual_quality > 0
+	if key_light != null:
+		key_light.shadow_enabled = visual_quality >= 2
+	for index in range(torches.size()):
+		var light: OmniLight3D = torches[index]
+		light.visible = visual_quality >= 2 or (visual_quality == 1 and index % 2 == 0)
+	if rim_light != null:
+		rim_light.visible = visual_quality > 0
+
+
 var move_material: StandardMaterial3D
 
 func _material(color: Color, metallic: float = 0.0, roughness: float = 0.42, emission: Color = Color.BLACK) -> StandardMaterial3D:
@@ -170,7 +186,7 @@ func _ready() -> void:
 	key.rotation_degrees = Vector3(-55, -28, 0)
 	key.light_color = Color("#ffe2b7")
 	key.light_energy = 1.5
-	key.shadow_enabled = true
+	key.shadow_enabled = false # Medium mobile default; high quality enables shadows.
 	add_child(key)
 	key_light = key
 	var rim := OmniLight3D.new()
@@ -187,6 +203,7 @@ func _ready() -> void:
 	add_child(camera)
 	camera.look_at(Vector3(0, 0, 0))
 	camera.current = true
+	set_visual_quality(1)
 
 func _square_position(index: int) -> Vector3:
 	return Vector3(float(index % 8) - 3.5, 0.11, float(index / 8) - 3.5)
@@ -691,7 +708,8 @@ func _process(delta: float) -> void:
 	for i in range(torch_flames.size()):
 		var flicker := sin(clock * (6.0 + float(i) * 0.27) + float(i) * 1.7)
 		torch_flames[i].scale = Vector3(0.85 + flicker * 0.12, 1.2 + flicker * 0.24, 0.85 + flicker * 0.12)
-		torches[i].light_energy = 1.15 + flicker * 0.22
+		if torches[i].visible:
+			torches[i].light_energy = 1.15 + flicker * 0.22
 	for n in range(animated_scenery.size()):
 		var orb: MeshInstance3D = animated_scenery[n]
 		if is_instance_valid(orb):
@@ -702,7 +720,7 @@ func _process(delta: float) -> void:
 		king_warning.scale = Vector3(pulse, 1.0, pulse)
 		king_warning.rotation.y = clock * 0.8
 	for marker in hazard_markers:
-		if marker.visible:
+		if marker.visible and fx_enabled:
 			marker.scale = Vector3(0.91 + 0.07 * sin(clock * 5.0), 1.0, 0.91 + 0.07 * sin(clock * 5.0))
 	for index in piece_nodes.keys():
 		if moving_nodes.has(index): continue
