@@ -106,7 +106,8 @@ def make_character(identifier, boss=False):
         idx=len(nodes)
         nodes.append({"name":name,"mesh":material,"translation":list(center),"scale":[v/2 for v in size],
                       "rotation":[0,0,math.sin(angle/2),math.cos(angle/2)]})
-        head_parts=("Eye","CheekGuard","BrowRidge","KingCrown","QueenDiadem",
+        head_parts=("Eye","CheekGuard","BrowRidge","NoseBridge","NoseTip",
+                    "Mouth","Pupil","Ear","LowerCheek","KingCrown","QueenDiadem",
                     "BishopMitre","KnightWing","RangerHood","EmberHorn",
                     "GlacierSpire","AstralCrown","CrimsonFang")
         if name.startswith(head_parts):
