@@ -1752,6 +1752,14 @@ func animate_move(source: int, target: int) -> void:
 	if not piece_nodes.has(source): return
 	_set_last_move_visual(source, target)
 	var actor: Node3D = piece_nodes[source]
+	# A lethal attack calls attack() and animate_move() in the same frame.
+	# Cancel its stationary anticipation tween before starting the move
+	# to prevent two tweens fighting over the actor's position.
+	var attack_motion: Tween = actor.get_meta("attack_motion_tween", null) as Tween
+	if attack_motion != null and attack_motion.is_running():
+		attack_motion.kill()
+	actor.remove_meta("attack_motion_tween") if actor.has_meta("attack_motion_tween") else null
+	actor.position = _square_position(source)
 	if piece_nodes.has(target):
 		if hero_model_cell == target: hero_model_cell = -1
 		var victim: Node3D = piece_nodes[target]
@@ -1806,7 +1814,12 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 		swing.tween_property(rig, "rotation", Vector3.ZERO, 0.18).set_trans(Tween.TRANS_BACK)
 		_play_authored_clip(rig, "attack")
 		_animate_limbs(rig, "attack")
+	var previous_motion: Tween = attacker.get_meta("attack_motion_tween", null) as Tween
+	if previous_motion != null and previous_motion.is_running():
+		previous_motion.kill()
+	attacker.position = start
 	var anticipation := create_tween().bind_node(attacker)
+	attacker.set_meta("attack_motion_tween", anticipation)
 	anticipation.tween_property(attacker, "position", start - direction * 0.16 + Vector3(0, 0.10, 0), 0.11).set_trans(Tween.TRANS_CUBIC)
 	anticipation.tween_property(attacker, "position", start + direction * 0.25 + Vector3(0, 0.19, 0), 0.12).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
 	anticipation.tween_property(attacker, "position", start, 0.17).set_trans(Tween.TRANS_BACK)
