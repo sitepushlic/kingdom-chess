@@ -1,3 +1,8 @@
+## CI repair — 2026-11-21, distal armor attachment
+- Retrieved actual GitHub Actions job logs for fast art run `44916618506` and Android run `44916626233`. Both fail at `tools/art/validate_blockouts.py` assertion `Gauntlet1 must follow animated limb` for `hero_01.glb`. Generator deliberately reparents gauntlets, shin plates, boots and forged knee guards from upper pivot to lower elbow/knee bone, preserving bind pose. Validator incorrectly inspected direct children of upper joint.
+- Commit `48bfc06bd0d52b0960473a474f513e021791fe80`: validator now confirms lower joint is a child of the upper joint and requires gauntlet/shin armor under the lower joint. No relaxation of weight, skin, transform or animation integrity checks.
+- New fast art run `44916702025` and Android run `44916702024` started, results NOT VERIFIED at handoff writing. Inspect their logs and fix further failures. Then verify 93 GLBs, Godot import/smoke, debug APK and Android device QA. All generated character assets remain procedural blockouts, not finished authored art. Do not claim release readiness.
+
 ## CI follow-up — 2026-11-21
 - Verified via GitHub Actions API: run 44916494123 failed in `Validate all GLB structures and six skins`; Android run 44916507094 failed in `Validate all generated GLB assets`. Thus commit `6225aa2` did NOT resolve all validation failures. The exact new traceback is not accessible through the connected GitHub logs endpoint; do not claim success.
 - Commit `65087b656af13ccd64affc58844eb69349f0e45a`: fast art workflow now pipes validator output through `tee` with `pipefail` and uploads `kingdom-chess-glb-validation-log` even on failure. This preserves the precise traceback for diagnosis without weakening the validator.
