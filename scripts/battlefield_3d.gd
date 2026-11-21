@@ -677,8 +677,38 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 	camera_shake.tween_property(camera, "position", base_camera_position + Vector3(-0.07, 0.04, 0), 0.055)
 	camera_shake.tween_property(camera, "position", base_camera_position, 0.11)
 
+func _spawn_impact_sparks(index: int, healing: bool) -> void:
+	# Short-lived geometry-only particles avoid a GPU particle dependency on Android.
+	if not fx_enabled or board_root == null or index < 0 or index >= 64: return
+	var count: int = 5 if visual_quality == 1 else 9
+	var origin: Vector3 = _square_position(index) + Vector3(0, 0.65, 0)
+	var tint: Color = Color("#75ffd0") if healing else Color("#ffbd65")
+	var spark_mat: StandardMaterial3D = _material(tint, 0.12, 0.22, tint)
+	spark_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	spark_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var spark_mesh := SphereMesh.new()
+	spark_mesh.radius = 0.045
+	spark_mesh.height = 0.09
+	spark_mesh.radial_segments = 6
+	spark_mesh.rings = 3
+	for n in range(count):
+		var angle: float = TAU * float(n) / float(count) + float(index) * 0.37
+		var spark := MeshInstance3D.new()
+		spark.mesh = spark_mesh
+		spark.material_override = spark_mat
+		spark.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		spark.position = origin
+		board_root.add_child(spark)
+		var travel: Vector3 = Vector3(cos(angle) * 0.55, 0.2 + float(n % 3) * 0.14, sin(angle) * 0.55)
+		var burst := create_tween()
+		burst.set_parallel(true)
+		burst.tween_property(spark, "position", origin + travel, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		burst.tween_property(spark, "scale", Vector3.ZERO, 0.35)
+		burst.chain().tween_callback(spark.queue_free)
+
 func hit(index: int, healing: bool = false) -> void:
 	if not piece_nodes.has(index): return
+	_spawn_impact_sparks(index, healing)
 	var shock := MeshInstance3D.new()
 	var shock_mesh := TorusMesh.new()
 	shock_mesh.inner_radius = 0.23
