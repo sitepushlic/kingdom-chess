@@ -34,6 +34,15 @@ def validate(path, require_animation=True):
         view = gltf["bufferViews"][acc["bufferView"]]
         byte_len = acc["count"] * COMPONENT_SIZE[acc["componentType"]] * COMPONENTS[acc["type"]]
         assert acc.get("byteOffset",0) + byte_len <= view["byteLength"], f"{path}: accessor overflow"
+        component_alignment=COMPONENT_SIZE[acc["componentType"]]
+        assert acc.get("byteOffset",0)%component_alignment==0, f"{path}: accessor offset misaligned"
+        assert view.get("byteOffset",0)%component_alignment==0, f"{path}: accessor buffer view misaligned"
+        if acc["type"]=="MAT4":
+            assert acc["componentType"]==5126, f"{path}: inverse bind matrix must use float32"
+        if "min" in acc or "max" in acc:
+            assert "min" in acc and "max" in acc, f"{path}: incomplete accessor bounds"
+            assert len(acc["min"])==len(acc["max"])==COMPONENTS[acc["type"]], f"{path}: incorrect accessor bound dimension"
+            assert all(math.isfinite(x) and math.isfinite(y) and x<=y for x,y in zip(acc["min"],acc["max"])), f"{path}: invalid accessor bounds"
     # Check glTF node graph and animation sampler consistency before Godot.
     node_count=len(gltf["nodes"])
     parent_counts=[0]*node_count
