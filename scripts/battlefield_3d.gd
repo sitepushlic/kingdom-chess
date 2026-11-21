@@ -115,6 +115,11 @@ func set_visual_quality(tier: int) -> void:
 		if not is_instance_valid(actor): continue
 		var rarity_halo: Node3D = actor.find_child("HeroRarityHalo", true, false) as Node3D
 		if rarity_halo != null: rarity_halo.visible = visual_quality > 0
+		# Equipment halos exist independently of the initial quality setting.
+		# Reuse their geometry rather than rebuilding all hero actors on change.
+		for enchantment in actor.find_children("EnchantmentHalo_*", "MeshInstance3D", true, false):
+			var halo_mesh: MeshInstance3D = enchantment as MeshInstance3D
+			halo_mesh.visible = visual_quality >= int(halo_mesh.get_meta("enchantment_level", 1))
 		var warning: MeshInstance3D = actor.get_meta("critical_health_ring", null) as MeshInstance3D
 		if warning != null:
 			var health_ratio: float = float(last_health[cell]) / float(maxi(1, int(last_max_health[cell]))) if last_health.size() == 64 and last_max_health.size() == 64 else 1.0
@@ -533,12 +538,14 @@ func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 				socket.add_child(rarity_marker)
 				# High-rarity gear gains subtle, socket-bound magic rings.
 				# Quality level controls count; no lights or per-frame particles.
-				if tier >= 4 and fx_enabled and visual_quality > 0:
+				if tier >= 4:
 					var glow: StandardMaterial3D = _gear_material(slot)
-					var ring_count: int = mini(tier - 3, visual_quality)
+					var ring_count: int = mini(tier - 3, 2)
 					for effect_index in range(ring_count):
 						var halo: MeshInstance3D = _ring(0.18 + effect_index * 0.085, 0.012, glow, socket, Vector3(0, 0.19 + effect_index * 0.08, 0))
 						halo.name = "EnchantmentHalo_%d" % effect_index
+						halo.set_meta("enchantment_level", effect_index + 1)
+						halo.visible = visual_quality >= effect_index + 1
 						halo.rotation.x = PI * 0.5
 						halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 				return
