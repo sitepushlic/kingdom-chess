@@ -1117,6 +1117,19 @@ func _run() -> void:
 	_assert_ok(game.battlefield_3d.board_gem_material.albedo_color == Color("#6ecfcb"), "Reset board skin restores corner gemstones")
 	_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == Color("#28395e"), "Biome reset restores active region colors")
 	game.battlefield_3d.set_region(0)
+	# The OBJ/procedural fallback must remain affordable if the GLB
+	# pipeline is unavailable; costume materials are reused per team.
+	var fallback_test_parent := Node3D.new()
+	game.battlefield_3d.board_root.add_child(fallback_test_parent)
+	game.battlefield_3d._add_character_surface_detail("R", true, fallback_test_parent)
+	game.battlefield_3d._add_character_surface_detail("Q", false, fallback_test_parent)
+	_assert_ok(game.battlefield_3d.fallback_costume_materials.size() == 2, "Fallback costumes cache one hero and one enemy palette")
+	_assert_ok((game.battlefield_3d.fallback_costume_materials["hero"] as Array).size() == 3 and (game.battlefield_3d.fallback_costume_materials["enemy"] as Array).size() == 3, "Fallback 3D costumes reuse six PBR materials total")
+	var original_fallback_mat: Material = game.battlefield_3d.fallback_costume_materials["hero"][0]
+	game.battlefield_3d._add_character_surface_detail("P", true, fallback_test_parent)
+	_assert_ok(original_fallback_mat == game.battlefield_3d.fallback_costume_materials["hero"][0], "New hero fallback geometry shares existing armor material")
+	fallback_test_parent.queue_free()
+
 	# All health bars on a side should reuse a single material, even
 	# after actor rebuilding and region changes.
 	var sample_hero: Node3D = game.battlefield_3d._build_piece("P", false, false)
