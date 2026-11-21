@@ -348,6 +348,51 @@ def make_character(identifier, boss=False):
         box("MageRobe",(0,.55,0),(.55,.48,.37))
         box("ArcaneCollar",(0,1.06,0),(.50,.13,.38),3)
         box("Focus",(-.43,1.12,-.08),(.15,.15,.15),3)
+    # Second silhouette pass: readable full-body class equipment, physically
+    # modeled with the shared beveled mesh rather than painted-on flat color.
+    # Distinct placement also keeps units identifiable at tactical zoom.
+    if family == 0:  # Royal guard: layered shield, double shoulder wings.
+        for side in (-1,1):
+            box("RoyalPauldronWing"+str(side),(side*.39,1.08,.02),(.18,.20,.43),3,side*.22)
+            box("RoyalGreaveCrest"+str(side),(side*.12,.34,-.155),(.08,.18,.06),3)
+        box("RoyalChestSunburst",(0,.96,-.252),(.20,.22,.065),4)
+        box("RoyalShieldRim",(-.47,.85,-.14),(.39,.66,.13),3)
+        box("RoyalShieldCore",(-.47,.85,-.225),(.26,.47,.06),0)
+    elif family == 1:  # Berserker: asymmetrical straps and spiked vambraces.
+        for side in (-1,1):
+            box("RaiderArmSpike"+str(side),(side*.36,.78,-.11),(.12,.25,.13),1,side*.25)
+            box("RaiderShinFang"+str(side),(side*.13,.31,-.17),(.10,.24,.10),3,side*.16)
+        box("RaiderDiagonalHarness",(0,.95,-.19),(.13,.50,.075),3,-.42)
+        box("RaiderBackSpine",(0,1.00,.26),(.14,.58,.12),1)
+    elif family == 2:  # Scout: quiver fletching and split travel tabard.
+        for side in (-1,1):
+            box("RangerSplitTabard"+str(side),(side*.15,.47,-.17),(.19,.42,.065),0,side*.15)
+            box("RangerForearmWrap"+str(side),(side*.31,.78,-.10),(.13,.27,.12),0)
+        for feather in range(3):
+            box("RangerArrowFeather"+str(feather),(-.32+feather*.06,1.39,.22),(.055,.24,.055),4,(feather-1)*.20)
+        box("RangerCloakBrooch",(0,1.09,-.16),(.14,.13,.08),3)
+    elif family == 3:  # Sentinel: segmented chest plates and tower shoulders.
+        for plate in range(3):
+            box("ForgeSegment"+str(plate),(0,1.01-plate*.15,-.25),(.46-plate*.055,.12,.075),1)
+        for side in (-1,1):
+            box("ForgeShoulderTower"+str(side),(side*.37,1.10,0),(.24,.32,.27),1)
+            box("ForgeKneeRivet"+str(side),(side*.12,.36,-.235),(.065,.065,.04),3)
+        box("ForgeChestGem",(0,.96,-.315),(.13,.13,.045),4)
+    else:  # Battlemage: hanging rune chains and broad arcane mantle.
+        for side in (-1,1):
+            box("MageHangingStole"+str(side),(side*.20,.66,-.22),(.12,.63,.06),0,side*.08)
+            box("MageShoulderSigil"+str(side),(side*.30,1.07,-.12),(.17,.16,.065),4)
+            box("MageBootRunes"+str(side),(side*.12,.14,-.21),(.10,.10,.045),4)
+        box("MageBeltFocus",(0,.54,-.23),(.20,.19,.09),4)
+        box("MageBackScroll",(0,.96,.28),(.23,.52,.12),3)
+    # Region bosses are recognizable even without their palette.
+    if boss:
+        for side in (-1,1):
+            box("BossShoulderCrest"+str(side),(side*.47,1.18,.04),(.23,.39,.22),3,side*.24)
+            box("BossBootSpur"+str(side),(side*.18,.13,-.23),(.19,.13,.20),4,side*.22)
+        box("BossRibCageUpper",(0,1.10,-.24),(.57,.14,.12),1)
+        box("BossRibCageLower",(0,.79,-.24),(.47,.12,.12),1)
+        box("BossBackStandard",(0,1.52,.28),(.15,.78,.12),3)
     # Layered armor and region identity. Distinct silhouettes remain legible
     # in a small Android viewport; all parts reuse five shared materials.
     if identifier.startswith("hero_"):
