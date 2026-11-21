@@ -123,13 +123,43 @@ def make_character(identifier, boss=False):
         "death":([0,.35,.70],[(0,0,0),(0,-.30,.1),(0,-.55,.1)]),
         "cast":([0,.20,.42],[(0,0,0),(0,.16,0),(0,0,0)]),
     }
+    # Articulated node animation: limb meshes are separate glTF nodes.
+    # This is not skinning; however, arms and legs now move independently
+    # instead of the previous rigid full-body-only animation.
+    limb_poses = {
+        "idle":   {"Arm1":[0,-.08,0], "Arm-1":[0,.08,0]},
+        "move":   {"Arm1":[0,-.55,.48], "Arm-1":[0,.55,-.48],
+                   "Leg1":[0,.40,-.35], "Leg-1":[0,-.40,.35]},
+        "attack": {"Arm1":[0,-1.25,.70], "Arm-1":[0,.05,0]},
+        "hit":    {"Arm1":[0,-.65,0], "Arm-1":[0,-.65,0]},
+        "death":  {"Arm1":[0,-1.25,-1.50], "Arm-1":[0,-1.25,1.50],
+                   "Leg1":[0,.45,.25], "Leg-1":[0,-.45,-.25]},
+        "cast":   {"Arm1":[0,-1.60,-.60], "Arm-1":[0,-1.60,.60]},
+    }
+    node_ids = {node["name"]: idx for idx,node in enumerate(nodes)}
     animations=[]
     for name,(times,positions) in clips.items():
         t=accessor(times,str(len(times))+"f",len(times),5126,"SCALAR",None,([0],[times[-1]]))
         vals=[v for p in positions for v in p]
         v=accessor(vals,str(len(vals))+"f",len(positions),5126,"VEC3")
-        animations.append({"name":name,"samplers":[{"input":t,"output":v,"interpolation":"LINEAR"}],
-                           "channels":[{"sampler":0,"target":{"node":1,"path":"translation"}}]})
+        samplers=[{"input":t,"output":v,"interpolation":"LINEAR"}]
+        channels=[{"sampler":0,"target":{"node":1,"path":"translation"}}]
+        for limb, angles in limb_poses[name].items():
+            if limb not in node_ids:
+                continue
+            # The cube is scaled around its center; rotation animates its
+            # orientation, giving clear readable gestures at mobile scale.
+            def quat_z(angle):
+                return (0.0,0.0,math.sin(angle/2),math.cos(angle/2))
+            poses=[quat_z(angle) for angle in angles]
+            if len(poses)!=len(times):
+                # Hold the last pose for clips with four timeline samples.
+                poses = (poses + [poses[-1]]*len(times))[:len(times)]
+            packed=[value for pose in poses for value in pose]
+            output=accessor(packed,str(len(packed))+"f",len(poses),5126,"VEC4")
+            samplers.append({"input":t,"output":output,"interpolation":"LINEAR"})
+            channels.append({"sampler":len(samplers)-1,"target":{"node":node_ids[limb],"path":"rotation"}})
+        animations.append({"name":name,"samplers":samplers,"channels":channels})
     gltf={"asset":{"version":"2.0","generator":"KingdomChess deterministic blockout generator"},
           "scene":0,"scenes":[{"nodes":[0]}],"nodes":nodes,"meshes":meshes,"materials":mats,
           "buffers":[{"byteLength":len(blob)}],"bufferViews":views,"accessors":accessors,"animations":animations}
