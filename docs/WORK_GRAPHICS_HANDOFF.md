@@ -268,3 +268,14 @@ This development batch committed directly to `main`:
 - **`d46a15f8bdfa9b3b4e6e8be9bd1a957a38593f15`**: CI compiles and executes semantic motion validator before Godot import/Android export.
 **Verification:** all GitHub commits confirmed. No successful generator run, validator execution, Godot import or Android APK build observed in this session; the new two-skin import path remains unverified. Do not claim a completed full-body rig or successful build.
 **Priority remaining:** obtain real CI logs and fix any failures; implement true weighted arm/leg deformation, polished original 3D character topology, textures/materials, environment art, mobile profiling and APK device testing.
+
+## 29. Weighted arms and legs: six glTF skin systems — 2026-11-21
+Direct-to-main commits in this batch:
+- **`50a563f84797961e5284f4e837c3a24e7c9dfadd`**: replaced rigid arm/leg mesh surfaces with four genuine two-joint GPU-skinned meshes on all 72 characters. Upper joints keep canonical `Arm1`, `Arm-1`, `Leg1`, `Leg-1` names; new `*Lower` elbow/knee joints are animated in all six clips. With the previous weighted torso and cape, each character now declares **six separate glTF skins / twelve joint references**. Original gear attachment pivot names are retained, but Godot may import them as skeleton bones.
+- **`d86bbeabcf8e0fd20daef62465c6c4b69e0481b9`**, **`ceda4bc92765578469c2d391a22a1015b5c2ddd1`**: GLB validator checks six skins, bone topology, animated lower joints, weighted vertices, normalized blends and inverse bind matrices.
+- **`92fd6f410d0d1857c978c48eda543deec03dd791`**: Godot smoke requires imported `Skeleton3D` upper/lower bone pairs for both arms and legs.
+- **`45752b77441ca1641994215bdf1659e3700b7fa9`**, **`4a5cfcf51e832f4d59049278b710ec4022ad3156`**: modular weapon and relic attachments now fall back to `BoneAttachment3D` on imported `Skeleton3D` bones, with smoke checks for both imported bone and legacy pivot forms.
+- **`f59ff3181fa894dd6d90f997a0cde84ed1f3543e`**: motion validator checks normalized elbow/knee tracks and visible flex in locomotion for all 30 heroes.
+- **`04e06465af0f76605afcbe2a1513e7233d4c8af1`**: removed last duplicated generic class insignia from imported characters while retaining procedural fallback.
+**Verification limitation:** commits confirmed, but generation, Python validators, Godot `Skeleton3D` import, smoke and Android APK have **not been executed/observed passing**. This is an experimental fully weighted *low-poly blockout*, not polished production 3D; skin compatibility with Godot 4.3 is unproven. The next development pass MUST prioritize actual CI logs and resolve failing tests rather than continue adding unverified features.
+**Remaining:** confirmed green build and downloadable APK, detailed meshes/UV/textures/materials, polished combat animation, optimized 18 level scenes, Android hardware QA and gameplay balancing.
