@@ -151,6 +151,17 @@ def validate(path, require_animation=True):
                 if index not in parents: break
                 index=parents[index]
             return result
+        # Distal rigid armor must inherit the lower bone transform.
+        # A plate left under the shoulder/hip floats during joint flex.
+        by_name={node.get("name"):i for i,node in enumerate(gltf["nodes"])}
+        for side in ("1","-1"):
+            for lower_name,plates in (
+                ("Arm"+side+"Lower",("Gauntlet"+side,)),
+                ("Leg"+side+"Lower",("ShinPlate"+side,"Boot"+side)),
+            ):
+                lower_node=gltf["nodes"][by_name[lower_name]]
+                child_names={gltf["nodes"][i].get("name") for i in lower_node.get("children",[])}
+                assert set(plates)<=child_names, f"{path}: distal armor not attached to {lower_name}"
         for skin_index,skin_data in enumerate(gltf["skins"]):
             assert len(skin_data["joints"])==2, f"{path}: skin {skin_index} must use two joints"
             ibm_accessor=gltf["accessors"][skin_data["inverseBindMatrices"]]
