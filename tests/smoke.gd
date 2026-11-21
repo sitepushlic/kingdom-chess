@@ -235,7 +235,7 @@ func _run() -> void:
 	var weapon_socket: Node = geared_bearer.find_child("GearSocket_weapon", true, false)
 	_assert_ok(weapon_socket != null, "Equipped weapon creates an authored GLB socket")
 	if weapon_socket != null:
-		_assert_ok(weapon_socket.get_parent().name == "Arm1", "Weapon is attached to the moving right arm")
+		_assert_ok(weapon_socket.get_parent().name == "Arm1" or (weapon_socket.get_parent() is BoneAttachment3D and weapon_socket.get_parent().bone_name == "Arm1"), "Weapon follows animated right arm bone")
 	var armor_socket: Node = geared_bearer.find_child("GearSocket_armor", true, false)
 	_assert_ok(armor_socket != null, "Equipped armor creates imported GLB socket")
 	if armor_socket != null:
@@ -243,7 +243,7 @@ func _run() -> void:
 	var relic_socket: Node = geared_bearer.find_child("GearSocket_relic", true, false)
 	_assert_ok(relic_socket != null, "Equipped relic creates imported GLB socket")
 	if relic_socket != null:
-		_assert_ok(relic_socket.get_parent().name == "Arm-1", "Relic follows moving left arm")
+		_assert_ok(relic_socket.get_parent().name == "Arm-1" or (relic_socket.get_parent() is BoneAttachment3D and relic_socket.get_parent().bone_name == "Arm-1"), "Relic follows animated left arm bone")
 	geared_bearer.queue_free()
 	plain_ally.queue_free()
 	game.battlefield_3d.hero_gear = prior_gear
