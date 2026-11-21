@@ -199,7 +199,20 @@ func _run() -> void:
 	_assert_ok(character_paths.size() == 72, "Exactly 72 character GLB import paths")
 	for character_path in character_paths:
 		_assert_ok(ResourceLoader.exists(character_path), "Character GLB exists: " + character_path)
-		_assert_ok(load(character_path) is PackedScene, "Character GLB imports as scene: " + character_path)
+		var packed_character: Resource = load(character_path)
+		_assert_ok(packed_character is PackedScene, "Character GLB imports as scene: " + character_path)
+		if packed_character is PackedScene:
+			var character_instance: Node = (packed_character as PackedScene).instantiate()
+			var imported_skeletons: Array[Node] = character_instance.find_children("*", "Skeleton3D", true, false)
+			_assert_ok(imported_skeletons.size() >= 6, "All six GPU skins import as Skeleton3D: " + character_path)
+			var imported_bones: Dictionary = {}
+			for imported_skeleton in imported_skeletons:
+				var skeleton: Skeleton3D = imported_skeleton as Skeleton3D
+				for bone_index in range(skeleton.get_bone_count()):
+					imported_bones[skeleton.get_bone_name(bone_index)] = true
+			for required_bone in ["CapeShoulder", "CapeHem", "SpineHip", "SpineChest", "Arm1Lower", "Arm-1Lower", "Leg1Lower", "Leg-1Lower"]:
+				_assert_ok(imported_bones.has(required_bone), "Imported character has deforming bone " + required_bone + ": " + character_path)
+			character_instance.free()
 	# Generated GLBs are required in CI before Godot import. Verify hero-ID
 	# and region-boss models really load and contain all six authored clip names.
 	var required_clips := ["idle", "move", "attack", "hit", "death", "cast"]
