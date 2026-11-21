@@ -108,11 +108,30 @@ jobs:
       - name: Import project
         run: |
           set -o pipefail
-          ./Godot_v4.3-stable_linux.x86_64 --headless --path . --editor --quit 2>&1 | tee import.log
+          timeout 240s ./Godot_v4.3-stable_linux.x86_64 --headless --path . --editor --quit 2>&1 | tee import.log
           if grep -Eq "SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|ERROR:.*glTF" import.log; then
             echo "Godot import reported parser or glTF errors"
             exit 1
           fi
+      - name: Launch actual Godot main scene
+        run: |
+          set -o pipefail
+          # This is a real headless game launch, separate from editor import
+          # and scripted smoke tests. A deliberate timeout is expected because
+          # the game remains interactive until a user exits.
+          set +e
+          timeout 25s ./Godot_v4.3-stable_linux.x86_64 --headless --path . 2>&1 | tee game-launch.log
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then
+            echo "Godot main scene exited unexpectedly: $status"
+            exit "$status"
+          fi
+          if grep -Eq "SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|ERROR:.*glTF" game-launch.log; then
+            echo "Godot main scene emitted script/import errors"
+            exit 1
+          fi
+          echo "Godot main scene launched without detected script/import errors (exit $status)."
       - name: Run gameplay smoke tests
         run: |
           set -o pipefail
@@ -155,7 +174,7 @@ jobs:
             else
               echo "No completed APK found. Check Godot import, smoke and export logs."
             fi
-            for name in import.log smoke.log export.log; do
+            for name in import.log game-launch.log smoke.log export.log; do
               if [ -f "$name" ]; then
                 echo
                 echo "### $name (last 25 lines)"
@@ -172,6 +191,7 @@ jobs:
           name: kingdom-chess-godot-diagnostics
           path: |
             import.log
+            game-launch.log
             smoke.log
             export.log
           if-no-files-found: ignore
