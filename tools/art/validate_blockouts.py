@@ -22,7 +22,7 @@ def validate(path):
     assert json_end + 8 <= len(data), f"{path}: missing binary chunk"
     gltf = json.loads(data[20:json_end])
     bin_size, bin_kind = struct.unpack_from("<I4s", data, json_end)
-    assert bin_kind == b"BIN\\x00".replace(b"\\x00", b"\x00"), f"{path}: wrong BIN chunk"
+    assert bin_kind == b"BIN\x00", f"{path}: wrong BIN chunk"
     assert json_end + 8 + bin_size == len(data), f"{path}: bad BIN size"
     assert gltf["buffers"][0]["byteLength"] <= bin_size, f"{path}: buffer overrun"
     for view in gltf["bufferViews"]:
