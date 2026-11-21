@@ -165,6 +165,20 @@ def make_character(identifier, boss=False):
         box("LowerCheek"+str(side),(side*.100,1.226,-.124),(.095,.040,.034),2)
     box("BeltBuckle",(0,.57,-.153),(.12,.10,.055),3)
     box("ChestInsignia",(0,.92,-.143),(.16,.19,.045),3)
+    # Secondary heraldry creates a readable front-facing identity at phone scale.
+    # Geometry is static and inexpensive; avoid changing the articulated rig.
+    for side in (-1, 1):
+        box("HeraldicChestRivet"+str(side),(side*.18,.99,-.164),(.042,.042,.025),3)
+        box("HeraldicBeltStud"+str(side),(side*.20,.57,-.15),(.052,.045,.032),3)
+    if boss:
+        # Boss chest cores glow in their biome palette, distinct from soldiers.
+        box("BossHeartCore",(0,.93,-.198),(.13,.18,.065),4)
+        box("BossHeartFrameTop",(0,1.06,-.20),(.25,.038,.05),3)
+        box("BossHeartFrameBottom",(0,.80,-.20),(.25,.038,.05),3)
+    elif identifier.startswith("hero_"):
+        # A three-piece rank chevron distinguishes player heroes from enemies.
+        for i in range(3):
+            box("HeroRankChevron"+str(i),((i-1)*.12,.82,-.173),(.083,.055,.04),3)
     for side in (-1,1):
         box("Leg"+str(side),(side*.12,.30,0),(.13,.45,.15),1)
         box("Arm"+str(side),(side*.30,.84,0),(.13,.48,.17),1)
