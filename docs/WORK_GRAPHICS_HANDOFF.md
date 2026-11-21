@@ -146,3 +146,15 @@ Every development step saved to `main`:
 - **`d87fb82a77a549a1587074ee5e2706c9a544dfce`**, **`7f85ae85e4ccc707abdf76375fdeb0ea9f70a85b`**: smoke regression checks three variants have different numbers of generated geometry nodes.
 - **Verification:** code committed. No successful Godot smoke, GLB import, Android build, or visual device test confirmed. Visual layouts are procedural low-poly dressing only.
 - **Remaining:** verify CI, fix import/parser/runtime issues, 30 rigged heroes + 36 enemies + six bosses with proper skinning, 21 authored gear assets, polish all 18 environments, VFX, lighting, performance and Android QA.
+
+## 16. Large-batch 3D equipment + enemy asset integration — 2026-11-21
+Implemented as one continuous batch (no user involvement):
+1. **`4dbd2b4edbb482aa67d01cd4f82dfe97ba55399e`**: new `tools/art/generate_equipment.py` generates 21 original low-poly modular GLB props: seven physically distinct weapon tiers, seven armor tiers, seven relic tiers, with metallic PBR materials and named mesh parts.
+2. **`b58baae6146ba37018d748237551f9d7878e35eb`**: GLB validation extended to all 21 gear assets, enforcing different node/geometry signatures per tier. Combined expected GLB count: **93** (30 heroes + 36 regional enemies + 6 bosses + 21 gear).
+3. **`c8c8bd1b1bd153bd19cc7d0b5701b9e9f9d18723`**: Android Actions now generates gear before Python GLB validation and Godot import.
+4. **`4f00bac41340d11d5c8ceaf1d5535c56034aa3fe`**: `battlefield_3d.gd` loads `res://assets/equipment/{weapon,armor,relic}_tier_N.glb` via independent equipment socket nodes; procedural mesh fallback remains for missing assets.
+5. **`ac90b5decdb36af9348ab7bdde70d3bbbaa52785`**: changing biome refreshes **all** enemy model scenes (not only boss), retaining chess cell indices. Captured hero bearer cell is invalidated.
+6. **`0f5f30fed8c9cdd7619f8fddb869eb916307e808`**: smoke tests require import of all 21 gear GLBs and distinguish tiers by actual mesh node names rather than top-level node count.
+7. **`27304bbcbd6b0627baef201727622d12bc4c60d7`**: six enemy classes get physically different equipment silhouettes, plus six region-specific material palettes.
+**Verification:** all code and test commits saved in GitHub; generator execution, Godot import, Actions and APK have not been observed succeeding. Assets are procedural blockouts, **not final polished or skinned assets**. CI will generate 93 GLBs; generated binaries are not committed to repository.
+**Remaining priority 1:** verify Actions logs and correct failures; replace blockouts with professionally detailed/skinned models and skeletal animations; add authored material maps, detailed equipment attachment sockets to actual bones, finished 18 environments, polished VFX/lighting, Android performance profiling and on-device QA.
