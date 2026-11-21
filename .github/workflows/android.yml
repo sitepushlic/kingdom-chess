@@ -80,9 +80,16 @@ jobs:
       - name: Verify all 93 GLBs regenerate identically
         run: python3 tools/art/check_reproducibility.py
       - name: Import project
-        run: ./Godot_v4.3-stable_linux.x86_64 --headless --path . --editor --quit
+        run: |
+          set -o pipefail
+          ./Godot_v4.3-stable_linux.x86_64 --headless --path . --editor --quit 2>&1 | tee import.log
+          if grep -Eq "SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|ERROR:.*glTF" import.log; then
+            echo "Godot import reported parser or glTF errors"
+            exit 1
+          fi
       - name: Run gameplay smoke tests
         run: |
+          set -o pipefail
           timeout 45s ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://tests/smoke.gd --quit-after 15 2>&1 | tee smoke.log
           grep -q "KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED" smoke.log
           if grep -Eq "SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:" smoke.log; then
@@ -96,6 +103,15 @@ jobs:
           ls -la "$ANDROID_HOME/build-tools/34.0.0" | head
           echo "=== Godot export diagnostics ==="
           ./Godot_v4.3-stable_linux.x86_64 --headless --verbose --path . --export-debug Android build/kingdom-chess-debug.apk
+      - name: Upload Godot import and smoke diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kingdom-chess-godot-diagnostics
+          path: |
+            import.log
+            smoke.log
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         with:
           name: kingdom-chess-android
