@@ -1103,6 +1103,33 @@ func _run() -> void:
 	sample_hero.queue_free()
 	sample_enemy.queue_free()
 
+	# Critical health rings must track HP thresholds, graphics settings,
+	# and reuse a single material on friendly and enemy pieces.
+	var warning_sample: MeshInstance3D = sample_enemy.get_meta("critical_health_ring")
+	_assert_ok(warning_sample != null and warning_sample.material_override == game.battlefield_3d.critical_health_material, "Critical HP ring uses shared material")
+	var low_health: Array = []
+	var low_max_health: Array = []
+	for low_cell in range(64):
+		low_health.append(20)
+		low_max_health.append(100)
+	game.battlefield_3d.sync_board(game.pieces, -1, [], -1, low_health, low_max_health)
+	var low_enemy_cell: int = -1
+	for low_cell in game.battlefield_3d.piece_nodes.keys():
+		if str(game.battlefield_3d.piece_types.get(low_cell, "")) == "p":
+			low_enemy_cell = low_cell
+			break
+	if low_enemy_cell >= 0:
+		var low_actor: Node3D = game.battlefield_3d.piece_nodes[low_enemy_cell]
+		var low_ring: MeshInstance3D = low_actor.get_meta("critical_health_ring")
+		_assert_ok(low_ring != null and low_ring.visible, "Critical HP below 25% displays 3D danger ring")
+		game.battlefield_3d.set_visual_quality(0)
+		_assert_ok(not low_ring.visible, "Low graphics tier hides critical-health rings")
+		game.battlefield_3d.set_visual_quality(1)
+		_assert_ok(low_ring.visible, "Medium graphics restores critical-health rings")
+		game.battlefield_3d.set_region(3)
+		var changed_ring: MeshInstance3D = (game.battlefield_3d.piece_nodes[low_enemy_cell] as Node3D).get_meta("critical_health_ring")
+		_assert_ok(changed_ring != low_ring and changed_ring.visible, "Critical health warning survives regional mesh rebuild")
+
 	# Replacing regional enemy GLBs must never visually heal damaged units.
 	var health_sample: Array = []
 	var max_health_sample: Array = []
