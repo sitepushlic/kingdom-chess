@@ -72,6 +72,22 @@ def make_character(identifier, boss=False):
     for m in range(4):
         meshes.append({"name":["ArmorBox","SteelBox","SkinBox","GoldBox"][m],"primitives":[{"attributes":{"POSITION":pos},"indices":indices,"material":m}]})
     def box(name, center, size, material=0, angle=0):
+        # Put articulated limbs under an actual shoulder/hip pivot so
+        # rotation tracks swing around joints rather than around box centers.
+        if name.startswith("Arm") and name[3:] in ("1","-1"):
+            joint = (center[0], 1.06, center[2])
+        elif name.startswith("Leg") and name[3:] in ("1","-1"):
+            joint = (center[0], .53, center[2])
+        else:
+            joint = None
+        if joint is not None:
+            pivot_index=len(nodes)
+            nodes.append({"name":name,"translation":list(joint),"children":[pivot_index+1]})
+            nodes.append({"name":name+"Mesh","mesh":material,
+                          "translation":[center[i]-joint[i] for i in range(3)],
+                          "scale":[v/2 for v in size]})
+            nodes[1]["children"].append(pivot_index)
+            return
         idx=len(nodes)
         nodes.append({"name":name,"mesh":material,"translation":list(center),"scale":[v/2 for v in size],
                       "rotation":[0,0,math.sin(angle/2),math.cos(angle/2)]})
