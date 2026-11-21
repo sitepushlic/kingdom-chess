@@ -165,6 +165,38 @@ def make_character(identifier, boss=False):
     else:
         box("Mask",(0,1.37,-.17),(.41,.15,.15),1)
         box("MaskSpike",(0,1.57,0),(.08,.33,.10),3)
+    # Chess-role heraldry is visible on each hero's silhouette, not just
+    # in the selection UI. Roster mapping matches scripts/hero_roster.gd.
+    if identifier.startswith("hero_"):
+        # Explicit 30-ID mapping avoids silently changing the roster order.
+        role_by_id = {
+            1:"K",2:"N",3:"B",4:"R",5:"P",6:"Q",7:"N",8:"R",9:"B",10:"K",
+            11:"N",12:"R",13:"Q",14:"B",15:"N",16:"R",17:"Q",18:"B",19:"B",20:"N",
+            21:"K",22:"Q",23:"Q",24:"K",25:"N",26:"B",27:"Q",28:"N",29:"R",30:"K",
+        }
+        role = role_by_id[num]
+        if role=="K":
+            for side in (-1,1):
+                box("KingCrownProng"+str(side),(side*.18,1.70,0),(.09,.26,.11),3)
+            box("KingBreastSigil",(0,.97,-.19),(.20,.23,.06),3)
+        elif role=="Q":
+            for i in range(5):
+                angle=(i-2)*.28
+                box("QueenDiadem"+str(i),((i-2)*.11,1.65-abs(i-2)*.035,0),(.07,.22,.09),4,angle)
+        elif role=="R":
+            for side in (-1,1):
+                box("RookBattlement"+str(side),(side*.28,1.12,0),(.20,.24,.33),1)
+            box("RookChestPlate",(0,.89,-.21),(.34,.32,.10),1)
+        elif role=="B":
+            box("BishopMitre",(0,1.70,0),(.19,.32,.20),3)
+            box("BishopStaffGem",(-.41,1.54,-.10),(.15,.20,.12),4)
+        elif role=="N":
+            for side in (-1,1):
+                box("KnightWing"+str(side),(side*.26,1.48,.08),(.13,.31,.17),1,side*.28)
+            box("KnightGorget",(0,1.08,-.14),(.37,.12,.23),1)
+        else:
+            box("PawnBanner",(0,1.60,.20),(.25,.38,.07),0)
+            box("PawnBannerSigil",(0,1.62,.155),(.11,.14,.04),3)
     box("WeaponGrip",(.43,.75,0),(.09,.61,.09),3)
     if boss:
         # Bosses carry monumental, region-distinct relic weapons.
