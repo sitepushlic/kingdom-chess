@@ -448,6 +448,19 @@ def make_character(identifier, boss=False):
         nodes.append({"name":limb_name+"Lower",
                       "translation":[0,lower_offset,0]})
         pivot["children"].append(lower_joint_index)
+        # Gauntlets, shin guards and boots are rigid armor plates. They
+        # belong to the lower arm/shin bone, not the upper pivot; otherwise
+        # they float above the bending mesh during elbow/knee flexion.
+        # Preserve their world-space bind pose while changing parent.
+        rigid_prefixes=("Gauntlet",) if is_arm else ("ShinPlate","Boot")
+        for child_index in list(pivot["children"]):
+            if child_index==lower_joint_index:
+                continue
+            child=nodes[child_index]
+            if any(child.get("name","").startswith(prefix) for prefix in rigid_prefixes):
+                pivot["children"].remove(child_index)
+                nodes[lower_joint_index].setdefault("children",[]).append(child_index)
+                child["translation"][1]-=lower_offset
         old_mesh.pop("scale",None)
         old_mesh.pop("rotation",None)
         old_mesh["translation"]=[0,0,0]
