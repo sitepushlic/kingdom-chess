@@ -250,6 +250,13 @@ func _gear_material(slot: String) -> Material:
 
 # Physical rarity marks are deliberately countable at mobile scale; the seven tiers
 # have distinct silhouettes, not only different shader colors.
+func _has_modular_equipment(slot: String) -> bool:
+	if not hero_gear.has(slot): return false
+	var key: String = str({"Оружие":"weapon", "Тело":"armor", "Реликвия":"relic"}.get(slot, ""))
+	if key == "": return false
+	var tier: int = clampi(int(hero_gear[slot].get("rarity", 0)), 0, 6)
+	return ResourceLoader.exists("res://assets/equipment/%s_tier_%d.glb" % [key, tier])
+
 func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 	if not hero_gear.has(slot): return
 	var tier: int = clampi(int(hero_gear[slot].get("rarity", 0)), 0, 6)
@@ -704,22 +711,26 @@ func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bo
 			var armor_mat := _gear_material("Тело")
 			_add_rarity_insignia("Тело", unit, Vector3(0, 0.52, -0.26))
 			_add_equipment_geometry("Тело", unit)
-			_cylinder(0.29, 0.15, armor_mat, unit, Vector3(0, 0.32, 0))
-			for side in [-1.0, 1.0]:
-				_box(Vector3(0.12, 0.28, 0.28), armor_mat, unit, Vector3(side * 0.27, 0.48, 0))
+			# Legacy accessory geometry only when the modular GLB is absent.
+			if not _has_modular_equipment("Тело"):
+				_cylinder(0.29, 0.15, armor_mat, unit, Vector3(0, 0.32, 0))
+				for side in [-1.0, 1.0]:
+					_box(Vector3(0.12, 0.28, 0.28), armor_mat, unit, Vector3(side * 0.27, 0.48, 0))
 		if hero_gear.has("Оружие"):
 			var weapon_mat := _gear_material("Оружие")
 			_add_rarity_insignia("Оружие", unit, Vector3(0.42, 1.15, 0))
 			_add_equipment_geometry("Оружие", unit)
-			_cylinder(0.045, 0.82, weapon_mat, unit, Vector3(0.42, 0.68, 0))
-			_box(Vector3(0.33, 0.065, 0.13), weapon_mat, unit, Vector3(0.42, 0.87, 0))
-			_cylinder(0.09, 0.21, weapon_mat, unit, Vector3(0.42, 1.13, 0), 0.015)
+			if not _has_modular_equipment("Оружие"):
+				_cylinder(0.045, 0.82, weapon_mat, unit, Vector3(0.42, 0.68, 0))
+				_box(Vector3(0.33, 0.065, 0.13), weapon_mat, unit, Vector3(0.42, 0.87, 0))
+				_cylinder(0.09, 0.21, weapon_mat, unit, Vector3(0.42, 1.13, 0), 0.015)
 		if hero_gear.has("Реликвия"):
 			var relic_mat := _gear_material("Реликвия")
 			_add_rarity_insignia("Реликвия", unit, Vector3(-0.39, 0.83, 0))
 			_add_equipment_geometry("Реликвия", unit)
-			_sphere(0.13, relic_mat, unit, Vector3(-0.39, 0.81, 0))
-			_cylinder(0.05, 0.32, gold_material, unit, Vector3(-0.39, 0.57, 0))
+			if not _has_modular_equipment("Реликвия"):
+				_sphere(0.13, relic_mat, unit, Vector3(-0.39, 0.81, 0))
+				_cylinder(0.05, 0.32, gold_material, unit, Vector3(-0.39, 0.57, 0))
 		var set_count := 0
 		var set_id := -1
 		for slot in hero_gear:
