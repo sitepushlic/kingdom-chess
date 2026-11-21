@@ -1537,6 +1537,10 @@ func set_region(region_index: int) -> void:
 			_apply_health_fill(new_enemy, cell, last_health, last_max_health)
 	if boss_enraged:
 		set_boss_phase(2)
+	else:
+		# Reset shared crown tint after returning to a non-boss region.
+		boss_crown.albedo_color = Color("#e56587")
+		boss_crown.emission_energy_multiplier = 0.6
 
 func set_hazards(cells: Array[int], modifier: String) -> void:
 	if active_hazards == cells and hazard_type == modifier: return
@@ -1626,6 +1630,12 @@ func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int,
 			node.position = _square_position(index)
 			piece_nodes[index] = node
 			piece_types[index] = piece
+			# A replacement boss must inherit the current phase immediately;
+			# otherwise its aura and size revert until the next phase transition.
+			if index == 4 and piece == "k" and boss_enraged:
+				var new_aura: Node3D = node.find_child("BossEnrageAura", true, false) as Node3D
+				if new_aura != null: new_aura.visible = visual_quality > 0
+				node.scale = Vector3.ONE * 1.42
 		if piece != "" and piece_nodes.has(index) and health.size() == 64 and max_health.size() == 64:
 			_apply_health_fill(piece_nodes[index], index, health, max_health)
 		highlights[index].visible = index == selected or legal_squares.has(index) or index == danger
