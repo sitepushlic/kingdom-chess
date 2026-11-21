@@ -110,6 +110,9 @@ var battle_layout: VBoxContainer
 var battlefield_3d: Node3D
 var battlefield_viewport: SubViewport
 var battlefield_container: SubViewportContainer
+const GRAPHICS_SETTINGS_PATH := "user://graphics.cfg"
+var graphics_quality := 1
+var graphics_button: Button
 
 func _ready() -> void:
 	hp_bar_friendly_style = StyleBoxFlat.new()
@@ -119,6 +122,7 @@ func _ready() -> void:
 	hp_bar_enemy_style.bg_color = Color("#d8838d")
 	hp_bar_enemy_style.set_corner_radius_all(3)
 	_load_profile()
+	_load_graphics_quality()
 	_apply_global_theme()
 	var bg := TextureRect.new()
 	bg.texture = preload("res://assets/backgrounds/ruined_kingdom.svg")
@@ -174,6 +178,7 @@ func _ready() -> void:
 	battlefield_container.add_child(battlefield_viewport)
 	battlefield_3d = Battlefield3D.new()
 	battlefield_viewport.add_child(battlefield_3d)
+	battlefield_3d.set_visual_quality(graphics_quality)
 	battlefield_container.gui_input.connect(_on_3d_board_input)
 	var grid := GridContainer.new()
 	grid.columns = 8
@@ -561,9 +566,31 @@ void fragment() {
 	_make_action_button("♜  АРЕНА ДЛЯ ДВОИХ", _menu_start_arena, column)
 	_make_action_button("◈  КООПЕРАТИВ ПО WI-FI", _menu_start_coop, column)
 	_make_action_button("🎒  СНАРЯЖЕНИЕ", _open_inventory, column)
+	graphics_button = _make_action_button("", _cycle_graphics_quality, column)
+	_update_graphics_label()
 	_make_action_button("❔  КАК ИГРАТЬ", _show_tutorial, column)
 	_make_action_button("ПРОДОЛЖИТЬ БИТВУ", _menu_continue, column)
 	main_menu.visible = true
+
+func _load_graphics_quality() -> void:
+	var config := ConfigFile.new()
+	if config.load(GRAPHICS_SETTINGS_PATH) == OK:
+		var saved: Variant = config.get_value("graphics", "quality", 1)
+		if typeof(saved) == TYPE_INT:
+			graphics_quality = clampi(saved, 0, 2)
+
+func _update_graphics_label() -> void:
+	if graphics_button != null:
+		graphics_button.text = "⚙  ГРАФИКА: " + ["НИЗКАЯ", "СРЕДНЯЯ", "ВЫСОКАЯ"][graphics_quality]
+
+func _cycle_graphics_quality() -> void:
+	graphics_quality = (graphics_quality + 1) % 3
+	if battlefield_3d != null:
+		battlefield_3d.set_visual_quality(graphics_quality)
+	var config := ConfigFile.new()
+	config.set_value("graphics", "quality", graphics_quality)
+	config.save(GRAPHICS_SETTINGS_PATH)
+	_update_graphics_label()
 
 func _show_main_menu() -> void:
 	if not lan_connected:
