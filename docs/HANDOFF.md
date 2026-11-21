@@ -1,3 +1,19 @@
+## 2026-11-21 — RIG QA AND INTERRUPTED ANIMATION SAFETY (LATEST)
+**Standing instructions:** Maximize substantive development per turn, update HANDOFF each time, continue game/3D graphics. **Do NOT build/export/sign APK** until explicitly requested. Do not claim Godot or CI passed without proof.
+
+### Committed changes on main
+- `276c35a6` **Art validation fix:** enemy rook tower is helmet geometry attached to the animated `Head` joint; `tools/art/test_rig_attachments.py` previously incorrectly expected `Arm1`/`Arm-1`, making 72-character rig QA fail. Fixed the assertion; rook bulwark remains shield attached to `Arm-1`.
+- `795e9811` **Boss animation safety:** `set_boss_phase()` now cancels the previous phase-scale tween and binds the new one to the actual boss actor, preventing stale phase animation overwriting the new state and errors after boss replacement.
+- `db982717` **Boss smoke regression:** rapid phase 2→1→2→1 transitions assert stale scale tweens are cancelled.
+- `0d5b6b10` **Chained move safety:** a second 3D leap cancels the first movement tween; only the current tween may clear its destination's movement lock on completion. Actor owns the tween in metadata.
+- `5bfb81fc` **Movement lock correction:** on chained moves the previous target/new source lock is removed, avoiding permanently locked squares.
+- `206dd1d6` **Chained move regression:** exercises two immediate leaps on one actor, verifies first tween stops and square lock transfers, then restores scene state.
+
+### Verification and remaining tasks
+- Changes committed to GitHub main. **No verified Godot import, smoke run or screenshot this turn**; new assertions are authored but not observed passing.
+- The game still needs real Godot CI logs and fixes, visually inspected GLBs, animation quality, balance and gameplay polish. Existing graphics includes 72 generated character GLBs, 21 equipment GLBs, 6 biome environments, boss aura and animated effects. These are procedural assets, not yet production art.
+- APK explicitly paused.
+
 ## 2026-11-21 — COMBAT TWEEN LIFECYCLE AND CAPTURE ANIMATION FIX (LATEST)
 **Standing user instructions:** Do maximum substantive work in one pass, update HANDOFF every time, continue completing Kingdom Chess with 3D graphics. **Never build/export/sign APK unless explicitly instructed otherwise.** Do not claim Godot tests passed without run evidence.
 
