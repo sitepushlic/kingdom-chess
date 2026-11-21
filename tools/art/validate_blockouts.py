@@ -81,6 +81,13 @@ def validate(path, require_animation=True):
             assert 0 <= channel["sampler"] < len(animation["samplers"]), f"{path}: bad sampler index"
             assert 0 <= channel["target"]["node"] < node_count, f"{path}: bad animation target"
             assert channel["target"]["path"] in ("translation","rotation","scale"), f"{path}: unsupported target"
+        for channel in animation["channels"]:
+            if channel["target"]["path"]=="rotation":
+                sampler=animation["samplers"][channel["sampler"]]
+                acc=gltf["accessors"][sampler["output"]]
+                assert acc["type"]=="VEC4" and acc["componentType"]==5126, f"{path}: rotation must be float quaternion"
+                quaternions=unpack_accessor(sampler["output"])
+                assert all(all(math.isfinite(x) for x in q) and abs(sum(x*x for x in q)-1)<1e-4 for q in quaternions), f"{path}: nonunit animated quaternion"
         for sampler in animation["samplers"]:
             input_acc=gltf["accessors"][sampler["input"]]
             output_acc=gltf["accessors"][sampler["output"]]
