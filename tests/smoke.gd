@@ -204,7 +204,16 @@ func _run() -> void:
 		if packed_character is PackedScene:
 			var character_instance: Node = (packed_character as PackedScene).instantiate()
 			var imported_skeletons: Array[Node] = character_instance.find_children("*", "Skeleton3D", true, false)
-			_assert_ok(imported_skeletons.size() >= 6, "All six GPU skins import as Skeleton3D: " + character_path)
+			# Godot may merge compatible glTF skins into fewer Skeleton3D
+			# nodes. Assert real skinned meshes and required bones instead
+			# of assuming a one-to-one glTF skin/Skeleton3D mapping.
+			_assert_ok(imported_skeletons.size() >= 1, "Character imports an animated Skeleton3D: " + character_path)
+			var skinned_mesh_count: int = 0
+			for mesh_candidate in character_instance.find_children("*", "MeshInstance3D", true, false):
+				var mesh_instance: MeshInstance3D = mesh_candidate as MeshInstance3D
+				if mesh_instance.skeleton != NodePath(""):
+					skinned_mesh_count += 1
+			_assert_ok(skinned_mesh_count >= 6, "Six character surfaces retain skeleton bindings: " + character_path)
 			var imported_bones: Dictionary = {}
 			for imported_skeleton in imported_skeletons:
 				var skeleton: Skeleton3D = imported_skeleton as Skeleton3D
