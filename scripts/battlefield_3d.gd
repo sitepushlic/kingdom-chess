@@ -458,79 +458,79 @@ func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 		var gear_scene: PackedScene = _get_equipment_scene(gear_path)
 		if gear_scene != null:
 			var gear_model: Node = gear_scene.instantiate()
-				if gear_model is Node3D:
-					var socket := Node3D.new()
-					socket.name = "GearSocket_" + slot_key
-					var attachment_parent: Node3D = parent
-					# Follow imported shoulder pivots so held items actually
-					# animate with the arms, not remain floating beside them.
-					var character: Node = parent.get_node_or_null("AuthoredCharacter")
-					if character != null:
-						if slot_key == "armor":
-							# Weighted torso flexes at SpineChest; attach chest
-							# armor to that imported bone when Godot exposes it.
-							var chest_bone_found: bool = false
+			if gear_model is Node3D:
+				var socket := Node3D.new()
+				socket.name = "GearSocket_" + slot_key
+				var attachment_parent: Node3D = parent
+				# Follow imported shoulder pivots so held items actually
+				# animate with the arms, not remain floating beside them.
+				var character: Node = parent.get_node_or_null("AuthoredCharacter")
+				if character != null:
+					if slot_key == "armor":
+						# Weighted torso flexes at SpineChest; attach chest
+						# armor to that imported bone when Godot exposes it.
+						var chest_bone_found: bool = false
+						for candidate in character.find_children("*", "Skeleton3D", true, false):
+							var skeleton: Skeleton3D = candidate as Skeleton3D
+							if skeleton.find_bone("SpineChest") >= 0:
+								var chest_attachment := BoneAttachment3D.new()
+								chest_attachment.name = "BoneSocket_SpineChest"
+								chest_attachment.bone_name = "SpineChest"
+								skeleton.add_child(chest_attachment)
+								attachment_parent = chest_attachment
+								chest_bone_found = true
+								break
+						if not chest_bone_found:
+							var torso: Node = character.find_child("BodyRig", true, false)
+							if torso is Node3D:
+								attachment_parent = torso as Node3D
+					else:
+						var joint_name: String = "Arm1" if slot_key == "weapon" else "Arm-1"
+						var joint: Node = character.find_child(joint_name, true, false)
+						if joint is Node3D:
+							attachment_parent = joint as Node3D
+						else:
+							# Godot imports skinned glTF joints as Skeleton3D
+							# bones, not necessarily named Node3D pivots.
+							# A BoneAttachment3D follows the animated bone.
 							for candidate in character.find_children("*", "Skeleton3D", true, false):
 								var skeleton: Skeleton3D = candidate as Skeleton3D
-								if skeleton.find_bone("SpineChest") >= 0:
-									var chest_attachment := BoneAttachment3D.new()
-									chest_attachment.name = "BoneSocket_SpineChest"
-									chest_attachment.bone_name = "SpineChest"
-									skeleton.add_child(chest_attachment)
-									attachment_parent = chest_attachment
-									chest_bone_found = true
+								if skeleton.find_bone(joint_name) >= 0:
+									var bone_socket := BoneAttachment3D.new()
+									bone_socket.name = "BoneSocket_" + joint_name
+									bone_socket.bone_name = joint_name
+									skeleton.add_child(bone_socket)
+									attachment_parent = bone_socket
 									break
-							if not chest_bone_found:
-								var torso: Node = character.find_child("BodyRig", true, false)
-								if torso is Node3D:
-									attachment_parent = torso as Node3D
-						else:
-							var joint_name: String = "Arm1" if slot_key == "weapon" else "Arm-1"
-							var joint: Node = character.find_child(joint_name, true, false)
-							if joint is Node3D:
-								attachment_parent = joint as Node3D
-							else:
-								# Godot imports skinned glTF joints as Skeleton3D
-								# bones, not necessarily named Node3D pivots.
-								# A BoneAttachment3D follows the animated bone.
-								for candidate in character.find_children("*", "Skeleton3D", true, false):
-									var skeleton: Skeleton3D = candidate as Skeleton3D
-									if skeleton.find_bone(joint_name) >= 0:
-										var bone_socket := BoneAttachment3D.new()
-										bone_socket.name = "BoneSocket_" + joint_name
-										bone_socket.bone_name = joint_name
-										skeleton.add_child(bone_socket)
-										attachment_parent = bone_socket
-										break
-					match slot_key:
-						"weapon":
-							socket.position = Vector3(0.13, -0.19, -0.08) if attachment_parent != parent else Vector3(0.43, 0.87, -0.08)
-							socket.scale = Vector3.ONE * 0.64
-						"armor":
-							socket.position = Vector3(0, -0.18, -0.08) if attachment_parent is BoneAttachment3D else Vector3(0, 0.83, -0.08)
-							socket.scale = Vector3.ONE * 0.95
-						"relic":
-							socket.position = Vector3(-0.27, -0.17, -0.16) if attachment_parent != parent else Vector3(-0.39, 0.89, -0.16)
-							socket.scale = Vector3.ONE * 0.72
-					attachment_parent.add_child(socket)
-					socket.add_child(gear_model)
-					# Preserve the stable rarity marker used by UI/tests and
-					# provide an attachment point for additional tier VFX.
-					var rarity_marker := Node3D.new()
-					rarity_marker.name = "Rarity_" + slot
-					socket.add_child(rarity_marker)
-					# High-rarity gear gains subtle, socket-bound magic rings.
-					# Quality level controls count; no lights or per-frame particles.
-					if tier >= 4 and fx_enabled and visual_quality > 0:
-						var glow: StandardMaterial3D = _gear_material(slot)
-						var ring_count: int = mini(tier - 3, visual_quality)
-						for effect_index in range(ring_count):
-							var halo: MeshInstance3D = _ring(0.18 + effect_index * 0.085, 0.012, glow, socket, Vector3(0, 0.19 + effect_index * 0.08, 0))
-							halo.name = "EnchantmentHalo_%d" % effect_index
-							halo.rotation.x = PI * 0.5
-							halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-					return
-				gear_model.free()
+				match slot_key:
+					"weapon":
+						socket.position = Vector3(0.13, -0.19, -0.08) if attachment_parent != parent else Vector3(0.43, 0.87, -0.08)
+						socket.scale = Vector3.ONE * 0.64
+					"armor":
+						socket.position = Vector3(0, -0.18, -0.08) if attachment_parent is BoneAttachment3D else Vector3(0, 0.83, -0.08)
+						socket.scale = Vector3.ONE * 0.95
+					"relic":
+						socket.position = Vector3(-0.27, -0.17, -0.16) if attachment_parent != parent else Vector3(-0.39, 0.89, -0.16)
+						socket.scale = Vector3.ONE * 0.72
+				attachment_parent.add_child(socket)
+				socket.add_child(gear_model)
+				# Preserve the stable rarity marker used by UI/tests and
+				# provide an attachment point for additional tier VFX.
+				var rarity_marker := Node3D.new()
+				rarity_marker.name = "Rarity_" + slot
+				socket.add_child(rarity_marker)
+				# High-rarity gear gains subtle, socket-bound magic rings.
+				# Quality level controls count; no lights or per-frame particles.
+				if tier >= 4 and fx_enabled and visual_quality > 0:
+					var glow: StandardMaterial3D = _gear_material(slot)
+					var ring_count: int = mini(tier - 3, visual_quality)
+					for effect_index in range(ring_count):
+						var halo: MeshInstance3D = _ring(0.18 + effect_index * 0.085, 0.012, glow, socket, Vector3(0, 0.19 + effect_index * 0.08, 0))
+						halo.name = "EnchantmentHalo_%d" % effect_index
+						halo.rotation.x = PI * 0.5
+						halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				return
+			gear_model.free()
 	var mat: Material = _gear_material(slot)
 	match slot:
 		"Оружие":
