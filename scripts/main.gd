@@ -896,6 +896,18 @@ static func sanitize_hero_poison(raw: Variant, board: Array) -> Dictionary:
 		clean[cell] = ticks
 	return clean
 
+static func valid_battle_arrays(board: Variant, hp_values: Variant) -> bool:
+	if typeof(board) != TYPE_ARRAY or typeof(hp_values) != TYPE_ARRAY: return false
+	if board.size() != 64 or hp_values.size() != 64: return false
+	for index in range(64):
+		if typeof(board[index]) != TYPE_STRING: return false
+		if board[index] != "" and not GLYPHS.has(board[index]): return false
+		if typeof(hp_values[index]) != TYPE_INT and typeof(hp_values[index]) != TYPE_FLOAT: return false
+		var value: float = float(hp_values[index])
+		if not is_finite(value) or value < 0.0 or value > 1000000.0: return false
+		if board[index] == "" and value != 0.0: return false
+	return true
+
 func _snapshot() -> Dictionary:
 	return {
 		"pieces": pieces.duplicate(), "health": health.duplicate(),
@@ -923,8 +935,7 @@ func _broadcast_snapshot() -> void:
 @rpc("authority", "call_remote", "reliable")
 func _send_snapshot(data: Dictionary) -> void:
 	if lan_host or not lan_connected: return
-	if typeof(data.get("pieces")) != TYPE_ARRAY or data["pieces"].size() != 64: return
-	if typeof(data.get("health")) != TYPE_ARRAY or data["health"].size() != 64: return
+	if not valid_battle_arrays(data.get("pieces"), data.get("health")): return
 	pieces = data["pieces"].duplicate()
 	health = data["health"].duplicate()
 	hero_poison = sanitize_hero_poison(data.get("hero_poison", {}), pieces)
@@ -988,8 +999,7 @@ func _restore_battle() -> bool:
 	if file == null: return false
 	var parsed = JSON.parse_string(file.get_as_text())
 	if typeof(parsed) != TYPE_DICTIONARY: return false
-	if typeof(parsed.get("pieces")) != TYPE_ARRAY or parsed["pieces"].size() != 64: return false
-	if typeof(parsed.get("health")) != TYPE_ARRAY or parsed["health"].size() != 64: return false
+	if not valid_battle_arrays(parsed.get("pieces"), parsed.get("health")): return false
 	var new_mode: String = str(parsed.get("mode", "arena"))
 	if new_mode != "arena" and new_mode != "raid": return false
 	for item in parsed["pieces"]:
