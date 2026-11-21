@@ -1112,6 +1112,9 @@ func _run() -> void:
 	_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == obsidian_dark and game.battlefield_3d.tile_materials[1].albedo_color == obsidian_light, "Selected board skin survives biome changes")
 	game.battlefield_3d.set_board_visual_style(-1)
 	_assert_ok(not game.battlefield_3d.board_style_customized, "Resetting board skin returns to biome palette")
+	_assert_ok(game.battlefield_3d.board_edge_material.albedo_color == Color("#433246"), "Reset board skin restores carved wooden frame")
+	_assert_ok(game.battlefield_3d.board_inlay_material.albedo_color == Color("#e0bb74"), "Reset board skin restores golden inlays")
+	_assert_ok(game.battlefield_3d.board_gem_material.albedo_color == Color("#6ecfcb"), "Reset board skin restores corner gemstones")
 	_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == Color("#28395e"), "Biome reset restores active region colors")
 	game.battlefield_3d.set_region(0)
 	# All health bars on a side should reuse a single material, even
