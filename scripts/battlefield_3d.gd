@@ -1795,6 +1795,9 @@ func animate_move(source: int, target: int) -> void:
 	var previous_move: Tween = actor.get_meta("move_tween", null) as Tween
 	if previous_move != null and previous_move.is_running():
 		previous_move.kill()
+	# Previous destination is now the new source; do not leave a stale
+	# movement lock on a square after a chained move.
+	moving_nodes.erase(source)
 	moving_nodes[target] = true
 	var destination := _square_position(target)
 	var move_rig: Node3D = actor.get_meta("visual_rig", null)
