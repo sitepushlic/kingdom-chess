@@ -1736,6 +1736,16 @@ func _heal_selected() -> void:
 	else:
 		_draw()
 
+# Checks whether the active side has any legal chess movement or RPG strike.
+# In a damage-based battle, a legal attack is not necessarily an immediate
+# check escape; full HP-aware mate evaluation remains a separate rule.
+func _has_legal_action(team: int) -> bool:
+	for source in range(64):
+		if _team(pieces[source]) != team: continue
+		for destination in range(64):
+			if _legal(source, destination): return true
+	return false
+
 func _end_turn() -> void:
 	if lan_connected and not lan_host:
 		_request_action.rpc_id(1, "end")
@@ -1745,6 +1755,11 @@ func _end_turn() -> void:
 	# RPG attacks may require multiple actions to defeat a threatening unit.
 	# Restore one action so the defender can continue resolving the threat.
 	if mode == "arena" and _king_threatened(pieces, turn):
+		if not _has_legal_action(turn):
+			winner = "ПОБЕДА ТЁМНЫХ!" if turn == 1 else "ПОБЕДА СВЕТЛЫХ!"
+			battle_log = "МАТ: нет допустимых действий для защиты короля."
+			_draw()
+			return
 		ap = maxi(1, ap)
 		acted.clear()
 		selected = -1
@@ -1755,6 +1770,9 @@ func _end_turn() -> void:
 		_boss_action()
 		return
 	turn = -turn
+	if mode == "arena" and _king_threatened(pieces, turn) and not _has_legal_action(turn):
+		winner = "ПОБЕДА ТЁМНЫХ!" if turn == 1 else "ПОБЕДА СВЕТЛЫХ!"
+		battle_log = "МАТ: королю некуда уйти и нет допустимых защитных действий."
 	ap = 2
 	heal_used = false
 	acted.clear()
