@@ -120,6 +120,19 @@ def validate(path, require_animation=True):
                 rest=world_rest_translation(joint_index)
                 assert all(abs(matrix[12+axis]+rest[axis])<1e-4 for axis in range(3)), f"{path}: skin {skin_index} inverse bind disagrees with joint rest pose"
                 assert all(abs(matrix[i]-1)<1e-5 for i in (0,5,10,15)), f"{path}: skin {skin_index} invalid bind matrix diagonal"
+        # glTF skinning requires compatible per-vertex attributes on every
+        # primitive of every mesh referenced by a skin node.
+        for node in gltf["nodes"]:
+            if "skin" not in node:
+                continue
+            assert "mesh" in node and 0<=node["skin"]<len(gltf["skins"]), f"{path}: skinned node missing valid mesh/skin"
+            for primitive in gltf["meshes"][node["mesh"]]["primitives"]:
+                attrs=primitive["attributes"]
+                assert {"POSITION","NORMAL","JOINTS_0","WEIGHTS_0"}.issubset(attrs), f"{path}: skinned mesh lacks vertex attributes"
+                counts=[gltf["accessors"][attrs[key]]["count"] for key in ("POSITION","NORMAL","JOINTS_0","WEIGHTS_0")]
+                assert len(set(counts))==1, f"{path}: skin attribute vertex count mismatch"
+                assert gltf["accessors"][attrs["JOINTS_0"]]["type"]=="VEC4", f"{path}: joints must be VEC4"
+                assert gltf["accessors"][attrs["WEIGHTS_0"]]["type"]=="VEC4", f"{path}: weights must be VEC4"
         skinned=[node for node in gltf["nodes"] if "skin" in node]
         assert len(skinned)==6 and {node["skin"] for node in skinned}==set(range(6)), f"{path}: missing skinned character meshes"
         assert {node.get("name") for node in skinned}=={"SkinnedCape","SkinnedTorso","Arm1Mesh","Arm-1Mesh","Leg1Mesh","Leg-1Mesh"}, f"{path}: unexpected skinned geometry"
