@@ -167,6 +167,15 @@ func _run() -> void:
 							found = true
 					_assert_ok(found, "GLB clip %s exists: %s" % [clip_name, asset_name])
 			model.free()
+	# Only the chosen hero bearer gets its ID-specific imported model,
+	# not every allied piece of the same chess class.
+	var hero_king: Node3D = game.battlefield_3d._build_piece("K", false, true)
+	var other_king: Node3D = game.battlefield_3d._build_piece("K", false, false)
+	_assert_ok(bool(hero_king.get_meta("selected_hero_piece", false)), "Chosen hero bearer is marked")
+	_assert_ok(not bool(other_king.get_meta("selected_hero_piece", true)), "Other units are not selected hero")
+	_assert_ok(other_king.find_child("HeroIdentity_30", true, false) == null, "Other same-class units do not receive selected hero insignia")
+	hero_king.queue_free()
+	other_king.queue_free()
 	# Every roster ID must generate a unique physical signature, not only a tint.
 	var hero_art_signatures: Dictionary = {}
 	for hero_number in range(1, 31):
