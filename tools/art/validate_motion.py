@@ -55,10 +55,18 @@ def main():
         for limb in ("Arm1Lower","Arm-1Lower","Leg1Lower","Leg-1Lower"):
             motion=animation_track(doc,data,base,"move",limb)
             assert max(abs(pose[0]) for pose in motion)>0.02, f"Hero {n}: {limb} never flexes during locomotion"
+    boss_attack_signatures=set()
+    boss_cast_signatures=set()
     for n in range(6):
         doc,data,base=load(ART / f"boss_region_{n}.glb")
         arm=animation_track(doc,data,base,"attack","Arm1")
         assert abs(arm[-1][0])<1e-5, f"Boss {n}: attack does not recover to rest"
+        cast=animation_track(doc,data,base,"cast","Arm1")
+        assert abs(cast[0][0])<1e-5 and abs(cast[-1][0])<1e-5, f"Boss {n}: spell does not return to rest"
+        boss_attack_signatures.add(tuple(round(frame[0],4) for frame in arm))
+        boss_cast_signatures.add(tuple(round(frame[0],4) for frame in cast))
+    assert len(boss_attack_signatures)==6, f"Expected 6 different boss attack signatures, got {len(boss_attack_signatures)}"
+    assert len(boss_cast_signatures)==6, f"Expected 6 different boss casting signatures, got {len(boss_cast_signatures)}"
     # Enemies use the same skeletal animation contract as heroes and bosses.
     # Check every generated character, not only representative samples.
     enemy_count=0
