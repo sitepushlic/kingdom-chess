@@ -1,3 +1,16 @@
+## 2026-11-21 — PERSISTENT COORDINATE UI AND ANIMATED ART FALLBACK
+**User:** Large substantive batches, update HANDOFF each turn, finish 3D game. **NO APK build/export/signing.** Never claim tests passed without runtime evidence.
+
+### Changes this pass
+- `c0eaefe5`: main menu `♟ КООРДИНАТЫ: ВКЛ/ВЫКЛ`; toggles all 32 world-space chess coordinate labels. `user://graphics.cfg` now saves both coordinate preference and graphics quality without clobbering either.
+- `292ca1a1`: saved coordinate preference is applied immediately after constructing 3D battlefield.
+- `23ef1d1b`: smoke coverage for UI toggle, renderer state, persistence and graphics quality preservation.
+- `b23daf8a`: missing hero-ID/regional enemy/regional boss GLB now falls back to animated chess-class GLB before static OBJ, avoiding unnecessary animation loss.
+- Earlier this development window: `1c2c83d7` board skin reset restores frame/inlays/gems; `34c7a684` added coordinate visibility API and `be727a5b` its smoke test.
+
+### Verification
+- Code committed to main; **Godot/CI runtime not verified in this turn**. Still need real art import and smoke logs, visual inspection, animation polish and game balancing. APK remains paused.
+
 ## 2026-11-21 — TACTICAL 3D CHESS READABILITY AND FALLBACK ART PERFORMANCE (LATEST)
 **User instructions:** Make maximal meaningful progress each turn, update this handoff every turn, finish game/graphics. **Do not build/export/sign APK until explicitly instructed.** Never report a successful Godot or Python test run without evidence.
 
