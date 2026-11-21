@@ -515,3 +515,15 @@ For EVERY future implementation session:
 **Remaining work:** complete HP-aware checkmate and no-softlock defensive AP; test LAN authority, reconnect and action replay; ensure all saved battles migrate safely; create/import commercial-quality original rigged 3D hero models, seven-tier gear visuals, animation/VFX and regional art; benchmark graphics quality tiers on real Android; audit campaign balance and hero unlock gates.
 
 **Next autonomous execution:** (1) obtain and inspect latest Actions job logs; fix errors; (2) verify raid snapshot schema against all gameplay states and extend host authority tests; (3) fix remaining chess/RPG endgame rules with deterministic tests; (4) implement authored GLB/animation and visual polish; (5) test Android and append exact commits, verification and risks to this full handoff. Earlier history retained above.
+
+## Full handoff — 2026-11-21: saved battle integrity
+
+**Product:** Godot 4.3 Android portrait 3D chess/RPG, chess victory/check, RPG HP/AP/skills, fair PvP, 30 heroes, 7 gear rarities, 18 missions/6 regions, LAN co-op, authored rigged 3D assets/animations/VFX. Main modules remain `scripts/main.gd`, `scripts/battlefield_3d.gd`, `scripts/progression.gd`, `scripts/hero_roster.gd`, `tests/smoke.gd` and `.github/workflows/android.yml`. Prior history retained above.
+
+**Commits:** `17ec8ff8878f737a44029fbc0fe161ca3a5024fc` applies strict shared raid/battle schema to disk battle restoration, preventing malformed turn, AP, acted indices, missing metadata and corrupt board/HP from mutating state; `6d4551f53f9cac7ecaef7bbef8190819fc69aceb` adds regression assertions for negative/excessive AP and string action indices. This documentation commit updates full handoff.
+
+**Verification:** GitHub accepted code and tests. Current Godot smoke CI, Android APK export, physical device rendering/performance, and two-device LAN remain **unverified**. Validator assumes existing save schema matches `_snapshot()` plus mode/time fields; verify legacy save compatibility and real run outcomes before release.
+
+**Known limitations:** incomplete HP-aware checkmate/AP edge cases; host networking action replay and reconnection; procedural rather than commercial-quality authored/rigged 3D models; limited authored animations, rarity visuals, region art; campaign balance and Android FPS/thermals unmeasured.
+
+**Next run:** obtain latest Actions logs and fix failures first; audit compatibility of saved battles and LAN snapshots; implement deterministic checkmate and AP edge-case tests; advance actual original 3D asset pipeline; benchmark Android on device; update handoff with exact commits and verified outcomes. Continue without confirmation, but never claim a completed game without tests.
