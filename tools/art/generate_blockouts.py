@@ -233,6 +233,26 @@ def make_character(identifier, boss=False):
                 node["translation"]=[center[i]-pivot["translation"][i] for i in range(3)]
                 pivot["children"].append(idx)
                 return
+        # New class armor needs to inherit limb animation. In the first
+        # silhouette pass these meshes were static under BodyRig, causing
+        # floating shoulder armor and shin runes during attack/movement.
+        arm_prefixes=("RoyalPauldronWing","RaiderArmSpike","RangerForearmWrap",
+                      "ForgeShoulderTower","MageShoulderSigil")
+        leg_prefixes=("RoyalGreaveCrest","RaiderShinFang","ForgeKneeRivet",
+                      "MageBootRunes","BossBootSpur","CrimsonClaw")
+        attachment=None
+        if name.startswith(arm_prefixes):
+            suffix=name[-2:] if name.endswith("-1") else name[-1:]
+            attachment="Arm"+suffix
+        elif name.startswith(leg_prefixes):
+            suffix=name[-2:] if name.endswith("-1") else name[-1:]
+            attachment="Leg"+suffix
+        if attachment is not None:
+            pivot=next((n for n in nodes if n.get("name")==attachment),None)
+            if pivot is not None:
+                nodes[idx]["translation"]=[center[i]-pivot["translation"][i] for i in range(3)]
+                pivot["children"].append(idx)
+                return
         nodes[1]["children"].append(idx)
     # Pivot at feet; rig node animation moves all geometry.
     # Torso is generated below as a weighted, two-joint deformable mesh.
