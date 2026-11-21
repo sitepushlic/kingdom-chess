@@ -270,6 +270,7 @@ func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 				4:
 					var wing := _box(Vector3(0.38, 0.13, 0.07), mat, parent, Vector3(0.43, 1.13, -0.08))
 					wing.rotation.z = 0.38
+					_sphere(0.08, mat, parent, Vector3(0.43, 1.26, -0.08))
 				5:
 					_cylinder(0.07, 0.87, mat, parent, Vector3(0.43, 0.86, -0.08), 0.015)
 					_sphere(0.17, mat, parent, Vector3(0.43, 1.34, -0.08))
