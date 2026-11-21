@@ -221,6 +221,14 @@ func _run() -> void:
 	_assert_ok(weapon_socket != null, "Equipped weapon creates an authored GLB socket")
 	if weapon_socket != null:
 		_assert_ok(weapon_socket.get_parent().name == "Arm1", "Weapon is attached to the moving right arm")
+	var armor_socket: Node = geared_bearer.find_child("GearSocket_armor", true, false)
+	_assert_ok(armor_socket != null, "Equipped armor creates imported GLB socket")
+	if armor_socket != null:
+		_assert_ok(armor_socket.get_parent().name == "BodyRig", "Chest armor follows animated torso")
+	var relic_socket: Node = geared_bearer.find_child("GearSocket_relic", true, false)
+	_assert_ok(relic_socket != null, "Equipped relic creates imported GLB socket")
+	if relic_socket != null:
+		_assert_ok(relic_socket.get_parent().name == "Arm-1", "Relic follows moving left arm")
 	geared_bearer.queue_free()
 	plain_ally.queue_free()
 	game.battlefield_3d.hero_gear = prior_gear
