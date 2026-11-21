@@ -118,11 +118,26 @@ jobs:
           fi
       - name: Export debug APK
         run: |
+          set -o pipefail
           mkdir -p build
           echo "=== Android toolchain ==="
           ls -la "$ANDROID_HOME/build-tools/34.0.0" | head
           echo "=== Godot export diagnostics ==="
-          ./Godot_v4.3-stable_linux.x86_64 --headless --verbose --path . --export-debug Android build/kingdom-chess-debug.apk
+          timeout 300s ./Godot_v4.3-stable_linux.x86_64 --headless --verbose --path . --export-debug Android build/kingdom-chess-debug.apk 2>&1 | tee export.log
+          test -s build/kingdom-chess-debug.apk
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, BadZipFile
+          apk=Path("build/kingdom-chess-debug.apk")
+          with ZipFile(apk) as z:
+              names=set(z.namelist())
+              assert "AndroidManifest.xml" in names, "APK missing AndroidManifest.xml"
+              assert any(name.startswith("lib/") and name.endswith(".so") for name in names), "APK missing native Godot libraries"
+              assert any(name.endswith(".pck") for name in names) or any(name.startswith("assets/") for name in names), "APK missing packaged game assets"
+              broken=z.testzip()
+              assert broken is None, f"Corrupted APK ZIP entry: {broken}"
+          print(f"Verified APK archive: {apk.stat().st_size:,} bytes, {len(names)} entries")
+          PY
       - name: Upload Godot import and smoke diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -131,6 +146,7 @@ jobs:
           path: |
             import.log
             smoke.log
+            export.log
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         with:
