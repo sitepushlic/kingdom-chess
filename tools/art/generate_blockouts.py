@@ -45,7 +45,7 @@ def make_character(identifier, boss=False):
     def accessor(data, fmt, count, component, type_, target=None, minmax=None):
         while len(blob)%4: blob.append(0)
         start=len(blob)
-        blob.extend(struct.pack("<"+fmt,data) if not isinstance(data,bytes) else data)
+        blob.extend(struct.pack("<"+fmt,*data) if not isinstance(data,bytes) else data)
         view={"buffer":0,"byteOffset":start,"byteLength":len(blob)-start}
         if target is not None: view["target"]=target
         views.append(view)
