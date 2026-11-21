@@ -104,6 +104,12 @@ def main():
         assert path.is_file(), f"missing {path}"
         counts.append(validate(path))
     assert len(counts) == 72
+    boss_landmarks=("EmberHorn", "GlacierSpire", "ThornBranch", "RunicTablet", "AstralWing", "CrimsonWing")
+    for region, landmark in enumerate(boss_landmarks):
+        data=(ART / f"boss_region_{region}.glb").read_bytes()
+        json_size=struct.unpack_from("<I",data,12)[0]
+        boss_gltf=json.loads(data[20:20+json_size])
+        assert any(node.get("name","").startswith(landmark) for node in boss_gltf["nodes"]), f"boss {region}: missing {landmark} silhouette"
     equipment_dir = ROOT / "assets" / "equipment"
     for slot in ("weapon","armor","relic"):
         shapes = set()
