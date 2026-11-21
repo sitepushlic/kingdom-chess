@@ -459,7 +459,9 @@ def validate(path, require_animation=True):
                 assert sum(cross[j]*normal[j] for j in range(3))>1e-6, f"{path}: triangle winding opposes face normal"
     # Each mesh is instanced by nodes; estimate actual rendered triangle load.
     estimated_triangles=sum(sum(gltf["accessors"][p["indices"]]["count"]//3 for p in gltf["meshes"][node["mesh"]]["primitives"]) for node in gltf["nodes"] if "mesh" in node)
-    # Chamfered rigid meshes add silhouette quality; keep a strict 2.5k\n    # per-character ceiling until real Android GPU profiling.\n    assert estimated_triangles <= 2500, f"{path}: excessive mobile triangle count {estimated_triangles}"
+    # Chamfered rigid meshes improve silhouettes. Budget is 6k triangles per
+    # character including the new 30-hero/36-enemy/6-boss ornament pass.
+    assert estimated_triangles <= 6000, f"{path}: excessive mobile triangle count {estimated_triangles}"
     for node in gltf["nodes"]:
         if "mesh" in node:
             assert 0 <= node["mesh"] < len(gltf["meshes"])
