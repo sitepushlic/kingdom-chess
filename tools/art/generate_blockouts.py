@@ -117,6 +117,15 @@ def make_character(identifier, boss=False):
                 nodes[idx]["translation"]=[center[i]-head_pivot["translation"][i] for i in range(3)]
                 head_pivot["children"].append(idx)
                 return
+        # Forged knee plates are rigid armor and must follow knee flex,
+        # just like shin guards; keep their bind-space center unchanged.
+        if name.startswith("ForgeKnee"):
+            side=name[len("ForgeKnee"):]
+            pivot=next((n for n in nodes if n.get("name")=="Leg"+side),None)
+            if pivot is not None:
+                nodes[idx]["translation"]=[center[i]-pivot["translation"][i] for i in range(3)]
+                pivot["children"].append(idx)
+                return
         if name.startswith("Gauntlet") or name.startswith("ShinPlate") or name.startswith("Boot"):
             side=name.split("Gauntlet")[-1] if name.startswith("Gauntlet") else (name.split("ShinPlate")[-1] if name.startswith("ShinPlate") else name.split("Boot")[-1])
             pivot_name=("Arm" if name.startswith("Gauntlet") else "Leg")+side
@@ -463,7 +472,7 @@ def make_character(identifier, boss=False):
         # belong to the lower arm/shin bone, not the upper pivot; otherwise
         # they float above the bending mesh during elbow/knee flexion.
         # Preserve their world-space bind pose while changing parent.
-        rigid_prefixes=("Gauntlet",) if is_arm else ("ShinPlate","Boot")
+        rigid_prefixes=("Gauntlet",) if is_arm else ("ShinPlate","Boot","ForgeKnee")
         for child_index in list(pivot["children"]):
             if child_index==lower_joint_index:
                 continue
