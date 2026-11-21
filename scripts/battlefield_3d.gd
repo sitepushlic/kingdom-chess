@@ -337,6 +337,62 @@ func set_selected_hero_visual(hero: Dictionary) -> void:
 		if str(piece_types[cell]) == str(hero.get("piece", "")):
 			piece_types[cell] = ""
 
+func _add_hero_signature_costume(hero_number: int, rarity: int, parent: Node3D, mat: Material) -> void:
+	# Thirty deterministic costume combinations: five major silhouettes times six
+	# individually shaped signature crests, with tier-dependent physical ornament.
+	# This is procedural in-game geometry, not a substitute for authored rigged GLBs.
+	var family: int = (hero_number - 1) % 5
+	var signature: int = int((hero_number - 1) / 5)
+	match family:
+		0: # Royal herald: layered mantle and angular epaulettes.
+			_box(Vector3(0.53, 0.55, 0.12), mat, parent, Vector3(0, 0.77, 0.23))
+			for side in [-1.0, 1.0]:
+				var plate := _box(Vector3(0.23, 0.13, 0.30), mat, parent, Vector3(side * 0.29, 1.02, 0))
+				plate.rotation.z = side * 0.23
+		1: # Raider: asymmetrical shoulder guard and serrated waist skirt.
+			_box(Vector3(0.32, 0.21, 0.33), mat, parent, Vector3(-0.28, 0.97, 0))
+			for i in range(4):
+				var flap := _box(Vector3(0.10, 0.29, 0.09), mat, parent, Vector3(-0.18 + i * 0.12, 0.46, -0.14))
+				flap.rotation.z = (float(i) - 1.5) * 0.16
+		2: # Ranger: swept-back hood, quiver and travel cloak.
+			var hood := _cylinder(0.22, 0.20, mat, parent, Vector3(0, 1.41, 0), 0.075)
+			hood.rotation.x = -0.12
+			_box(Vector3(0.38, 0.56, 0.10), mat, parent, Vector3(0, 0.80, 0.20))
+			for i in range(3):
+				_cylinder(0.022, 0.45, mat, parent, Vector3(-0.28 + float(i) * 0.06, 1.05, 0.21))
+		3: # Forge sentinel: heavy plated breast and reinforced knee guards.
+			_box(Vector3(0.46, 0.40, 0.34), mat, parent, Vector3(0, 0.82, -0.015))
+			for side in [-1.0, 1.0]:
+				_box(Vector3(0.20, 0.20, 0.23), mat, parent, Vector3(side * 0.14, 0.43, -0.08))
+		4: # Arcane sage: layered robe, floating focus and high collar.
+			_cylinder(0.33, 0.43, mat, parent, Vector3(0, 0.53, 0), 0.19)
+			_ring(0.25, 0.035, mat, parent, Vector3(0, 1.04, 0))
+			_sphere(0.10, mat, parent, Vector3(-0.38, 1.05, -0.12))
+	# Signature 0-5 changes the head outline, never only the palette.
+	match signature:
+		0:
+			_cylinder(0.22, 0.13, mat, parent, Vector3(0, 1.43, 0))
+		1:
+			for side in [-1.0, 1.0]:
+				var antler := _cylinder(0.038, 0.34, mat, parent, Vector3(side * 0.19, 1.52, 0), 0.006)
+				antler.rotation.z = side * 0.28
+		2:
+			_cylinder(0.18, 0.42, mat, parent, Vector3(0, 1.51, 0), 0.015)
+		3:
+			for i in range(3):
+				var blade := _box(Vector3(0.065, 0.25 + float(i % 2) * 0.15, 0.09), mat, parent, Vector3((float(i) - 1.0) * 0.14, 1.49, 0))
+				blade.rotation.z = (float(i) - 1.0) * 0.13
+		4:
+			_ring(0.23, 0.04, mat, parent, Vector3(0, 1.46, 0))
+			_sphere(0.08, mat, parent, Vector3(0, 1.59, 0))
+		5:
+			_box(Vector3(0.40, 0.14, 0.20), mat, parent, Vector3(0, 1.38, -0.06))
+			_cylinder(0.045, 0.31, mat, parent, Vector3(0, 1.56, 0), 0.01)
+	# High-rarity hero costumes earn extra visible metalwork.
+	for i in range(rarity):
+		var angle: float = TAU * float(i) / float(maxi(1, rarity))
+		_sphere(0.037, mat, parent, Vector3(cos(angle) * 0.26, 0.86, sin(angle) * 0.26))
+
 func _add_selected_hero_identity(kind: String, parent: Node3D) -> void:
 	if selected_hero_visual.is_empty() or str(selected_hero_visual.get("piece", "")) != kind: return
 	var identifier: String = str(selected_hero_visual.get("id", "hero_01"))
@@ -348,6 +404,7 @@ func _add_selected_hero_identity(kind: String, parent: Node3D) -> void:
 	var emblem := Node3D.new()
 	emblem.name = "HeroIdentity_%02d" % number
 	parent.add_child(emblem)
+	_add_hero_signature_costume(number, rarity, emblem, crest_mat)
 	# A distinct silhouette, hue and insignia for each roster identity.
 	var spikes: int = 2 + (number % 5)
 	for i in range(spikes):
