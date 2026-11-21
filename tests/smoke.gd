@@ -29,6 +29,26 @@ func _check_mesh_integrity(node: Node) -> void:
 
 func _run() -> void:
 	_assert_ok(Progression.CASTLE_BUILDINGS.size() == 5, "Castle has five functional buildings")
+	# Deterministic fallback cases catch rare high-rarity and over-level loot.
+	for rarity in range(7):
+		for rolled_level in [1, 2, 10, 50]:
+			for slot in Progression.ITEM_SLOTS:
+				var raw_drop: Dictionary = {
+					"name":"Legendary trial", "slot":slot, "level":rolled_level,
+					"rarity":rarity, "power":4 + rolled_level * 2 + rarity * (4 + int(rolled_level / 8.0)) + 5,
+					"affix":Progression.AFFIXES[3], "set_id":3, "trait_id":2
+				}
+				var legal_drop: Dictionary = Progression.normalize_progress_drop(raw_drop, 1, 0)
+				_assert_ok(int(legal_drop["level"]) == 1 and int(legal_drop["rarity"]) == 0, "Loot downgrade enforces starter level and rarity")
+				_assert_ok(int(legal_drop["power"]) == 11, "Loot downgrade cannot retain high-level power")
+				_assert_ok(int(legal_drop["set_id"]) == -1 and int(legal_drop["trait_id"]) == -1, "Starter loot strips locked set and trait")
+				_assert_ok(int(legal_drop["penetration"]) <= 5 and int(legal_drop["crit"]) <= 35, "Starter loot recomputes capped combat stats")
+				_assert_ok(not str(legal_drop["name"]).contains(" • "), "Starter loot name removes locked affixes")
+				_assert_ok(int(raw_drop["level"]) == rolled_level and int(raw_drop["rarity"]) == rarity, "Loot normalization does not mutate original")
+	var high_drop: Dictionary = {"name":"Epic trial", "slot":"Оружие", "level":50, "rarity":6, "power":4 + 50 * 2 + 6 * 10 + 5, "affix":Progression.AFFIXES[3], "set_id":2, "trait_id":2}
+	var mid_drop: Dictionary = Progression.normalize_progress_drop(high_drop, 20, 3)
+	_assert_ok(int(mid_drop["level"]) == 20 and int(mid_drop["rarity"]) == 3 and int(mid_drop["power"]) <= 4 + 20 * 2 + 3 * 6 + 5, "Midgame fallback respects item power ceiling")
+	_assert_ok(int(mid_drop["trait_id"]) == -1, "Midgame downgrade strips legendary-only traits")
 	_assert_ok(Progression.sanitize_castle({"forge":4,"academy":-3,"barracks":"99","treasury":100000,"infirmary":1.5}) == {"forge":4,"barracks":0,"treasury":0,"academy":0,"infirmary":0}, "Castle save rejects forged, negative and malformed upgrades")
 	_assert_ok(Progression.castle_bonus({"forge":100}, "forge") == 30, "Castle PvE attack bonus is capped")
 	_assert_ok(Progression.castle_bonus({"barracks":100}, "barracks") == 100, "Castle PvE health bonus is capped")
