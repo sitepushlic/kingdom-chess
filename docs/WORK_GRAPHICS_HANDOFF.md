@@ -402,3 +402,11 @@ Commits on `main`:
 - **`ccf1c0e8ab3059300fd2eff07f3d270b00a6a4dc`**: core GLB validator also rejects static/unattached authored weapon geometry.
 **Limitations:** code commits are confirmed. Godot import, actual visual animation, CI result and Android APK have not been executed/verified here. Authored weapon visuals may overlap runtime equipment; inspect and resolve in Godot once CI is accessible.
 **Next:** run/inspect Actions pipeline, fix failing imports and exports, test arm swings and weapon grip in Godot and Android, check runtime equipment visibility and eliminate duplicated meshes, continue visual detailing.
+
+## 45. More expressive 3D heads: facial geometry animated with neck — 2026-11-21
+- **`16bc1a599e984e7998b9916b16e7ae70fd90349a`**: added actual low-poly facial mesh parts to all 72 character GLBs: nose bridge and tip, mouth, two pupils, two ears and two lower cheek volumes. This improves facial readability at portrait scale beyond eyes and brow.
+- **`474ee2c5701566c1720ea7a67f7acfb90fa74114`**: updated the generator's head attachment list so all nine new facial mesh nodes follow the animated `Head` pivot rather than remaining rigidly parented to `BodyRig`.
+- **`9141aed667b83c3986f18c69724e2c9c7cdcf5fa`**: extended independent 72-GLB rig QA with 648 facial attachment and world-space rest-height checks (nine parts × 72 characters).
+- **`006c828d07f8e1502475d845fce0bbf7ac26b812`**: core GLB validator requires these nine head-attached facial landmarks on each character.
+**Verification:** GitHub source commits succeeded. Full Python generation, Godot 3D import, mobile visual QA and Android APK export remain unconfirmed. These are low-poly authored details, not completed production facial art.
+**Next:** inspect actual CI status/logs and fix errors, visually review facial proportions and weapon motion, then develop varied face silhouettes, costume materials, detailed environments and mobile performance checks.
