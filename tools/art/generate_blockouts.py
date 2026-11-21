@@ -88,6 +88,7 @@ def make_character(identifier, boss=False):
     # pieces, so 72 characters do not duplicate vertex data per plate.
     bevel_positions=[]
     bevel_normals=[]
+    bevel_uvs=[]
     bevel_indices=[]
     bevel=.16
     def add_flat_face(vertices):
@@ -103,9 +104,14 @@ def make_character(identifier, boss=False):
         magnitude=math.sqrt(sum(n*n for n in cross))
         assert magnitude>1e-8, "Degenerate bevel polygon"
         start=len(bevel_positions)//3
+        # Per-face planar UV charts on already split flat-shaded vertices.
+        dominant=max(range(3),key=lambda axis:abs(cross[axis]))
+        uv_axes=[axis for axis in range(3) if axis!=dominant]
         for vertex in vertices:
             bevel_positions.extend(vertex)
             bevel_normals.extend(n/magnitude for n in cross)
+            bevel_uvs.extend(((vertex[uv_axes[0]]+1.0)*0.5,
+                              (vertex[uv_axes[1]]+1.0)*0.5))
         for k in range(1,len(vertices)-1):
             bevel_indices.extend((start,start+k,start+k+1))
     for axis in range(3):
@@ -145,13 +151,17 @@ def make_character(identifier, boss=False):
                        ([-1,-1,-1],[1,1,1]))
     bevel_normal=accessor(bevel_normals,str(len(bevel_normals))+"f",
                           len(bevel_normals)//3,5126,"VEC3",34962)
+    bevel_uv=accessor(bevel_uvs,str(len(bevel_uvs))+"f",
+                      len(bevel_positions)//3,5126,"VEC2",34962,
+                      ([0,0],[1,1]))
     bevel_index=accessor(bevel_indices,str(len(bevel_indices))+"H",
                          len(bevel_indices),5123,"SCALAR",34963)
     for m in range(5):
         meshes.append({"name":["BeveledArmor","BeveledSteel","BeveledSkin",
                                "BeveledGold","BeveledArcaneGlow"][m],
                        "primitives":[{"attributes":{"POSITION":bevel_pos,
-                                                    "NORMAL":bevel_normal},
+                                                    "NORMAL":bevel_normal,
+                                                    "TEXCOORD_0":bevel_uv},
                                       "indices":bevel_index,"material":m}]})
     def box(name, center, size, material=0, angle=0):
         # Put articulated limbs under an actual shoulder/hip pivot so
