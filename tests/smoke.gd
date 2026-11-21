@@ -560,6 +560,22 @@ func _run() -> void:
 			var gear_asset: String = "res://assets/equipment/%s_tier_%d.glb" % [gear_slot, gear_tier]
 			_assert_ok(ResourceLoader.exists(gear_asset), "Modular equipment GLB exists: " + gear_asset)
 			_assert_ok(load(gear_asset) is PackedScene, "Modular equipment GLB imports: " + gear_asset)
+	# Imported 21-model cache avoids repeated disk/import lookups on
+	# inventory changes. Material cache distinguishes rarity and upgrades.
+	for gear_slot in ["weapon", "armor", "relic"]:
+		for gear_tier in range(7):
+			var path: String = "res://assets/equipment/%s_tier_%d.glb" % [gear_slot, gear_tier]
+			var scene_a: PackedScene = game.battlefield_3d._get_equipment_scene(path)
+			var scene_b: PackedScene = game.battlefield_3d._get_equipment_scene(path)
+			_assert_ok(scene_a != null and scene_a == scene_b, "Equipment GLB cache reuses imported PackedScene")
+	_assert_ok(game.battlefield_3d.equipment_scene_cache.size() == 21, "All 21 equipment scenes cached without duplicate entries")
+	var prior_cache_gear: Dictionary = game.battlefield_3d.hero_gear.duplicate(true)
+	game.battlefield_3d.hero_gear["Оружие"] = {"rarity": 4, "upgrade": 2}
+	var cached_gear_material: Material = game.battlefield_3d._gear_material("Оружие")
+	_assert_ok(cached_gear_material == game.battlefield_3d._gear_material("Оружие"), "Gear material cache reuses matching rarity and upgrade")
+	game.battlefield_3d.hero_gear["Оружие"] = {"rarity": 4, "upgrade": 3}
+	_assert_ok(cached_gear_material != game.battlefield_3d._gear_material("Оружие"), "Different upgrade levels receive distinct PBR materials")
+	game.battlefield_3d.hero_gear = prior_cache_gear
 	# Every roster ID must generate a unique physical signature, not only a tint.
 	var hero_art_signatures: Dictionary = {}
 	for hero_number in range(1, 31):
