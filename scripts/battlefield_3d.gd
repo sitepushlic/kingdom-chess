@@ -1056,17 +1056,25 @@ func _add_boss_enrage_aura(parent: Node3D) -> void:
 		crystal.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 func set_boss_phase(phase: int) -> void:
-	var enraged := phase >= 2
-	if boss_enraged == enraged: return
+	var enraged: bool = phase >= 2
+	var phase_changed: bool = boss_enraged != enraged
 	boss_enraged = enraged
+	# _draw() may recreate the boss actor without changing its logical phase.
+	# Always reapply aura, tint and scale to the current instance.
 	if piece_nodes.has(4) and piece_types.get(4, "") == "k":
 		var boss: Node3D = piece_nodes[4]
+		if not is_instance_valid(boss): return
 		var aura: Node3D = boss.get_node_or_null("BossEnrageAura")
 		if aura != null: aura.visible = enraged and visual_quality > 0
-		var burst := create_tween()
-		burst.tween_property(boss, "scale", Vector3.ONE * (1.42 if enraged else 1.12), 0.24).set_trans(Tween.TRANS_BACK)
+		var target_scale: Vector3 = Vector3.ONE * (1.42 if enraged else 1.12)
+		if phase_changed:
+			var burst := create_tween()
+			burst.tween_property(boss, "scale", target_scale, 0.24).set_trans(Tween.TRANS_BACK)
+		else:
+			boss.scale = target_scale
 		if not enraged:
 			boss.position.y = 0.0
+	if boss_crown != null:
 		boss_crown.albedo_color = Color("#ff2c5f") if enraged else Color("#e56587")
 		boss_crown.emission_energy_multiplier = 2.8 if enraged else 0.6
 
