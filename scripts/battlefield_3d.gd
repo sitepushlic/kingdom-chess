@@ -1391,7 +1391,7 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 	_spawn_attack_trail(source, target, magical)
 	# Low graphics tier intentionally omits translucent attack geometry and
 	# camera shake; it still plays the complete actor animation.
-	if fx_enabled and visual_quality > 0 and board_root != null:
+	if fx_enabled and visual_quality > 0 and board_root != null and distance_vector.length_squared() > 0.0001:
 		var beam := MeshInstance3D.new()
 		var beam_mesh := CylinderMesh.new()
 		beam_mesh.top_radius = 0.045 if magical else 0.075
