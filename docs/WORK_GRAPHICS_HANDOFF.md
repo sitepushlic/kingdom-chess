@@ -123,3 +123,10 @@ Every development step saved to `main`:
 - **`0d3282e3745fba3575c03eec98c98a2e7786db13`**: smoke regression asserts equipped selected king has weapon rarity insignia and another allied king does not.
 - **Verification:** changes committed to `main`; no Godot smoke or Android run result verified. Must check actual CI before claiming pass.
 - **Remaining:** verify CI and fix Godot errors; replace all 36 generated rigid-animation blockouts with authored rigged/skinned hero/boss models, enemy assets, 21 authored modular gear models with attachment sockets, six finished biome environments plus 18 mission variants, VFX, optimization and Android APK/device QA. The game is not yet visually complete.
+
+## 13. Articulated GLB motion and animation state recovery — 2026-11-21
+1. **`42aecaa8217e609402e713f2b6dc99c22ab74809`** — enhanced the deterministic 36-GLB generator: separate left/right arm rotation channels for all six clips, separate leg rotation channels for `move` and `death`, in addition to existing body translation. Character arms/legs can now move independently. **Still rigid mesh-node articulation, NOT a skinned bone skeleton**, and not production animation.
+2. **`1392adfbf91da9d6cd8f4ad96b071393f782c0a9`** — GLB validator now checks that every clip has root translation and independent arm rotation and that move/death include leg rotation. Existing Android CI runs validator before Godot import.
+3. **`0269abcc1c1c7e74e5fa58a82885befbcc1aff85`** — imported AnimationPlayer resumes looping `idle` when a one-shot move/attack/hit/cast clip finishes, rather than freezing in its final action pose.
+**Verification:** GitHub commits saved, but Godot 4.3 import, Actions success, visual motion, and Android APK **not yet verified**. Generator and validator are not yet demonstrated to run successfully in this chat.
+**Remaining priority-1:** actual skinned/rigged hero GLBs (30), unique rigged enemies and six bosses, original 21 modular gear meshes with sockets, six polished authored biomes and 18 mission variants, improved materials/lighting/VFX, verified Godot/CI import and Android device performance. Generated blockouts remain temporary.
