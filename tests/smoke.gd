@@ -243,13 +243,17 @@ func _run() -> void:
 							found = true
 					_assert_ok(found, "GLB clip %s exists: %s" % [clip_name, asset_name])
 					if found:
-						var animation: Animation = player.get_animation(clip_name)
-						if animation == null:
-							for library_name in player.get_animation_library_list():
-								var library: AnimationLibrary = player.get_animation_library(library_name)
-								if library != null and library.has_animation(clip_name):
-									animation = library.get_animation(clip_name)
-									break
+						# Avoid get_animation() on a name that exists only
+						# inside a named import library: Godot logs an error
+						# even when the fallback lookup would succeed.
+						var animation: Animation = null
+						for library_name in player.get_animation_library_list():
+							var library: AnimationLibrary = player.get_animation_library(library_name)
+							if library != null and library.has_animation(clip_name):
+								animation = library.get_animation(clip_name)
+								break
+						if animation == null and player.has_animation(clip_name):
+							animation = player.get_animation(clip_name)
 						_assert_ok(animation != null, "Imported animation resource exists: %s/%s" % [asset_name, clip_name])
 						if animation != null:
 							_assert_ok(animation.get_track_count() >= 8, "Imported 3D clip retains bone and body tracks: %s/%s" % [asset_name, clip_name])
