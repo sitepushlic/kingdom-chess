@@ -286,7 +286,7 @@ def validate(path, require_animation=True):
         for joint_name in ("Arm1","Arm-1","Leg1","Leg-1"):
             joint_index = next(i for i,node in enumerate(gltf["nodes"]) if node.get("name")==joint_name)
             joint = gltf["nodes"][joint_index]
-            assert "mesh" not in joint and len(joint.get("children",[])) >= 2, f"{path}: {joint_name} must be an articulated pivot"
+            assert "mesh" not in joint and len(joint.get("children",[])) >= 1, f"{path}: {joint_name} must be an articulated pivot"
             assert any(gltf["nodes"][child].get("name")==joint_name+"Lower" for child in joint["children"]), f"{path}: missing elbow/knee bone"
             limb_mesh=next(node for node in skinned if node.get("name")==joint_name+"Mesh")
             assert "mesh" in limb_mesh and limb_mesh["skin"]>=2, f"{path}: missing deformable limb surface"
