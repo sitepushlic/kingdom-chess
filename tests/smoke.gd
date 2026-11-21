@@ -138,9 +138,15 @@ func _run() -> void:
 	var original_hero_visual := game.battlefield_3d._build_piece("K")
 	_assert_ok(original_hero_visual.get_node_or_null("VisualRig") != null, "Humanoid character has a separate animation rig")
 	var fallback_rig: Node3D = original_hero_visual.get_node_or_null("VisualRig")
-	_assert_ok(fallback_rig.get_node_or_null("Arm_L") != null and fallback_rig.get_node_or_null("Arm_R") != null, "Fallback humanoid has articulated arms")
-	_assert_ok(fallback_rig.get_node_or_null("Leg_L") != null and fallback_rig.get_node_or_null("Leg_R") != null, "Fallback humanoid has articulated legs")
-	game.battlefield_3d._animate_limbs(fallback_rig, "attack")
+	var authored_hero: Node = fallback_rig.get_node_or_null("AuthoredCharacter")
+	if authored_hero != null:
+		_assert_ok(authored_hero.find_child("Arm1", true, false) != null, "Imported hero has articulated right arm")
+		_assert_ok(authored_hero.find_child("Leg1", true, false) != null, "Imported hero has articulated right leg")
+		_assert_ok(fallback_rig.get_node_or_null("Arm_L") == null, "Imported hero does not duplicate fallback arms")
+	else:
+		_assert_ok(fallback_rig.get_node_or_null("Arm_L") != null and fallback_rig.get_node_or_null("Arm_R") != null, "Fallback humanoid has articulated arms")
+		_assert_ok(fallback_rig.get_node_or_null("Leg_L") != null and fallback_rig.get_node_or_null("Leg_R") != null, "Fallback humanoid has articulated legs")
+		game.battlefield_3d._animate_limbs(fallback_rig, "attack")
 	_assert_ok(original_hero_visual.find_child("HeroIdentity_01", true, false) != null, "Hero's identity mesh is attached to animation rig")
 	_assert_ok(original_hero_visual.find_child("HeroIdentity_01", true, false) != null, "Hero has a distinct visible 3D identity crest")
 	game.battlefield_3d.set_selected_hero_visual(HeroRoster.get_hero("hero_30"))
