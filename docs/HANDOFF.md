@@ -1,3 +1,20 @@
+## 2026-11-21 — NEXT EXTENDED 3D ART + GAMEPLAY QUALITY PASS
+**Standing instructions:** Do as much real implementation as possible each turn, update HANDOFF on every turn, NO APK build/export; minimize repetitive build-status narration. Do not claim green Godot CI without evidence.
+
+### Completed in this pass (committed to main)
+- `23077ee3` **Board skin persistence**: previously `set_region()` overwrote the chosen chessboard's square colors, breaking cosmetic ownership. Region palettes now apply only when no custom board is selected; `set_board_visual_style(-1)` explicitly returns to biome palette. Existing four selectable board skins retain edge, metal and gem palettes.
+- `9a516eea` **Board skin regression tests**: selected obsidian skin survives multiple region changes; resetting restores active region's original square colors.
+- `a64fdd0b` **Poison stack readability**: enemy/allied floating status indicators now scale with 1..5 stacks, cap extreme values, reuse the same mesh node when intensity changes. Zero/expired effects still disappear.
+- `14a96a89` **Poison regression tests**: verifies visual size increase, reuse of original marker and cap.
+- `0393bdcc` **High-rarity hero art**: named `HeroRarityHalo` now gently rotates and bobs for epic/legendary selected heroes; automatically hidden on low graphics; also fixed boss levitation not resetting when enrage ends.
+- `c1bb04be` **VisualRig fix**: locate animated rarity halo recursively inside nested rig rather than only direct actor children.
+- `322c1f8b` **Hero/boss regression tests**: highest-rarity hero has halo; boss returns to ground after enrage.
+- Previous current session: live enemy poison visual indicators and cleanup, six unique class pedestal emblems, six animated biome landmarks, castle material cache, boss phase-two aura, smoke tests for each. See prior section.
+
+### Verification and remaining work
+- All above code and smoke tests are committed to GitHub `main`. No verified successful Godot run this session; treat tests as added, not passed. APK intentionally untouched.
+- Next: actually run Godot 4.3 smoke on an available runner, inspect earliest parser/assertion errors, correct; improve 72 generated character meshes/rigged animations and 21 equipment models beyond blockout quality, review mobile frame budget and UI, verify full gameplay progression before calling finished.
+
 ## 2026-11-21 — LARGE CONTINUOUS GAMEPLAY + 3D ART PASS (LATEST)
 **User standing instructions:** Maximize actual work per turn; always update this HANDOFF; do NOT build/export APK or resume Android SDK/signing. Avoid repeated unverifiable Godot status narration. User expects substantive game completion and high-quality character/region art.
 
