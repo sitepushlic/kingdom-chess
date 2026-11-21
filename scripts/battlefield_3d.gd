@@ -27,6 +27,7 @@ const BOARD_STYLES: Array[Dictionary] = [
 	{"name":"Изумрудный сад", "dark":"#2b5545", "light":"#c4d9b0", "edge":"#304535", "metal":"#d9bf70", "gem":"#84f0ac"}
 ]
 var board_style_index := 0
+var board_style_customized := false
 var castle_levels: Dictionary = {"forge":0,"barracks":0,"treasury":0,"academy":0,"infirmary":0}
 var board_edge_material: StandardMaterial3D
 var board_inlay_material: StandardMaterial3D
@@ -178,10 +179,23 @@ func _ring(major_radius: float, tube_radius: float, material: Material, parent: 
 	return instance
 
 func set_board_visual_style(style_index: int) -> void:
-	# The art selection is intentionally cosmetic. No gameplay variables
-	# or combat stats are read or changed by this method.
+	# -1 returns to the current biome palette; other choices persist across
+	# biome changes and remain purely cosmetic.
+	board_style_customized = style_index >= 0
 	board_style_index = clampi(style_index, 0, BOARD_STYLES.size() - 1)
-	if tile_materials.size() < 2:
+	if tile_materials.size() < 2: return
+	if not board_style_customized:
+		var region_palettes: Array = [
+			[Color("#273a4c"), Color("#b7a58c")],
+			[Color("#243e59"), Color("#92b7d0")],
+			[Color("#183d42"), Color("#83ada7")],
+			[Color("#39283f"), Color("#947b8e")],
+			[Color("#28395e"), Color("#c4b6a2")],
+			[Color("#2b182e"), Color("#78617e")]
+		]
+		var colors: Array = region_palettes[clampi(current_region, 0, 5)]
+		tile_materials[0].albedo_color = colors[0]
+		tile_materials[1].albedo_color = colors[1]
 		return
 	var palette: Dictionary = BOARD_STYLES[board_style_index]
 	tile_materials[0].albedo_color = Color(str(palette["dark"]))
@@ -1421,6 +1435,9 @@ func set_region(region_index: int) -> void:
 	# Two shared materials replace 64 independent tile materials and avoid repeated updates.
 	tile_materials[0].albedo_color = palette[0]
 	tile_materials[1].albedo_color = palette[1]
+	# Region lighting and architecture change independently of purchased board skins.
+	if board_style_customized:
+		set_board_visual_style(board_style_index)
 	for torch in torches:
 		torch.light_color = palette[2]
 	# Region lighting changes the actual 3D scene, not just tile colours.
