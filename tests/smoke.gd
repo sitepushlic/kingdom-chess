@@ -176,6 +176,17 @@ func _run() -> void:
 	_assert_ok(other_king.find_child("HeroIdentity_30", true, false) == null, "Other same-class units do not receive selected hero insignia")
 	hero_king.queue_free()
 	other_king.queue_free()
+	# Gear geometry belongs only to the selected hero bearer, never to
+	# every allied piece. Gear changes must not clear unrelated board units.
+	var prior_gear: Dictionary = game.battlefield_3d.hero_gear.duplicate(true)
+	game.battlefield_3d.hero_gear = {"Оружие": {"rarity": 3, "upgrade": 0}}
+	var geared_bearer: Node3D = game.battlefield_3d._build_piece("K", false, true)
+	var plain_ally: Node3D = game.battlefield_3d._build_piece("K", false, false)
+	_assert_ok(geared_bearer.find_child("Rarity_Оружие", true, false) != null, "Selected bearer receives equipped weapon")
+	_assert_ok(plain_ally.find_child("Rarity_Оружие", true, false) == null, "Other allied unit has no selected hero gear")
+	geared_bearer.queue_free()
+	plain_ally.queue_free()
+	game.battlefield_3d.hero_gear = prior_gear
 	# Every roster ID must generate a unique physical signature, not only a tint.
 	var hero_art_signatures: Dictionary = {}
 	for hero_number in range(1, 31):
