@@ -5,6 +5,47 @@ const SAVE_PATH = "user://kingdom_progress.json"
 # Cosmetic-only boards. Unlock thresholds are campaign victories, not
 # PvP rating; no item, unit or combat modifier reads these fields.
 const BOARD_COSTS = [0, 300, 900, 1800]
+# The first functional castle loop. Upgrades are earned by raids and
+# paid in gold. They grant modest PvE-only benefits, never arena stats.
+const CASTLE_BUILDINGS = [
+	{"id":"forge","name":"Кузница","description":"Усиливает атаки в рейдах","base_cost":160,"wins":0},
+	{"id":"barracks","name":"Казармы","description":"Добавляет здоровье союзникам в рейдах","base_cost":220,"wins":1},
+	{"id":"treasury","name":"Казначейство","description":"Увеличивает золото за рейды","base_cost":280,"wins":2},
+	{"id":"academy","name":"Академия","description":"Увеличивает опыт за рейды","base_cost":350,"wins":3},
+	{"id":"infirmary","name":"Лазарет","description":"Усиливает лечение зельями в рейдах","base_cost":300,"wins":4}
+]
+
+static func default_castle() -> Dictionary:
+	return {"forge":0,"barracks":0,"treasury":0,"academy":0,"infirmary":0}
+
+static func sanitize_castle(raw: Variant) -> Dictionary:
+	var result: Dictionary = default_castle()
+	if typeof(raw) != TYPE_DICTIONARY:
+		return result
+	for key in result.keys():
+		result[key] = safe_save_int(raw.get(key, 0), 0, 0, 100)
+	return result
+
+static func castle_upgrade_cost(building: Dictionary, current_level: int) -> int:
+	# Costs grow steadily; 100 levels provide a substantial long-term goal.
+	return int(building["base_cost"]) * (current_level + 1) * (current_level + 1)
+
+static func castle_upgrade_requirement(building: Dictionary, current_level: int) -> int:
+	return int(building["wins"]) + current_level * 2
+
+static func castle_upgrade_allowed(building: Dictionary, current_level: int, wins: int, balance: int) -> bool:
+	return current_level >= 0 and current_level < 100 and wins >= castle_upgrade_requirement(building, current_level) and balance >= castle_upgrade_cost(building, current_level)
+
+static func castle_bonus(castle: Dictionary, building_id: String) -> int:
+	var level: int = clampi(int(castle.get(building_id, 0)), 0, 100)
+	match building_id:
+		"forge": return mini(30, level * 2)
+		"barracks": return mini(100, level * 5)
+		"treasury": return mini(50, level * 3)
+		"academy": return mini(50, level * 3)
+		"infirmary": return mini(30, level * 3)
+	return 0
+
 const BOARD_WIN_REQUIREMENTS = [0, 2, 6, 12]
 
 static func sanitize_board_collection(raw: Variant) -> Array:
@@ -111,6 +152,7 @@ static func sanitize_profile(parsed: Dictionary) -> Dictionary:
 	profile["wins"] = safe_save_int(profile["wins"], 0, 0, 1000000000)
 	profile["dry_streak"] = safe_save_int(profile["dry_streak"], 0, 0, 100)
 	profile["selected_hero"] = HeroRoster.valid_selection(str(profile.get("selected_hero", "hero_01")), int(profile["wins"]), int(profile["level"]))
+	profile["castle"] = sanitize_castle(profile.get("castle", {}))
 	profile["owned_boards"] = sanitize_board_collection(profile.get("owned_boards", [0]))
 	profile["selected_board"] = safe_save_int(profile.get("selected_board", 0), 0, 0, BOARD_COSTS.size() - 1)
 	if not profile["owned_boards"].has(profile["selected_board"]):
@@ -197,7 +239,7 @@ static func is_valid_equipment_item(item: Dictionary) -> bool:
 	return true
 
 static func default_profile() -> Dictionary:
-	return {"level":1, "xp":0, "gold":0, "potions":2, "items":[], "equipped":-1, "slots":{"Оружие":-1,"Тело":-1,"Реликвия":-1}, "wins":0, "dry_streak":0, "selected_hero":"hero_01", "owned_boards":[0], "selected_board":0}
+	return {"level":1, "xp":0, "gold":0, "potions":2, "items":[], "equipped":-1, "slots":{"Оружие":-1,"Тело":-1,"Реликвия":-1}, "wins":0, "dry_streak":0, "selected_hero":"hero_01", "owned_boards":[0], "selected_board":0, "castle":default_castle()}
 
 static func save_profile(profile: Dictionary) -> bool:
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
