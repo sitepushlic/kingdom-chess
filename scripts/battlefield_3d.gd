@@ -550,7 +550,12 @@ func _add_selected_hero_identity(kind: String, parent: Node3D) -> void:
 	var emblem := Node3D.new()
 	emblem.name = "HeroIdentity_%02d" % number
 	parent.add_child(emblem)
-	_add_hero_signature_costume(number, rarity, emblem, crest_mat)
+	# Keep a lightweight identity marker for UI/tests. The imported hero GLB
+	# already contains the actual costume and class heraldry, so the full
+	# procedural outfit is needed only by the OBJ/procedural fallback.
+	var authored_model: Node = parent.get_node_or_null("AuthoredCharacter")
+	if authored_model == null or not (authored_model is Node3D):
+		_add_hero_signature_costume(number, rarity, emblem, crest_mat)
 	# A distinct silhouette, hue and insignia for each roster identity.
 	var spikes: int = 2 + (number % 5)
 	for i in range(spikes):
@@ -682,9 +687,12 @@ func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bo
 	_ring(0.235, 0.016, accent, unit, Vector3(0, 0.265, 0))
 
 	var kind := letter.to_upper()
-	if not _load_authored_character(kind, unit):
+	var imported_character: bool = _load_authored_character(kind, unit)
+	if not imported_character:
 		_add_humanoid_costume(kind, white, unit)
-	_add_character_surface_detail(kind, white, unit)
+		# Imported GLBs already contain face, armor and chess-role details.
+		# Do not draw another static costume on top of animated geometry.
+		_add_character_surface_detail(kind, white, unit)
 	if white and selected_hero_piece: _add_selected_hero_identity(kind, unit)
 	# Each class has an identifiable elevated crest, even at portrait mobile scale.
 	if kind == "N":
