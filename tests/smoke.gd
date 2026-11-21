@@ -321,6 +321,23 @@ func _run() -> void:
 	]
 	game.battlefield_3d.set_hero_gear(visual_gear, {"Оружие":0,"Тело":1,"Реликвия":2})
 	_assert_ok(game.battlefield_3d.hero_gear.size() == 3, "All three RPG gear slots change 3D character visuals")
+
+	# Every rarity tier must change physical mesh count in all three gear slots.
+	for rarity in range(7):
+		var tier_gear: Array = [
+			{"rarity":rarity,"upgrade":0,"set_id":-1,"slot":"Оружие"},
+			{"rarity":rarity,"upgrade":0,"set_id":-1,"slot":"Тело"},
+			{"rarity":rarity,"upgrade":0,"set_id":-1,"slot":"Реликвия"}
+		]
+		game.battlefield_3d.set_hero_gear(tier_gear, {"Оружие":0,"Тело":1,"Реликвия":2})
+		var tier_piece: Node3D = game.battlefield_3d._build_piece("K")
+		var tier_rig: Node3D = tier_piece.get_meta("visual_rig")
+		for slot in ["Оружие", "Тело", "Реликвия"]:
+			var insignia: Node3D = tier_rig.get_node_or_null("Rarity_" + slot)
+			_assert_ok(insignia != null and insignia.get_child_count() == rarity + 1, "3D gear rarity %d has distinct %s crest geometry" % [rarity, slot])
+		tier_piece.queue_free()
+	game.battlefield_3d.set_hero_gear(visual_gear, {"Оружие":0,"Тело":1,"Реликвия":2})
+
 	game.battlefield_3d.sync_board(game.pieces, -1, [], -1)
 	_assert_ok(game.battlefield_3d.piece_nodes.size() > 0, "3D chess models rebuild with equipped cosmetic gear")
 	game.battlefield_3d.set_boss_phase(2)
