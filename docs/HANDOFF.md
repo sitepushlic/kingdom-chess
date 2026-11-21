@@ -1,5 +1,44 @@
 # KINGDOM CHESS — DEVELOPMENT HANDOFF
 
+Updated: 2026-11-21 (torch mesh visibility and shadow pass). Repository: https://github.com/sitepushlic/kingdom-chess ; branch `main`.
+
+## FULL CURRENT HANDOFF — 2026-11-21, Android decorative-light optimization
+
+### Product requirements and acceptance
+Godot 4.3 portrait Android chess RPG: preserve legal chess movement, king safety/checkmate, HP/AP, class abilities, 30 heroes with level/quest unlocks, seven meaningful equipment rarities, six regions, 18 missions, bosses and fair PvP/LAN co-op. Finished art requires original rigged GLB hero and enemy models, distinct gear geometry and PBR materials, authored environments, animations and VFX, polished UI/audio and measured Android performance. Prototype is NOT commercial-ready.
+
+### Actual architecture
+- `scripts/main.gd`: chess/RPG gameplay, UI, save/load, LAN state, 3D integration.
+- `scripts/progression.gd`: mission data, equipment, rarity and progression gates.
+- `scripts/hero_roster.gd`: hero roster and unlock rules.
+- `scripts/battlefield_3d.gd`: 3D board, class model GLB/OBJ fallbacks, equipment crests, six procedural region environments, lighting, effects, three graphics tiers.
+- `tests/smoke.gd`: headless gameplay/render state regressions.
+- `.github/workflows/android.yml`: headless smoke tests and debug Android APK export.
+
+### New source/test commits accepted by GitHub
+- `03ce0bdf78d3c6a1b6ca9393bc6eb4782be045ec`: hide decorative flame meshes whenever the corresponding tier-controlled torch light is disabled. Previously the light was disabled but its emissive mesh still rendered.
+- `b4eb38355c2c8a5bbf6edbb31c695eab3e9ad04e`: smoke assertions for low/medium/high flame visibility.
+- `f86ea1e2a5b27c6b87fe50dfe6e40e257812bf5a`: disable shadow casting on emissive torch flame meshes.
+- `2799edec72ae680acff410fa0f3211a6ca928330`: smoke assertion that flames never cast shadows, even in high quality.
+- This documentation update is a separate commit; retrieve its exact SHA from Git history.
+
+### Verification (do not overstate)
+GitHub accepted the four code/test writes above. Godot 4.3 headless test execution: **NOT VERIFIED**. GitHub Actions: commit-workflow lookup returned an empty list because the available connector filters to PR-triggered runs; push workflow result **NOT VERIFIED**. Debug APK and artifact: **NOT VERIFIED**. Android FPS, GPU draw calls, memory, heat and battery: **NOT MEASURED**. Expected render-work reduction is not a measured FPS improvement. Check https://github.com/sitepushlic/kingdom-chess/actions for latest run and debug artifact.
+
+### Known issues, risks and art status
+Original rigged GLB characters/enemies and complete skeletal clips: **NOT VERIFIED / outstanding**. Six low-poly static OBJ class silhouettes and import hooks exist, but are not commercial art. Seven rarity insignias are geometric placeholders, not seven authored 3D equipment families. Six procedural regions and tiered lighting exist; authored environment assets/PBR polish outstanding. Hazards, attack trails and status markers are primitive VFX. Need visual QA for torch changes on real Android devices. Chess HP/checkmate edge cases, LAN authority/reconnect, unique mission objectives, progression balance, production signing, two-device tests and release readiness remain risks. Recent parallel changes to battle save/LAN validation (`17ec8ff`, `5bf5ca5`) require CI confirmation.
+
+### Exact next execution
+1. Fetch latest `main` and read this entire file and changed sources; account for concurrent development commits before editing.
+2. Inspect newest noncancelled GitHub Actions run and logs; run Godot 4.3 import/headless smoke tests; fix any parser/runtime regression and confirm debug APK artifact only after success.
+3. Replace procedural class placeholders with original rigged GLB heroes and enemies and verified move/attack/ability animation clips. Add asset validation and scene import tests. Build visually distinct weapon/armor/relic assets for all seven rarity tiers.
+4. Continue six authored region sets, lighting/VFX, LOD/culling and real-device Android performance measurement. Preserve chess legal moves, checkmate, HP/AP and progression gates.
+5. Re-update full handoff with precise commits, tests/CI evidence, known bugs, art/Android status and next actions. Preserve all historical sections below; no empty commits or unsupported quality claims.
+
+---
+
+# KINGDOM CHESS — DEVELOPMENT HANDOFF
+
 Updated: 2026-11-21 (manual material optimization). Repository: https://github.com/sitepushlic/kingdom-chess ; default branch: `main`.
 This file is the persistent handoff for the next development session. Update it after every substantial implementation, with actual commits and CI status; never label the game production-ready without device and playtesting evidence.
 
