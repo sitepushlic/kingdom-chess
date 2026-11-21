@@ -9,6 +9,7 @@ Godot imports the project; the generated assets are not stored in Git.
 import json
 import math
 import struct
+import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -930,9 +931,54 @@ def make_character(identifier, boss=False):
             samplers.append({"input":t,"output":output,"interpolation":"LINEAR"})
             channels.append({"sampler":len(samplers)-1,"target":{"node":node_ids[limb],"path":"rotation"}})
         animations.append({"name":name,"samplers":samplers,"channels":channels})
+    # Five small original deterministic PBR albedo textures. They are
+    # embedded as PNG bufferViews in the GLB itself: no missing external
+    # files, no third-party dependencies and no random nondeterminism.
+    # UV charts are available on all rigid pieces and weighted torso/limbs.
+    def material_png(material_index):
+        size=32
+        rows=bytearray()
+        for y in range(size):
+            rows.append(0)  # PNG filter: none
+            for x in range(size):
+                # Neutral variation multiplies existing character-specific
+                # baseColorFactor without replacing hero rarity/biome colors.
+                grain=((x*17+y*29+material_index*13) % 17)-8
+                seam=(x%8==0 or y%8==0)
+                if material_index==0: # engraved cloth / enamel armor
+                    tone=236+grain-(13 if seam else 0)
+                elif material_index==1: # brushed steel
+                    tone=226+grain+(13 if x%6==0 else 0)
+                elif material_index==2: # organic skin, restrained freckles
+                    tone=240+grain-(17 if (x*3+y*7)%41==0 else 0)
+                elif material_index==3: # chased gold lattice
+                    tone=232+grain+(15 if (x+y)%8==0 else 0)
+                else: # arcane etched circuit
+                    tone=228+grain+(22 if x%8==0 or y%8==0 else 0)
+                tone=max(0,min(255,tone))
+                rows.extend((tone,tone,tone,255))
+        def chunk(kind,data):
+            return struct.pack(">I",len(data))+kind+data+struct.pack(">I",zlib.crc32(kind+data)&0xffffffff)
+        return (b"\\x89PNG\\r\\n\\x1a\\n"+
+                chunk(b"IHDR",struct.pack(">IIBBBBB",size,size,8,6,0,0,0))+
+                chunk(b"IDAT",zlib.compress(bytes(rows),9))+
+                chunk(b"IEND",b""))
+    images=[]
+    textures=[]
+    for material_index in range(5):
+        while len(blob)%4:
+            blob.append(0)
+        start=len(blob)
+        png=material_png(material_index)
+        blob.extend(png)
+        views.append({"buffer":0,"byteOffset":start,"byteLength":len(png)})
+        images.append({"name":mats[material_index]["name"]+"Albedo",
+                       "bufferView":len(views)-1,"mimeType":"image/png"})
+        textures.append({"source":material_index,"sampler":0})
+        mats[material_index]["pbrMetallicRoughness"]["baseColorTexture"]={"index":material_index,"texCoord":0}
     gltf={"asset":{"version":"2.0","generator":"KingdomChess deterministic blockout generator"},
           "scene":0,"scenes":[{"nodes":[0]}],"nodes":nodes,"meshes":meshes,"materials":mats,
-          "buffers":[{"byteLength":len(blob)}],"bufferViews":views,"accessors":accessors,"skins":skins,"animations":animations}
+          "buffers":[{"byteLength":len(blob)}],"bufferViews":views,"accessors":accessors,"skins":skins,"animations":animations,\n          "images":images,"textures":textures,"samplers":[{"magFilter":9729,"minFilter":9729,"wrapS":10497,"wrapT":10497}]}
     json_bytes=json.dumps(gltf,ensure_ascii=False,separators=(",",":")).encode("utf-8")
     json_bytes+=b" " * ((-len(json_bytes))%4)
     blob.extend(b"\x00"*((-len(blob))%4))
