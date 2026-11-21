@@ -140,3 +140,10 @@ For EVERY future implementation session:
 - Commit `9e2b923` (`tests/smoke.gd`): regression for mixed invalid/valid inventory, weapon and armor remapping, invalid relic rejection, legacy weapon index.
 - Check the latest CI after these changes; do not claim APK success until gameplay tests, export and artifact upload complete. https://github.com/sitepushlic/kingdom-chess/actions
 - Next: unique mission victory conditions and persistent statuses; production-quality original 3D art, real-device Android and LAN co-op QA, signing and store readiness remain unfinished.
+
+## Automated development — persistent toxic fog (2026-11-21)
+- Verified **CI #187 success** (Godot smoke tests, debug Android APK export) before edits: https://github.com/sitepushlic/kingdom-chess/actions/runs/44848204226 .
+- Commit `ea41633` (`scripts/main.gd`): poison mission fog now applies two enemy-turn ticks of damage-over-time to surviving heroes, rather than only an instant strike. Status follows a hero when it moves, expires after two ticks, is removed on death or encounter reset, and lethal ticks use `_boss_aoe_hit` so king defeat is enforced. Initial fog still deals its existing direct hit. This is gameplay logic, not a polished visual status icon.
+- Commit `d4d38a9` (`tests/smoke.gd`): smoke regressions for poison following movement, periodic damage, expiry, dead-unit cleanup and reset.
+- New CI after these commits **must be checked**; #187 only validates the preceding version. Check https://github.com/sitepushlic/kingdom-chess/actions and verify debug APK upload. Fix parser/test errors before treating feature as validated.
+- Known limitations: poison state is not yet serialized in LAN snapshots or battle autosaves, and no status VFX/UI indicator exists. Implement those next; continue distinct mission win conditions and commercial-grade 3D art/device testing. Do not claim production readiness.
