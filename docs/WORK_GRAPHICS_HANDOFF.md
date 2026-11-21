@@ -305,3 +305,12 @@ This batch committed to `main`:
 - **`64d8b275f9584d3583c1ce540f2b4cdea3d0874d`**: corrected outdated GLB generator documentation to describe all 72 character assets and six two-joint skins.
 **Verification:** code commits saved, but **no observed successful Actions run, local Godot import or valid Android APK**. These gates make errors observable and stop invalid APK delivery; they do not themselves prove a successful build.
 **Next mandatory:** inspect the new Actions run results/logs; resolve actual Python validator, Godot importer, smoke and Android export failures before claiming a working build. Then continue detailed character geometry and on-device visual testing.
+
+## 33. Spine-following armor and stronger binary GLB QA — 2026-11-21
+Commits saved to `main`:
+- **`f43019250912c42b22aa7c9c7497b0778c31c3cc`**: validator checks every animation sampler has the same number of timeline and output keyframes, and enforces VEC3 translation/scale vs VEC4 quaternion rotation types.
+- **`521c72c1ed013fe436f1dc855cf3719c352005a3`**: chest armor now attaches to the imported `SpineChest` via `BoneAttachment3D` when present. Adjusted chest-relative socket offset. If Godot exposes no such skeleton, retains the existing `BodyRig` fallback. This avoids rigid-looking armor when the weighted chest bends.
+- **`8221cb84693679470e0a15075d505f41c846c540`**: smoke assertion accepts the new animated chest bone or the legacy body pivot.
+- **`97e81a31723d90d7fc06ab4c2585009eca7be5fa`**: validator decodes all skinned vertex positions, normals, weights and joint indices and rejects nonfinite positions, nonunit normals, nonnormalized/out-of-range weights and invalid joint references.
+**Unverified:** No observed completed Actions job, actual Python validation execution, Godot import or Android APK build. Changes are committed but integration behavior remains unproven; do not claim successful release.
+**Next:** obtain and act on CI run logs, ensure all six glTF skins import as intended, verify bone attachments visually, complete Android build and device testing, then refine original geometry and animation.
