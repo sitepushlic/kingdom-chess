@@ -261,3 +261,9 @@ For EVERY future implementation session:
 - Commit `17ce65c` updates `scripts/main.gd`: pure `_chess_attacks_square` checks pawn diagonals, knight leaps, king adjacency and unobstructed sliding attacks; `_king_destination_safe` simulates a king move and rejects attacked destination squares in **arena only**. `_legal` now rejects out-of-bounds cell indices. Raid behavior intentionally unchanged.
 - **Unverified**: no Godot runtime or CI test was run for this commit. Verify GitHub Actions and GDScript parse; add dedicated regression tests. This is not checkmate or complete orthodox chess. Still missing: king-in-check response, pinned pieces, castling, en passant, promotion, turn/attack semantics and consistent RPG check resolution.
 - Concurrent hourly automation may update main; always fetch current blob SHA before editing.
+
+## Chess-RPG king safety and pin regression batch — 2026-11-21
+- Commit `25adf6e`: adds `_king_threatened` and `_move_preserves_king` in `scripts/main.gd`. Arena empty-square moves cannot expose the moving side's king; pinned sliding pieces may move along the pin line. Nonlethal RPG attacks remain stationary and are not modeled as instant chess captures. Raid remains exempt pending boss-specific check rules.
+- Commit `9ef48fa`: king attacks onto occupied enemy squares must also satisfy safe-destination simulation, preventing a lethal king capture onto an attacked square.
+- Commit `e0364f5`: `tests/smoke.gd` now includes rook pin, check escape, knight and pawn attack geometry regression cases.
+- **CI/runtime not verified.** Inspect latest GitHub Actions build and smoke tests before release. This batch is partial chess safety, not complete checkmate or chess rules. Remaining major work: enforce mandatory responses to check across multi-AP RPG turns, pin-safe lethal captures by non-king units, castling/en passant/promotion, AI and boss threat semantics, robust PvP end conditions, Android device QA and 3D assets.
