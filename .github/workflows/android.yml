@@ -15,70 +15,17 @@ jobs:
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - name: Prepare Android SDK
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0" "platform-tools"
       - name: Diagnose runner resources before Godot
         run: |
           df -h . "$HOME"
           free -h
           python3 --version
           java -version
-      - name: Download Godot and export templates
+      - name: Download Godot 4.3 editor
         run: |
           curl -fL -o godot.zip https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
           unzip -q godot.zip
           chmod +x Godot_v4.3-stable_linux.x86_64
-          curl -fL -o templates.tpz https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
-          mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
-          unzip -q templates.tpz
-          cp templates/* "$HOME/.local/share/godot/export_templates/4.3.stable/"
-      - name: Restore playtest signing key
-        uses: actions/cache@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: kingdom-chess-playtest-debug-signing-v1
-      - name: Create debug signing key
-        run: |
-          mkdir -p "$HOME/.android"
-          if [ ! -f "$HOME/.android/debug.keystore" ]; then
-            keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-          fi
-      - name: Configure Godot Android export
-        run: |
-          mkdir -p "$HOME/.config/godot"
-          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
-          [gd_resource type="EditorSettings" format=3]
-
-          [resource]
-          export/android/android_sdk_path = "$ANDROID_HOME"
-          export/android/java_sdk_path = "$JAVA_HOME"
-          export/android/debug_keystore = "$HOME/.android/debug.keystore"
-          export/android/debug_keystore_user = "androiddebugkey"
-          export/android/debug_keystore_pass = "android"
-          EOF
-          echo "Android SDK: $ANDROID_HOME"
-          echo "Java SDK: $JAVA_HOME"
-          test -f "$ANDROID_HOME/platforms/android-34/android.jar"
-          test -f "$HOME/.android/debug.keystore"
-      - name: Set absolute debug keystore path
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import os
-          preset = Path("export_presets.cfg")
-          text = preset.read_text()
-          text = text.replace('keystore/debug="~/.android/debug.keystore"', 'keystore/debug="' + os.environ["HOME"] + '/.android/debug.keystore"')
-          preset.write_text(text)
-          PY
-          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey
       - name: Check Python art pipeline syntax
         run: python3 -m compileall -q tools/art
       - name: Cache generated 3D art for faster Godot builds
@@ -137,11 +84,9 @@ jobs:
             assets/equipment/*.glb
           if-no-files-found: error
           retention-days: 14
-      - name: Verify Godot executable and templates
+      - name: Verify Godot executable and project
         run: |
           ./Godot_v4.3-stable_linux.x86_64 --headless --version
-          test -s "$HOME/.local/share/godot/export_templates/4.3.stable/android_debug.apk"
-          test -s "$HOME/.local/share/godot/export_templates/4.3.stable/android_release.apk"
           test -f project.godot
           test -f export_presets.cfg
       - name: Import project
@@ -188,41 +133,14 @@ jobs:
             echo "Godot emitted script or parser errors; refusing APK export"
             exit 1
           fi
-      - name: Export debug APK
-        if: false # APK intentionally paused at user request; only Godot and graphics tests run
-        run: |
-          set -o pipefail
-          mkdir -p build
-          echo "=== Android toolchain ==="
-          ls -la "$ANDROID_HOME/build-tools/34.0.0" | head
-          echo "=== Godot export diagnostics ==="
-          timeout 300s ./Godot_v4.3-stable_linux.x86_64 --headless --verbose --path . --export-debug Android build/kingdom-chess-debug.apk 2>&1 | tee export.log
-          test -s build/kingdom-chess-debug.apk
-          python3 - <<'PY'
-          from pathlib import Path
-          from zipfile import ZipFile, BadZipFile
-          apk=Path("build/kingdom-chess-debug.apk")
-          with ZipFile(apk) as z:
-              names=set(z.namelist())
-              assert "AndroidManifest.xml" in names, "APK missing AndroidManifest.xml"
-              assert any(name.startswith("lib/") and name.endswith(".so") for name in names), "APK missing native Godot libraries"
-              assert any(name.endswith(".pck") for name in names) or any(name.startswith("assets/") for name in names), "APK missing packaged game assets"
-              broken=z.testzip()
-              assert broken is None, f"Corrupted APK ZIP entry: {broken}"
-          print(f"Verified APK archive: {apk.stat().st_size:,} bytes, {len(names)} entries")
-          PY
-      - name: Publish Android build verification summary
+      - name: Publish Godot verification summary
         if: always()
         run: |
           {
-            echo "## Kingdom Chess Android build"
+            echo "## Kingdom Chess Godot 4.3 verification"
             echo
-            if [ -s build/kingdom-chess-debug.apk ]; then
-              echo "APK file exists: $(stat -c '%s' build/kingdom-chess-debug.apk) bytes."
-            else
-              echo "No completed APK found. Check Godot import, smoke and export logs."
-            fi
-            for name in art-generation.log art-validation.log import.log game-launch.log smoke.log export.log; do
+            echo 'APK export intentionally paused; this workflow validates Godot and 3D art only.'
+            for name in art-generation.log art-validation.log import.log game-launch.log smoke.log; do
               if [ -f "$name" ]; then
                 echo
                 echo "### $name (last 25 lines)"
