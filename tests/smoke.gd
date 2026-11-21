@@ -142,6 +142,8 @@ func _run() -> void:
 	if authored_hero != null:
 		_assert_ok(authored_hero.find_child("Arm1", true, false) != null, "Imported hero has articulated right arm")
 		_assert_ok(authored_hero.find_child("Leg1", true, false) != null, "Imported hero has articulated right leg")
+		_assert_ok(authored_hero.find_child("CapeShoulder", true, false) != null, "Imported hero has shoulder cape skin joint")
+		_assert_ok(authored_hero.find_child("CapeHem", true, false) != null, "Imported hero has animated cape hem joint")
 		_assert_ok(fallback_rig.get_node_or_null("Arm_L") == null, "Imported hero does not duplicate fallback arms")
 		_assert_ok(original_hero_visual.find_child("RangerHood", true, false) != null or original_hero_visual.find_child("KingCrownProng1", true, false) != null, "Imported hero preserves generated silhouette")
 		_assert_ok(original_hero_visual.find_child("SurfaceDetail", true, false) == null, "Imported hero avoids redundant legacy costume nodes")
