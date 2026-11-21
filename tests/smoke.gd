@@ -46,6 +46,9 @@ func _run() -> void:
 	game._draw()
 	_assert_ok(game.status == null, "Pre-ready redraw leaves uninitialized HUD untouched")
 	root.add_child(game)
+	# SceneTree._initialize runs before the first frame; defer checks until the 3D viewport and HUD finish _ready.
+	await process_frame
+	_assert_ok(game.battlefield_3d != null, "3D battlefield initialized before chess warning assertions")
 	# Chess-first RPG movement: threat geometry, king safety and pinned pieces.
 	game.mode = "arena"
 	game._reset()
