@@ -1102,6 +1102,18 @@ func _run() -> void:
 			var plinth: Node3D = plinth_test_unit.get_node_or_null("ClassInsignia_" + role)
 			_assert_ok(plinth != null and plinth.get_child_count() >= 2, "3D class heraldry has distinct geometry: " + team_role)
 			plinth_test_unit.queue_free()
+	# The currently selected 3D square must pulse, while legal move
+	# indicators remain static and selection state resets on deselection.
+	game.battlefield_3d.sync_board(game.pieces, 60, [52], -1)
+	_assert_ok(game.battlefield_3d.selected_square_visual == 60, "Selected tactical cell tracked for 3D pulse")
+	var destination_marker: MeshInstance3D = game.battlefield_3d.highlights[52]
+	var selection_marker: MeshInstance3D = game.battlefield_3d.highlights[60]
+	game.battlefield_3d._process(0.24)
+	_assert_ok(selection_marker.scale != Vector3.ONE and selection_marker.position.y > 0.078, "Selection ring visibly pulses in 3D")
+	_assert_ok(destination_marker.scale == Vector3.ONE and destination_marker.position.y == 0.078, "Legal destination remains static and readable")
+	game.battlefield_3d.sync_board(game.pieces, -1, [], -1)
+	_assert_ok(game.battlefield_3d.selected_square_visual == -1 and selection_marker.scale == Vector3.ONE, "Clearing selection resets previous ring scale")
+
 	# Board cosmetics must survive region changes and must never alter
 	# gameplay board indices or biome lighting.
 	game.battlefield_3d.set_board_visual_style(2)
