@@ -555,9 +555,12 @@ func _play_authored_clip(rig: Node3D, clip: String) -> bool:
 	if player.has_animation(clip):
 		player.play(clip)
 		return true
-	for name in player.get_animation_list():
-		var qualified: String = str(name)
-		if qualified.ends_with("/" + clip) or qualified.ends_with("|" + clip):
+	# Imported GLB clips are stored in named libraries; resolve by library rather than
+	# relying on a flattened animation list or on a particular import prefix.
+	for library_name in player.get_animation_library_list():
+		var library: AnimationLibrary = player.get_animation_library(library_name)
+		if library != null and library.has_animation(clip):
+			var qualified: String = clip if library_name == "" else library_name + "/" + clip
 			player.play(qualified)
 			return true
 	return false
