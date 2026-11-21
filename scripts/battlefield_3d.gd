@@ -79,6 +79,19 @@ func _sphere(radius: float, material: Material, parent: Node3D, at: Vector3) -> 
 	parent.add_child(instance)
 	return instance
 
+func _ring(major_radius: float, tube_radius: float, material: Material, parent: Node3D, at: Vector3) -> MeshInstance3D:
+	var instance := MeshInstance3D.new()
+	var mesh := TorusMesh.new()
+	mesh.inner_radius = major_radius - tube_radius
+	mesh.outer_radius = major_radius + tube_radius
+	mesh.rings = 8
+	mesh.ring_segments = 24
+	instance.mesh = mesh
+	instance.material_override = material
+	instance.position = at
+	parent.add_child(instance)
+	return instance
+
 func _ready() -> void:
 	hero_material = _material(Color("#d8e4f3"), 0.55)
 	enemy_material = _material(Color("#57283e"), 0.45)
@@ -193,6 +206,10 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	var accent := gold_material if white else dark_material
 	_cylinder(0.31, 0.16, accent, unit, Vector3(0, 0.08, 0))
 	_cylinder(0.24, 0.09, material, unit, Vector3(0, 0.21, 0))
+	# Layered cast-metal plinth, raised rim and a sculpted class-specific heraldic emblem.
+	_ring(0.29, 0.028, gold_material if white else boss_crown, unit, Vector3(0, 0.155, 0))
+	_ring(0.235, 0.016, accent, unit, Vector3(0, 0.265, 0))
+
 	var kind := letter.to_upper()
 	if kind == "P":
 		_cylinder(0.17, 0.45, material, unit, Vector3(0, 0.47, 0), 0.11)
@@ -223,6 +240,17 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 		_cylinder(0.27, 0.12, accent, unit, Vector3(0, 1.12, 0))
 		_box(Vector3(0.12, 0.47, 0.12), gold_material, unit, Vector3(0, 1.41, 0))
 		_box(Vector3(0.37, 0.10, 0.12), gold_material, unit, Vector3(0, 1.48, 0))
+	# Each class has an identifiable elevated crest, even at portrait mobile scale.
+	if kind == "N":
+		for side in [-1.0, 1.0]:
+			var ear := _cylinder(0.055, 0.24, accent, unit, Vector3(side * 0.11, 1.20, -0.05), 0.0)
+			ear.rotation.z = side * 0.24
+	elif kind == "B":
+		_ring(0.17, 0.025, gold_material, unit, Vector3(0, 1.03, 0))
+	elif kind == "Q":
+		_sphere(0.105, gold_material, unit, Vector3(0, 1.30, 0))
+	elif kind == "P":
+		_ring(0.145, 0.021, accent, unit, Vector3(0, 0.65, 0))
 	if is_boss:
 		var shadow_ring := _cylinder(0.43, 0.035, boss_crown, unit, Vector3(0, 0.12, 0))
 		shadow_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
