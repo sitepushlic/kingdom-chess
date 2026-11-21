@@ -105,11 +105,11 @@ static func sanitize_profile(parsed: Dictionary) -> Dictionary:
 		if index_map.has(int(raw_index)):
 			remapped_slots[slot] = index_map[int(raw_index)]
 	profile["items"] = cleaned_items
-	profile["slots"] = sanitize_equipment_slots(cleaned_items, remapped_slots, int(profile["level"]))
+	profile["slots"] = sanitize_equipment_slots(cleaned_items, remapped_slots, int(profile["level"]), int(profile["wins"]))
 	profile["equipped"] = int(profile["slots"]["Оружие"])
 	return profile
 
-static func sanitize_equipment_slots(items: Array, slots: Dictionary, level: int) -> Dictionary:
+static func sanitize_equipment_slots(items: Array, slots: Dictionary, level: int, wins: int = 100000) -> Dictionary:
 	# Save files can contain stale indices after selling gear, wrong-slot gear or level-locked gear.
 	var valid := {}
 	for slot in ITEM_SLOTS:
@@ -126,7 +126,7 @@ static func sanitize_equipment_slots(items: Array, slots: Dictionary, level: int
 		if typeof(items[index]) != TYPE_DICTIONARY:
 			continue
 		var item: Dictionary = items[index]
-		if not is_valid_equipment_item(item) or str(item["slot"]) != slot or int(item["level"]) > level:
+		if not is_valid_equipment_item(item) or str(item["slot"]) != slot or not can_equip(item, wins, level):
 			continue
 		valid[slot] = index
 	return valid
@@ -170,6 +170,32 @@ static func save_profile(profile: Dictionary) -> bool:
 	file.store_string(JSON.stringify(profile))
 	file.flush()
 	return true
+
+# The campaign sets a hard power ceiling. Rarity and upgrades are earned, not rolled on day one.
+static func rarity_cap(wins: int, level: int) -> int:
+	var chapter_cap: int = clampi(int(wins / 3.0), 0, 6)
+	var level_cap: int = clampi(int((level - 1) / 5.0), 0, 6)
+	return mini(chapter_cap, level_cap)
+
+static func upgrade_cap(wins: int, level: int) -> int:
+	return mini(12, mini(2 + int(wins / 3.0) * 2, 2 + int((level - 1) / 5.0) * 2))
+
+static func can_equip(item: Dictionary, wins: int, level: int) -> bool:
+	return is_valid_equipment_item(item) and int(item["level"]) <= level and int(item["rarity"]) <= rarity_cap(wins, level) and int(item["upgrade"]) <= upgrade_cap(wins, level)
+
+static func roll_item_for_progress(level: int, wins: int, boss: bool = false, luck: int = 0) -> Dictionary:
+	var item: Dictionary = roll_item(level, boss, luck)
+	var cap: int = rarity_cap(wins, level)
+	if int(item["rarity"]) > cap:
+		# Re-roll within earned rarity tiers rather than awarding unusable late-game gear.
+		for attempt in range(40):
+			item = roll_item(level, boss, 0)
+			if int(item["rarity"]) <= cap: break
+		if int(item["rarity"]) > cap:
+			item["rarity"] = cap
+			item["set_id"] = -1
+			item["trait_id"] = -1
+	return item
 
 static func roll_item(level: int, boss: bool = false, luck: int = 0) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
