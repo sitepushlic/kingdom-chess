@@ -1,6 +1,6 @@
 # KINGDOM CHESS — DEVELOPMENT HANDOFF
 
-Updated: 2026-11-21. Repository: https://github.com/sitepushlic/kingdom-chess ; default branch: `main`.
+Updated: 2026-11-21 (manual material optimization). Repository: https://github.com/sitepushlic/kingdom-chess ; default branch: `main`.
 This file is the persistent handoff for the next development session. Update it after every substantial implementation, with actual commits and CI status; never label the game production-ready without device and playtesting evidence.
 
 ## FULL CURRENT HANDOFF — 2026-11-21 (read this first)
@@ -346,3 +346,27 @@ For EVERY future implementation session:
 - `271ae34`: main menu now has a real **ГРАФИКА** button cycling low/medium/high tiers, applies changes to `Battlefield3D.set_visual_quality` immediately and persists tier to `user://graphics.cfg` with `ConfigFile`; loads selection at startup and applies it when creating the renderer. This setting is independent of progression and battle saves.
 - `cbb22f9`: smoke tests cover menu control, tier cycling, immediate renderer update and on-disk persistence. Tests reset tier afterward.
 - CI **not yet verified** for these commits; mobile UI fit, frame-rate and battery impact require physical Android testing. The three-tier renderer remains procedural art, not commercial-grade authored character meshes.
+
+## Full handoff — current manual session (2026-11-21)
+
+### Product target and current architecture
+- Goal: polished Godot 4.3 Android portrait 3D tactical chess RPG; maintain chess moves, king victory/check, RPG HP and abilities, campaign progression and fair normalized arena. Commercial-quality rigged 3D characters, equipment, effects, six distinctive regions and real-device performance remain required.
+- Gameplay: `scripts/main.gd` manages combat, UI, save, LAN and 3D viewport. `scripts/progression.gd` handles loot, rarity gating, equipment and 18 missions. `scripts/hero_roster.gd` provides 30 authored hero records. `scripts/battlefield_3d.gd` renders a procedural 3D battlefield and loads authored models where present. `tests/smoke.gd` contains headless regression checks.
+- Implemented foundations: seven gear rarities, campaign across six regions, hero progression restrictions, chess movement/check logic, telegraphed hazards, 3D king check warning, three player-selectable graphics quality tiers, and local LAN framework. These features are not evidence of completed game quality or complete gameplay correctness.
+
+### Changes this run
+1. `d0e8b7835189d49b0255858ea486998031372526`: replaced 64 per-tile `StandardMaterial3D` allocations with exactly two reusable materials for dark/light board tiles. Region palette updates now mutate those two shared materials rather than looping through all 64 tile instances. All 64 meshes and square patterns remain unchanged.
+2. `33e0b63bbd090a732a36d71b8410574e00414483`: smoke assertions for two shared materials, 64 board tiles, alternating colors, and palette propagation on switching to the ice region.
+3. This handoff commit records the state, test status and next work. Earlier commits in this branch also implemented Android graphics quality tiers, scenery culling and a player-facing persisted setting; see prior sections for precise SHAs.
+
+### Verification and risks
+- **Confirmed:** GitHub accepted both source and test commits. The code now explicitly constructs two tile material resources rather than 64.
+- **NOT confirmed:** latest GitHub Actions smoke-test result, Android APK export, physical-device rendering, FPS, thermals, GPU memory, or battery life. Do not infer a measured performance improvement from reduced material count.
+- Known issues: chess/RPG checkmate and HP-aware capture edge cases need rule review; LAN reconnect and two-phone sync need field testing; authored rigged models and animations are incomplete; procedural environments and gear visuals are not commercial art; touch readability, UI layout, monetization, audio and onboarding need QA.
+
+### Next execution instructions
+1. Read current `docs/HANDOFF.md`, `scripts/main.gd`, `scripts/battlefield_3d.gd`, and newest Actions results; fix any CI failure before stacking more features.
+2. Implement additional authored GLB assets or original procedural-to-authored model pipeline with correct licenses, distinct silhouettes and animations; add import/scene smoke tests.
+3. Verify graphics tier controls and shared tile materials in Android debug APK; profile FPS, draw calls, memory and thermal stability on low-end and mid-range devices.
+4. Improve checkmate/HP-aware captures and test cases, campaign variety and balancing. Commit actual code/tests, not only plans.
+5. At the end, update this **full handoff**, retaining architecture, verified status, known blockers, exact commits and concrete next steps. Never claim production-ready until real device/playtest evidence exists.
