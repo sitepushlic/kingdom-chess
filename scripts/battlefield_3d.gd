@@ -288,6 +288,19 @@ func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 							var joint: Node = character.find_child(joint_name, true, false)
 							if joint is Node3D:
 								attachment_parent = joint as Node3D
+							else:
+								# Godot imports skinned glTF joints as Skeleton3D
+								# bones, not necessarily named Node3D pivots.
+								# A BoneAttachment3D follows the animated bone.
+								for candidate in character.find_children("*", "Skeleton3D", true, false):
+									var skeleton: Skeleton3D = candidate as Skeleton3D
+									if skeleton.find_bone(joint_name) >= 0:
+										var bone_socket := BoneAttachment3D.new()
+										bone_socket.name = "BoneSocket_" + joint_name
+										bone_socket.bone_name = joint_name
+										skeleton.add_child(bone_socket)
+										attachment_parent = bone_socket
+										break
 					match slot_key:
 						"weapon":
 							socket.position = Vector3(0.13, -0.19, -0.08) if attachment_parent != parent else Vector3(0.43, 0.87, -0.08)
