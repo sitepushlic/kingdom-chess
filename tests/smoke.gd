@@ -146,6 +146,19 @@ func _run() -> void:
 	game.battlefield_3d.set_selected_hero_visual(HeroRoster.get_hero("hero_30"))
 	var rare_hero_visual := game.battlefield_3d._build_piece("K")
 	_assert_ok(rare_hero_visual.find_child("HeroIdentity_30", true, false) != null, "Highest rarity hero has distinct 3D crest")
+	# Every roster ID must generate a unique physical signature, not only a tint.
+	var hero_art_signatures: Dictionary = {}
+	for hero_number in range(1, 31):
+		var costume := Node3D.new()
+		var art_mat: Material = game.battlefield_3d.gold_material
+		game.battlefield_3d._add_hero_signature_costume(hero_number, 0, costume, art_mat)
+		var family: int = (hero_number - 1) % 5
+		var signature: int = int((hero_number - 1) / 5)
+		var art_key: String = "%d:%d" % [family, signature]
+		_assert_ok(costume.get_child_count() > 0 and not hero_art_signatures.has(art_key), "Hero %02d has unique 3D costume geometry recipe" % hero_number)
+		hero_art_signatures[art_key] = true
+		costume.free()
+	_assert_ok(hero_art_signatures.size() == 30, "All 30 hero art recipes are represented")
 	game.battlefield_3d.set_selected_hero_visual(hero_visual)
 	_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == Color("#243e59"), "Region palette updates shared dark material")
 	_assert_ok(game.battlefield_3d.tile_materials[1].albedo_color == Color("#92b7d0"), "Region palette updates shared light material")
