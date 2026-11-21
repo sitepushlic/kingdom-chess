@@ -99,6 +99,10 @@ def validate(path, require_animation=True):
             assert target_path in ("translation","rotation","scale"), f"{path}: unsupported animation target {target_path}"
             expected_type="VEC4" if target_path=="rotation" else "VEC3"
             assert output_acc["type"]==expected_type, f"{path}: invalid {target_path} keyframe vector type"
+            assert output_acc["componentType"]==5126, f"{path}: animation output must be float32"
+            assert all(all(math.isfinite(value) for value in key) for key in unpack_accessor(sampler["output"])), f"{path}: nonfinite animated {target_path} value"
+            if target_path=="scale":
+                assert all(all(value>0 for value in key) for key in unpack_accessor(sampler["output"])), f"{path}: nonpositive animated scale"
             if channel["target"]["path"]=="rotation":
                 sampler=animation["samplers"][channel["sampler"]]
                 acc=gltf["accessors"][sampler["output"]]
