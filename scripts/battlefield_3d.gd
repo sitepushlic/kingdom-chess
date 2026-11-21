@@ -424,6 +424,10 @@ func _load_authored_character(kind: String, parent: Node3D) -> bool:
 						player.animation_finished.connect(func(finished: StringName) -> void:
 							if not is_instance_valid(player) or not is_instance_valid(model):
 								return
+							# Death is terminal. Never restart idle on a defeated
+							# character while its disappearance tween is running.
+							if str(finished).get_slice("/", -1) == "death":
+								return
 							if str(finished) != idle_name and player.has_animation(idle_name):
 								player.play(idle_name)
 						)
