@@ -33,6 +33,17 @@ Starting branch SHA: `71de2e3dcdf50ae7b1a40fbe7a39af78fcba7446`.
 ### First next action
 Author `hero_01`–`hero_06` as one Blender source batch using the new briefs; export the six GLBs, preserve the shared rig/socket/animation contract, import them in Godot 4.3, visually inspect front/three-quarter/in-game views, then update the asset pipeline and CI so generated placeholders cannot overwrite accepted models. No APK.
 
+## SESSION UPDATE — 2026-11-22 — HERO SIGNATURE DETAILS BATCH 01
+Starting SHA: `b5858e4618c25f6fe1481c8aaea3d1f0cf086f69`.
+
+- Added `tools/art/create_hero_signatures_batch_01.py` and editable Blender source `assets/characters/authored_details/hero_signatures_batch_01.blend`. It produces six original, rigid head-detail GLBs for Aelin, Bran, Mira, Toren, Lissa and Orwin (`hero_01`–`hero_06`). Blender 4.3.2 export completed: each GLB is 37–55 KB; source is about 1.3 MB.
+- `scripts/battlefield_3d.gd` now mounts a selected hero's matching detail scene under the imported animated `Head` pivot. `tests/smoke.gd` asserts all six named geometry modules load below that pivot. This is accessory integration only: all 30 character bodies and animation clips remain procedural; no full hero is authored or accepted.
+- Godot 4.3 local editor import did not finish within the local command window, leaving no import cache. The first smoke invocation therefore failed before loading the game because SVG resources were not imported; this is an environment/import prerequisite failure, not a passing test. The updated Godot workflow must verify the exact source commit. No visual screenshot, Android device QA, FPS measurement or APK work was done.
+- Updated `docs/ART_MANIFEST.md`: six authored detail modules are tracked separately from full-body authored heroes; import/visual acceptance remain unverified.
+
+### Next action
+Commit the six source/export files, runtime integration, smoke assertions and both handoffs; check the Godot 4.3 workflow for that exact commit. Fix any actual import or smoke failure, then author the first complete rigged hero body and animation set. Continue through all 30 heroes only after validating the production pipeline. APK remains untouched.
+
 ## 1. USER'S DIRECT ORDERS — HIGHEST PRIORITY
 1. Finish **priority 1: complete playable 3D graphics** for Kingdom Chess, not a demo, static concept art, or another batch of superficial procedural blockouts.
 2. Do the **maximum substantive, coherent work per session**; do not stop after one tiny edit. Act autonomously within the agreed graphics scope, without repeatedly asking for permission. Do not claim work continues when the session has stopped.

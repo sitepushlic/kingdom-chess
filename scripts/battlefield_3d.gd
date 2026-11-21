@@ -1036,6 +1036,8 @@ func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bo
 	var kind := letter.to_upper()
 	_add_chess_class_plinth(kind, white, unit)
 	var imported_character: bool = _load_authored_character(kind, unit)
+	if imported_character and white and selected_hero_piece:
+		_attach_authored_hero_detail(unit, kind)
 	if not imported_character:
 		_add_humanoid_costume(kind, white, unit)
 		# Imported GLBs already contain face, armor and chess-role details.
@@ -1138,6 +1140,30 @@ func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bo
 	unit.scale = Vector3.ONE * (1.12 if is_boss else 0.84)
 	board_root.add_child(unit)
 	return unit
+
+func _attach_authored_hero_detail(unit: Node3D, kind: String) -> void:
+	# Blender-authored signature modules are mounted to the actual animated
+	# head pivot; the 30-body generator remains a fallback until each body is
+	# replaced by its authored production model.
+	if selected_hero_visual.is_empty() or str(selected_hero_visual.get("piece", "")) != kind:
+		return
+	var hero_id: String = str(selected_hero_visual.get("id", ""))
+	if not hero_id.begins_with("hero_") or not hero_id.is_valid_filename():
+		return
+	var detail_path: String = "res://assets/characters/authored_details/%s_detail.glb" % hero_id
+	var detail_scene: PackedScene = _get_character_scene(detail_path)
+	if detail_scene == null:
+		return
+	var authored_character: Node = unit.get_node_or_null("AuthoredCharacter")
+	if authored_character == null:
+		return
+	var head_pivot: Node3D = authored_character.find_child("Head", true, false) as Node3D
+	if head_pivot == null:
+		return
+	var detail_instance: Node = detail_scene.instantiate()
+	if detail_instance is Node3D:
+		detail_instance.name = "AuthoredHeroDetail_" + hero_id
+		head_pivot.add_child(detail_instance)
 
 func _add_boss_enrage_aura(parent: Node3D) -> void:
 	# An unmistakable phase-two silhouette visible above the boss plinth.

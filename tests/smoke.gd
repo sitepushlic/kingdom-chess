@@ -431,6 +431,22 @@ func _run() -> void:
 	_assert_ok(rare_hero_visual.find_child("HeroIdentity_30", true, false) != null, "Highest rarity hero has distinct 3D crest")
 	var epic_halo: Node3D = rare_hero_visual.find_child("HeroRarityHalo", true, false) as Node3D
 	_assert_ok(epic_halo != null and epic_halo.visible, "High-rarity hero has a visible animated 3D identity halo")
+	# Blender-authored signature details for the first production batch must
+	# load on the selected hero and inherit the imported animated Head pivot.
+	var selected_visual_before_details: Dictionary = game.battlefield_3d.selected_hero_visual.duplicate(true)
+	var authored_detail_ids := ["hero_01", "hero_02", "hero_03", "hero_04", "hero_05", "hero_06"]
+	var authored_detail_nodes := ["Aelin_LighthouseHalo", "Bran_AshVisor", "Mira_HoodCrest", "Toren_ForgedBrow", "Lissa_StreetSigil", "Orwin_RuneBrow"]
+	for detail_index in range(authored_detail_ids.size()):
+		var detail_hero: Dictionary = HeroRoster.get_hero(authored_detail_ids[detail_index])
+		game.battlefield_3d.set_selected_hero_visual(detail_hero)
+		var detail_actor: Node3D = game.battlefield_3d._build_piece(str(detail_hero["piece"]), false, true)
+		var detail_head: Node3D = detail_actor.find_child("Head", true, false) as Node3D
+		var detail_root: Node3D = detail_actor.find_child("AuthoredHeroDetail_" + authored_detail_ids[detail_index], true, false) as Node3D
+		var named_detail: Node = detail_actor.find_child(authored_detail_nodes[detail_index], true, false)
+		_assert_ok(detail_head != null and detail_root != null and detail_root.get_parent() == detail_head, "Authored detail follows animated head: " + authored_detail_ids[detail_index])
+		_assert_ok(named_detail != null, "Unique Blender-authored signature geometry imports: " + authored_detail_ids[detail_index])
+		detail_actor.queue_free()
+	game.battlefield_3d.set_selected_hero_visual(selected_visual_before_details)
 
 	var authored_boss_visual: Node3D = game.battlefield_3d._build_piece("k", true, false)
 	_assert_ok(authored_boss_visual.find_child("AuthoredCharacter", true, false) != null, "Regional boss imports its dedicated 3D scene")
