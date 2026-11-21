@@ -207,7 +207,7 @@ def make_character(identifier, boss=False):
                     "CrimsonCrownHorn", "IdentitySun", "IdentityScoutVisor",
                     "IdentityFeather", "IdentityOracle", "IdentityVeteran",
                     "IdentityMoon", "IdentityAscendantSpire", "EnemyPawnHood",
-                    "EnemyRookTower", "EnemyKnightCrest", "EnemyBishopMitre",
+                    "EnemyKnightCrest", "EnemyBishopMitre",
                     "EnemyQueenCrown", "EnemyKingCrown", "BossCrownShard")
         if name.startswith(head_parts):
             head_pivot=next((n for n in nodes if n.get("name")=="Head"),None)
