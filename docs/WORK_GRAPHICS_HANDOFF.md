@@ -388,3 +388,10 @@ Commits on `main`:
 - **`9c50cd3ce117dfb2736c8cfde9a2a893321707f8`**: Godot smoke now verifies all six imported animation names on **all 72 characters** (432 clip-presence checks), instead of checking clips only for eight representative assets. Existing detailed checks of representative clip track counts and duration remain.
 **Verification:** commits are confirmed on `main`. A completed Godot runner execution, successful smoke result, and valid APK remain **unconfirmed**; do not imply the new assertions have passed. The new stricter test can reveal previously hidden failures.
 **Next:** inspect real GitHub Actions logs once run identifiers are available, fix actual Godot import issues and Android export failures, then continue mobile visual inspection and production-quality mesh development.
+
+## 43. Real tapered skinned arms and legs across 72 character GLBs — 2026-11-21
+- **`5d0702128510ad2210dfdae481971192bb38c632`**: substantial mesh upgrade. Replaced straight rectangular limb cross-sections with three-band tapered profiles on all four GPU-skinned arms/legs of every character: wrist/ankle radius 78%, elbow/knee radius 90%, shoulder/hip radius 100%. Preserved 40 vertices/20 triangles per limb and existing two-joint skinning. Recomputed each face normal from the new sloped geometry so directional lighting follows the real silhouette.
+- **`f21c3315d49359c3c2121b24f5cd52d928e07c94`**: independent binary GLB topology QA checks monotonic ring widths in all 288 limbs, alongside triangle winding, weights and normals.
+- **`a2b1c757fe0f25a82daea9abfbccc9bdc3cc53a2`**: main GLB validator independently enforces all 288 tapered limb profiles and preserved three-ring skin topology.
+**Important:** GitHub commits succeeded; these changes have not been confirmed by executing the complete generator, Godot importer or Android APK. Geometry remains procedural low-poly; mobile visual and performance review is outstanding.
+**Next:** obtain real Actions status and logs, fix generation/import/build errors, visually test deformation on device, then further develop faces, costumes, materials and environment.
