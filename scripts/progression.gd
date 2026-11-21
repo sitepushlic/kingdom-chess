@@ -23,7 +23,13 @@ static func sanitize_castle(raw: Variant) -> Dictionary:
 	if typeof(raw) != TYPE_DICTIONARY:
 		return result
 	for key in result.keys():
-		result[key] = safe_save_int(raw.get(key, 0), 0, 0, 100)
+		var value: Variant = raw.get(key, 0)
+		var validated: int = safe_save_int(value, 0, 0, 100)
+		# Reject, rather than silently clamp, a forged building level.
+		if typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT:
+			if float(value) < 0.0 or float(value) > 100.0:
+				validated = 0
+		result[key] = validated
 	return result
 
 static func castle_upgrade_cost(building: Dictionary, current_level: int) -> int:
