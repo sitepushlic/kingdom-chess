@@ -350,3 +350,11 @@ This batch makes a substantive 3D geometry change, rather than only adding valid
 - Local isolated Python geometry check completed successfully: 40 vertices, 10 panels, nondegenerate normals. This is not a full execution of the generator or Godot importer.
 **Limitations:** current art remains procedural low-poly and needs silhouette/texture polish. GitHub Actions run status, actual Godot import and APK build are still not observable from the connected tools; no successful build is claimed.
 **Next:** verify the complete Python GLB generation/test chain in CI, inspect Godot import and mobile visuals, and fix any actual errors before calling the Android build ready.
+
+## 38. Godot import-contract correction and animation verification — 2026-11-21
+Changes committed on `main`:
+- **`d8ae93901555ac527a547ddc3183177da905ead7`**: corrected a brittle smoke-test assumption. Godot can merge multiple glTF skins into a smaller number of `Skeleton3D` nodes; instead of demanding six distinct skeleton nodes, the smoke now requires at least one imported skeleton, six `MeshInstance3D` surfaces with a skeleton path and the named essential bones across imported skeletons. This tests actual skinning more directly without relying on importer implementation details.
+- **`d88336c6a032254848c44b11456f31accd81b690`**: representative hero, enemy and boss smoke tests now inspect imported Godot `Animation` resources, require at least eight tracks per clip and nontrivial clip duration, in addition to checking all six names.
+- **`f911d26e44ecfa52fdec3b40beedcffc8c1fec08`**: negative validator suite now injects NaN into skinned vertex coordinates and an invalid bone index, expanding from six to eight corrupted GLB cases.
+**Status:** GitHub writes confirmed. No observed Actions execution or APK; no claim that these tests pass. Verify the `MeshInstance3D.skeleton` import contract against Godot 4.3 output, then investigate any failures rather than bypassing checks.
+**Next:** get an actual GitHub Actions run result, confirm Godot skeleton imports, run Android APK export and inspect generated logs; proceed with higher-fidelity 3D geometry after integration passes.
