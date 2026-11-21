@@ -341,7 +341,7 @@ def validate(path, require_animation=True):
             assert "POSITION" in attrs and "NORMAL" in attrs, f"{path}: missing flat-shading normals"
             position=gltf["accessors"][attrs["POSITION"]]
             normal=gltf["accessors"][attrs["NORMAL"]]
-            expected_vertices=40 if mesh.get("name","").endswith("DeformingSurface") or mesh.get("name")=="SkinnedTorsoSurface" else 24
+            expected_vertices=40 if mesh.get("name","").endswith("DeformingSurface") or mesh.get("name")=="DeformingTorso" else 24
             assert position["count"]==normal["count"]==expected_vertices, f"{path}: {mesh.get('name')} expected {expected_vertices} vertices"
             assert position["type"]=="VEC3" and normal["type"]=="VEC3", f"{path}: invalid vertex attribute type"
             index=gltf["accessors"][primitive["indices"]]
