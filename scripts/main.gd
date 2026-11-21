@@ -53,6 +53,7 @@ var combat_hits := 0
 var frost_guard_used := false
 var phoenix_used := false
 var poison_marks: Dictionary = {}
+var hero_poison: Dictionary = {} # square -> remaining enemy turns
 var raid_region := ""
 var raid_encounter := ""
 var raid_mission: Dictionary = {}
@@ -1276,6 +1277,7 @@ func _reset() -> void:
 	frost_guard_used = false
 	phoenix_used = false
 	poison_marks.clear()
+	hero_poison.clear()
 	raid_round = 0
 	boss_target = -1
 	battle_log = ("%s • %s. %s\nКаждый ход: 2 действия. Нажми фигуру, затем подсвеченную клетку." % [raid_region, str(raid_mission.get("title", raid_encounter)), str(raid_mission.get("goal", "Победи босса."))]) if mode == "raid" else "Арена: два игрока на одном устройстве."
@@ -1514,6 +1516,11 @@ func _tap(i: int) -> void:
 func _move(a: int,b: int) -> void:
 	if battlefield_3d != null: battlefield_3d.animate_move(a, b)
 	_animate_move(a, b)
+	# Status follows the moving unit, not the vacated board square.
+	var poison_turns: int = int(hero_poison.get(a, 0))
+	hero_poison.erase(a)
+	hero_poison.erase(b)
+	if poison_turns > 0: hero_poison[b] = poison_turns
 	pieces[b] = pieces[a]
 	health[b] = health[a]
 	pieces[a] = ""
@@ -1633,6 +1640,17 @@ func _boss_aoe_hit(index: int, damage: int) -> void:
 		pieces[index] = ""
 		health[index] = 0
 
+func _tick_hero_poison() -> void:
+	var remaining: Dictionary = {}
+	for key in hero_poison.keys():
+		var cell: int = int(key)
+		if cell < 0 or cell >= 64 or _team(pieces[cell]) != 1: continue
+		_boss_aoe_hit(cell, 3 + raid_stage * 2)
+		if winner != "": break
+		if _team(pieces[cell]) == 1 and int(hero_poison[key]) > 1:
+			remaining[cell] = int(hero_poison[key]) - 1
+	hero_poison = remaining
+
 func _apply_mission_modifier() -> void:
 	if mode != "raid" or winner != "": return
 	var modifier: String = str(raid_mission.get("modifier", "none"))
@@ -1651,6 +1669,7 @@ func _apply_mission_modifier() -> void:
 				for cell in range(64):
 					if _team(pieces[cell]) == 1 and cell % 8 in [1, 6]:
 						_boss_aoe_hit(cell, 6 + raid_stage * 2)
+						if _team(pieces[cell]) == 1: hero_poison[cell] = 2
 						poisoned += 1
 				if poisoned > 0: battle_log += "\nЯДОВИТЫЙ ТУМАН: %d героев под ударом." % poisoned
 		"fury":
@@ -1686,6 +1705,11 @@ func _boss_action() -> void:
 	if winner != "": return
 	enemy_turn = true
 	raid_round += 1
+	_tick_hero_poison()
+	if winner != "":
+		enemy_turn = false
+		_draw()
+		return
 	frost_guard_used = false
 	turn_count += 1
 	for target in poison_marks.keys():
