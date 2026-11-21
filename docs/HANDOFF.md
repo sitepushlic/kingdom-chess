@@ -1,3 +1,18 @@
+## 2026-11-21 — MAJOR 3D CHARACTER AND EQUIPMENT SILHOUETTE PASS (LATEST)
+**User standing instruction:** maximize substantive work per turn; update HANDOFF every turn. **APK is paused: do not export, build or sign APK until explicitly requested.** Continue completing game and production graphics. Do not claim tests passed without logs.
+
+### Work committed directly to main
+1. `f6d76a47` — `tools/art/generate_blockouts.py`: substantial new geometry for **all 30 roster heroes** (six head/helm identities, layered banners and buckles, unique per-ID badge counts and rank markings); **36 enemy figures** now carry role-specific combat silhouettes (pawn hood and dagger, rook tower and bulwark, knight lance, bishop mitre, queen sceptre, king crown); **six bosses** have different 4–9-shard crown profiles, power cores and asymmetric wing armor. Uses existing five PBR materials and mesh buffers, no new texture assets.
+2. `d7a44b30` — rig new head adornments under animated `Head` joint to keep visors/crowns attached through authored animation.
+3. `1aa5b505` — `tools/art/validate_blockouts.py` verifies unique identity signatures for 30 heroes, six role silhouettes in all six enemy regions, and exact biome-specific boss crown geometry. These are newly authored assertions, not yet confirmed passed.
+4. `e76f641a` — `tools/art/generate_equipment.py`: expanded geometry for **all 21 equipment GLBs**. Weapons gain pommels, crossguards, guard wings, higher-rarity enchanted cores and ascendant blade edges; armor gains gorgets, center seals, rib plates, higher-rarity crest fins and magic cores; relics gain sockets, wings, runic pillars and ascendant rays. Each slot/tier remains separately generated.
+5. `06365f17` — equipment validator checks new baseline parts for all 21 assets, premium power crystals for tiers >=4 and ascendant geometry at tier 6.
+
+### Verification / next work
+- GitHub changes are committed; **no successful Godot 4.3 run or full GLB generation is verified in this session**. GitHub Actions push workflow includes Python syntax compilation, generation, validation, import, smoke and diagnostic artifacts; APK export is intentionally absent/disabled.
+- Priority: inspect actual GitHub Actions diagnostics (first parser/assertion error, not just final dummy renderer warnings), fix any failed GLB validation, refine actual topology/rigging and combat animations, improve menus/UX and ensure progression/balance; only call complete when verified.
+- Previous pass: `23077ee3`, `9a516eea`, `a64fdd0b`, `14a96a89`, `0393bdcc`, `c1bb04be`, `322c1f8b` for board skins, poison VFX and epic hero halos.
+
 ## 2026-11-21 — NEXT EXTENDED 3D ART + GAMEPLAY QUALITY PASS
 **Standing instructions:** Do as much real implementation as possible each turn, update HANDOFF on every turn, NO APK build/export; minimize repetitive build-status narration. Do not claim green Godot CI without evidence.
 
