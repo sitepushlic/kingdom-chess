@@ -57,6 +57,17 @@ def check(path):
                 expected_center={("Gauntlet"+side):.66,("ShinPlate"+side):.30,("Boot"+side):.12}[name]
                 assert abs(position[1]-expected_center)<1e-5, f"{path}: {name} rest Y drifted: {position[1]} vs {expected_center}"
                 assert all(math.isfinite(x) for x in position), f"{path}: {name} nonfinite bind position"
+    # New facial landmarks must move with the animated neck pivot.
+    head_id=by_name["Head"]
+    for name,rest_y in (
+        ("NoseBridge",1.315),("NoseTip",1.265),("Mouth",1.204),
+        ("Pupil1",1.34),("Pupil-1",1.34),
+        ("Ear1",1.30),("Ear-1",1.30),
+        ("LowerCheek1",1.226),("LowerCheek-1",1.226),
+    ):
+        assert name in by_name, f"{path}: missing facial landmark {name}"
+        assert parents[by_name[name]]==head_id, f"{path}: {name} detached from animated head"
+        assert abs(world_position(by_name[name])[1]-rest_y)<1e-5, f"{path}: {name} rest pose drift"
     # Every character's weapon must follow its actual wrist, rather
     # than staying under the stationary BodyRig during attacks.
     right=by_name["Arm1Lower"]
