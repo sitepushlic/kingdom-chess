@@ -2080,6 +2080,11 @@ func _process(delta: float) -> void:
 		if moving_nodes.has(index): continue
 		var actor: Node3D = piece_nodes[index]
 		if is_instance_valid(actor):
+			if visual_quality > 0:
+				var critical_ring: MeshInstance3D = actor.get_meta("critical_health_ring", null) as MeshInstance3D
+				if critical_ring != null and critical_ring.visible:
+					var pulse: float = 1.0 + 0.12 * sin(clock * 5.2 + float(index) * 0.35)
+					critical_ring.scale = Vector3(pulse, 1.0, pulse)
 			if visual_quality > 0 and bool(actor.get_meta("selected_hero_piece", false)):
 				var halo: Node3D = actor.find_child("HeroRarityHalo", true, false) as Node3D
 				if halo != null:
