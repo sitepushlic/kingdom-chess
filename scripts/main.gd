@@ -113,6 +113,10 @@ var battlefield_container: SubViewportContainer
 const GRAPHICS_SETTINGS_PATH := "user://graphics.cfg"
 var graphics_quality := 1
 var graphics_button: Button
+var castle: Dictionary = {"forge":0,"barracks":0,"treasury":0,"academy":0,"infirmary":0}
+var castle_dialog: AcceptDialog
+var castle_list: ItemList
+var castle_details: Label
 var owned_boards: Array = [0]
 var selected_board := 0
 var board_gallery_dialog: AcceptDialog
@@ -572,12 +576,89 @@ void fragment() {
 	_make_action_button("♜  АРЕНА ДЛЯ ДВОИХ", _menu_start_arena, column)
 	_make_action_button("◈  КООПЕРАТИВ ПО WI-FI", _menu_start_coop, column)
 	_make_action_button("🎒  СНАРЯЖЕНИЕ", _open_inventory, column)
+	_make_action_button("🏰  МОЁ КОРОЛЕВСТВО", _open_castle, column)
 	_make_action_button("♟  МОЯ КОЛЛЕКЦИЯ ДОСОК", _open_board_gallery, column)
 	graphics_button = _make_action_button("", _cycle_graphics_quality, column)
 	_update_graphics_label()
 	_make_action_button("❔  КАК ИГРАТЬ", _show_tutorial, column)
 	_make_action_button("ПРОДОЛЖИТЬ БИТВУ", _menu_continue, column)
 	main_menu.visible = true
+
+func _open_castle() -> void:
+	if castle_dialog == null:
+		castle_dialog = AcceptDialog.new()
+		castle_dialog.title = "МОЁ КОРОЛЕВСТВО — РАЗВИТИЕ ЗАМКА"
+		castle_dialog.min_size = Vector2i(580, 560)
+		add_child(castle_dialog)
+		var layout := VBoxContainer.new()
+		castle_dialog.add_child(layout)
+		var intro := Label.new()
+		intro.text = "Побеждай в рейдах, добывай золото и строй королевство. Улучшения работают только в PvE, не в шахматной арене."
+		intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		layout.add_child(intro)
+		castle_list = ItemList.new()
+		castle_list.custom_minimum_size = Vector2(530, 290)
+		layout.add_child(castle_list)
+		castle_details = Label.new()
+		castle_details.custom_minimum_size.y = 95
+		castle_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		layout.add_child(castle_details)
+		castle_list.item_selected.connect(_on_castle_selected)
+		var upgrade := Button.new()
+		upgrade.text = "УЛУЧШИТЬ ЗДАНИЕ"
+		upgrade.custom_minimum_size.y = 56
+		upgrade.pressed.connect(_upgrade_castle_building)
+		layout.add_child(upgrade)
+	_refresh_castle()
+	castle_dialog.popup_centered()
+
+func _refresh_castle() -> void:
+	if castle_list == null:
+		return
+	var current: int = 0
+	var indices: PackedInt32Array = castle_list.get_selected_items()
+	if not indices.is_empty():
+		current = indices[0]
+	castle_list.clear()
+	for building in Progression.CASTLE_BUILDINGS:
+		var level: int = int(castle.get(str(building["id"]), 0))
+		castle_list.add_item("%s  •  уровень %d/100" % [str(building["name"]), level])
+	castle_list.select(clampi(current, 0, Progression.CASTLE_BUILDINGS.size() - 1))
+	_on_castle_selected(clampi(current, 0, Progression.CASTLE_BUILDINGS.size() - 1))
+
+func _on_castle_selected(index: int) -> void:
+	if castle_details == null or index < 0 or index >= Progression.CASTLE_BUILDINGS.size():
+		return
+	var building: Dictionary = Progression.CASTLE_BUILDINGS[index]
+	var building_id: String = str(building["id"])
+	var level: int = int(castle.get(building_id, 0))
+	if level >= 100:
+		castle_details.text = "%s\nУровень максимальный. Бонус: %d" % [building["description"], Progression.castle_bonus(castle, building_id)]
+		return
+	var cost: int = Progression.castle_upgrade_cost(building, level)
+	var required_wins: int = Progression.castle_upgrade_requirement(building, level)
+	castle_details.text = "%s\nБонус сейчас: %d\nСледующий уровень: %d золота; победы %d/%d; в казне %d" % [building["description"], Progression.castle_bonus(castle, building_id), cost, raid_wins, required_wins, gold]
+
+func _upgrade_castle_building() -> void:
+	if castle_list == null:
+		return
+	var indices: PackedInt32Array = castle_list.get_selected_items()
+	if indices.is_empty():
+		return
+	var index: int = indices[0]
+	if index < 0 or index >= Progression.CASTLE_BUILDINGS.size():
+		return
+	var building: Dictionary = Progression.CASTLE_BUILDINGS[index]
+	var building_id: String = str(building["id"])
+	var level: int = int(castle.get(building_id, 0))
+	if not Progression.castle_upgrade_allowed(building, level, raid_wins, gold):
+		_on_castle_selected(index)
+		return
+	gold -= Progression.castle_upgrade_cost(building, level)
+	castle[building_id] = level + 1
+	_save_profile()
+	_refresh_castle()
+	_draw()
 
 func _open_board_gallery() -> void:
 	if board_gallery_dialog == null:
@@ -1165,6 +1246,7 @@ func _load_profile() -> void:
 	var profile: Dictionary = Progression.load_profile()
 	player_level = int(profile["level"])
 	selected_hero = str(profile.get("selected_hero", "hero_01"))
+	castle = Progression.sanitize_castle(profile.get("castle", {}))
 	owned_boards = Progression.sanitize_board_collection(profile.get("owned_boards", [0]))
 	selected_board = int(profile.get("selected_board", 0))
 	experience = int(profile["xp"])
@@ -1251,7 +1333,7 @@ func _save_profile() -> void:
 		"level": player_level, "xp": experience, "gold": gold,
 		"potions": potions, "items": equipment,
 		"equipped": equipped, "slots": equipped_slots, "wins": raid_wins, "dry_streak": dry_loot_streak, "selected_hero": selected_hero,
-		"owned_boards": owned_boards, "selected_board": selected_board
+		"owned_boards": owned_boards, "selected_board": selected_board, "castle": castle
 	})
 
 func _item_stat(stat: String) -> int:
@@ -1287,13 +1369,13 @@ func _effective_level() -> int:
 	return player_level
 
 func _attack_bonus() -> int:
-	return _item_stat("attack") + (int(HeroRoster.get_hero(selected_hero)["attack"]) if mode == "raid" else 0)
+	return _item_stat("attack") + (int(HeroRoster.get_hero(selected_hero)["attack"]) + Progression.castle_bonus(castle, "forge") if mode == "raid" else 0)
 
 func _armor_bonus() -> int:
 	return _item_stat("armor") + (int(HeroRoster.get_hero(selected_hero)["armor"]) if mode == "raid" else 0)
 
 func _max_hp(piece: String, friendly: bool = true) -> int:
-	return HP[piece.to_upper()] + (_item_stat("hp") + int(HeroRoster.get_hero(selected_hero)["hp"]) if friendly and mode == "raid" else 0)
+	return HP[piece.to_upper()] + (_item_stat("hp") + int(HeroRoster.get_hero(selected_hero)["hp"]) + Progression.castle_bonus(castle, "barracks") if friendly and mode == "raid" else 0)
 
 func _deal_damage(target: int, raw_damage: int, attacker_is_hero: bool) -> int:
 	var amount := maxi(1, raw_damage)
@@ -1381,8 +1463,13 @@ func _equip_best() -> void:
 	_draw()
 
 func _reward(amount: int) -> void:
-	experience += amount
-	gold += int(amount / 2.0)
+	var xp_gain: int = amount
+	var gold_gain: int = int(amount / 2.0)
+	if mode == "raid":
+		xp_gain += int(float(amount) * float(Progression.castle_bonus(castle, "academy")) / 100.0)
+		gold_gain += int(float(amount) * 0.5 * float(Progression.castle_bonus(castle, "treasury")) / 100.0)
+	experience += xp_gain
+	gold += gold_gain
 	while player_level < 50 and experience >= Progression.experience_needed(player_level):
 		experience -= Progression.experience_needed(player_level)
 		player_level += 1
@@ -1440,13 +1527,14 @@ func _use_potion() -> void:
 	if _team(pieces[selected]) != turn: return
 	var p: String = pieces[selected].to_upper()
 	if health[selected] >= _max_hp(p, _team(pieces[selected]) == 1): return
-	var healed: int = mini(40, _max_hp(p, _team(pieces[selected]) == 1) - health[selected])
+	var heal_amount: int = 40 + (Progression.castle_bonus(castle, "infirmary") if mode == "raid" else 0)
+	var healed: int = mini(heal_amount, _max_hp(p, _team(pieces[selected]) == 1) - health[selected])
 	health[selected] += healed
 	_damage_popup(selected, healed, true)
 	potions -= 1
 	_save_profile()
 	_spend_action(selected)
-	battle_log = "Зелье восстанавливает 40 здоровья."
+	battle_log = "Зелье восстанавливает до %d здоровья." % heal_amount
 	_draw()
 
 func _shield_selected() -> void:
