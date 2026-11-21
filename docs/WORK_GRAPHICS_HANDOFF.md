@@ -257,3 +257,14 @@ Committed directly to `main`:
 - **`f4727908e4424fec85e3c1b4a5b6b161f8303aa5`**: validator checks winding vs normals for *all* unique GLB mesh primitives, including the weighted cape and equipment; rejects reversed faces with backface culling enabled.
 **Verification:** commits saved; local Python/Godot execution and push-triggered Android CI status remain unverified. No claim of a passing APK build. Character body still uses articulated rigid meshes; only the cape is GPU-skinned.
 **Next:** obtain actual Actions logs and resolve failures, extend skinned rigs to torso/arms/legs, improve mesh topology and materials, authored levels, mobile device QA.
+
+## 28. Real skinned torso, semantic animation tests — 2026-11-21
+This development batch committed directly to `main`:
+- **`ace5d9c82816e288ac472c050be6bda61d57679c`**: fixed a latent animation bug: 5–6-pose combat curves were truncated to 4 samples, losing the recovery pose. Curves now resample their entire authored range to clip time keys.
+- **`788520776fba7e9c21322bfbbd060325ed1ed23d`**: replaced the rigid Torso box with a second genuine weighted glTF skin, `TorsoSkin`. Each of the 72 characters now has `SpineHip` and `SpineChest` bones, weighted vertices, inverse bind matrices, and independent chest flex animation in all six clips. The previously skinned two-bone mantle remains as a separate skin. Arms and legs are still rigid articulated meshes.
+- **`ab6a93e05862224494f2f4365d8aadcd314c9fa1`**: validator requires both skin instances, torso/cape joint names, normalized blended weights, inverse bind matrices, and animated chest rotation.
+- **`05162c345de56828a7820a56655a414d3685508d`**: Godot smoke now asserts import of actual `Skeleton3D` spine bones alongside cape bones.
+- **`569c114368c74f71d6c479fd7f902ebe812e7d8e`**: new `tools/art/validate_motion.py` decodes GLB animation binary data, checks 30 hero attack recoveries, five distinct attack signatures, normalized head/spine/cape quaternion tracks, and six boss recoveries.
+- **`d46a15f8bdfa9b3b4e6e8be9bd1a957a38593f15`**: CI compiles and executes semantic motion validator before Godot import/Android export.
+**Verification:** all GitHub commits confirmed. No successful generator run, validator execution, Godot import or Android APK build observed in this session; the new two-skin import path remains unverified. Do not claim a completed full-body rig or successful build.
+**Priority remaining:** obtain real CI logs and fix any failures; implement true weighted arm/leg deformation, polished original 3D character topology, textures/materials, environment art, mobile profiling and APK device testing.
