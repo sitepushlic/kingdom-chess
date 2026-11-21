@@ -265,17 +265,26 @@ func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 				if gear_model is Node3D:
 					var socket := Node3D.new()
 					socket.name = "GearSocket_" + slot_key
+					var attachment_parent: Node3D = parent
+					# Follow imported shoulder pivots so held items actually
+					# animate with the arms, not remain floating beside them.
+					var character: Node = parent.get_node_or_null("AuthoredCharacter")
+					if character != null and slot_key != "armor":
+						var joint_name: String = "Arm1" if slot_key == "weapon" else "Arm-1"
+						var joint: Node = character.find_child(joint_name, true, false)
+						if joint is Node3D:
+							attachment_parent = joint as Node3D
 					match slot_key:
 						"weapon":
-							socket.position = Vector3(0.43, 0.87, -0.08)
+							socket.position = Vector3(0.13, -0.19, -0.08) if attachment_parent != parent else Vector3(0.43, 0.87, -0.08)
 							socket.scale = Vector3.ONE * 0.64
 						"armor":
 							socket.position = Vector3(0, 0.83, -0.08)
 							socket.scale = Vector3.ONE * 0.95
 						"relic":
-							socket.position = Vector3(-0.39, 0.89, -0.16)
+							socket.position = Vector3(-0.27, -0.17, -0.16) if attachment_parent != parent else Vector3(-0.39, 0.89, -0.16)
 							socket.scale = Vector3.ONE * 0.72
-					parent.add_child(socket)
+					attachment_parent.add_child(socket)
 					socket.add_child(gear_model)
 					# Preserve the stable rarity marker used by UI/tests and
 					# provide an attachment point for additional tier VFX.
