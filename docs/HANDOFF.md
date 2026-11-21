@@ -133,3 +133,10 @@ For EVERY future implementation session:
 - Commit `cd377bb` (`tests/smoke.gd`): regressions for malformed profile fields, fractional gold, negative streak, invalid inventory/slots, integral float compatibility and string currency rejection.
 - **CI #182 running** at handoff time: https://github.com/sitepushlic/kingdom-chess/actions/runs/44841894440 . Verify smoke tests and Android debug APK export; do not claim this change passes until complete. Latest verified successful prior run #181.
 - Next: implement unique mission victory conditions and persistent status design with tests; original 3D art, device QA, co-op validation and release signing remain unfinished. Commercial readiness is not implied by run number.
+
+## Automated development — inventory compaction with slot remapping (2026-11-21)
+- Verified GitHub Actions **#184 success** before edits (Godot smoke tests and Android APK workflow): https://github.com/sitepushlic/kingdom-chess/actions/runs/44841919263 .
+- Commit `ffee8fa` (`scripts/progression.gd`): `sanitize_profile` removes malformed or invalid saved inventory entries, retaining valid items in their original order. Equipped indices are remapped from the original inventory to the compacted inventory; removed, locked and wrong-slot references remain unequipped. Legacy weapon index follows the validated result. This prevents malformed inventory entries from reaching normal item UI code after load.
+- Commit `9e2b923` (`tests/smoke.gd`): regression for mixed invalid/valid inventory, weapon and armor remapping, invalid relic rejection, legacy weapon index.
+- Check the latest CI after these changes; do not claim APK success until gameplay tests, export and artifact upload complete. https://github.com/sitepushlic/kingdom-chess/actions
+- Next: unique mission victory conditions and persistent statuses; production-quality original 3D art, real-device Android and LAN co-op QA, signing and store readiness remain unfinished.
