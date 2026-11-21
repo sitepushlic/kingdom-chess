@@ -1847,6 +1847,7 @@ func _impact_effect(index: int, healing: bool = false) -> void:
 func _damage_popup(index: int, amount: int, healing: bool = false) -> void:
 	if battlefield_3d != null:
 		battlefield_3d.hit(index, healing)
+		battlefield_3d.show_combat_number(index, amount, healing)
 
 	if index < 0 or index >= buttons.size(): return
 	_impact_effect(index, healing)
