@@ -92,6 +92,9 @@ func set_visual_quality(tier: int) -> void:
 			torch_flames[index].visible = light.visible
 	if rim_light != null:
 		rim_light.visible = visual_quality > 0
+	if piece_nodes.has(4):
+		var boss_aura: Node3D = (piece_nodes[4] as Node3D).get_node_or_null("BossEnrageAura")
+		if boss_aura != null: boss_aura.visible = boss_enraged and visual_quality > 0
 	for halo in board_gem_halos:
 		halo.visible = visual_quality >= 2
 	for mote in ambient_motes:
@@ -928,6 +931,7 @@ func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bo
 		elif kind == "P":
 			_ring(0.145, 0.021, accent, unit, Vector3(0, 0.65, 0))
 	if is_boss:
+		_add_boss_enrage_aura(unit)
 		# Imported bosses already carry their own regional horns, crystals,
 		# wings and relics. Avoid masking them with a generic second costume.
 		if unit.get_node_or_null("AuthoredCharacter") == null:
@@ -998,12 +1002,30 @@ func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bo
 	board_root.add_child(unit)
 	return unit
 
+func _add_boss_enrage_aura(parent: Node3D) -> void:
+	# An unmistakable phase-two silhouette visible above the boss plinth.
+	# Three rotating crown arcs share one material and existing cached ring meshes.
+	var aura := Node3D.new()
+	aura.name = "BossEnrageAura"
+	aura.visible = boss_enraged and visual_quality > 0
+	parent.add_child(aura)
+	for i in range(3):
+		var ring: MeshInstance3D = _ring(0.49 + float(i) * 0.13, 0.028, boss_crown, aura, Vector3(0, 0.65 + float(i) * 0.21, 0))
+		ring.rotation.x = float(i) * 0.24
+		ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for i in range(4):
+		var angle: float = TAU * float(i) / 4.0
+		var crystal: MeshInstance3D = _sphere(0.065, boss_crown, aura, Vector3(cos(angle) * 0.52, 1.11, sin(angle) * 0.52))
+		crystal.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
 func set_boss_phase(phase: int) -> void:
 	var enraged := phase >= 2
 	if boss_enraged == enraged: return
 	boss_enraged = enraged
 	if piece_nodes.has(4) and piece_types.get(4, "") == "k":
 		var boss: Node3D = piece_nodes[4]
+		var aura: Node3D = boss.get_node_or_null("BossEnrageAura")
+		if aura != null: aura.visible = enraged and visual_quality > 0
 		var burst := create_tween()
 		burst.tween_property(boss, "scale", Vector3.ONE * (1.42 if enraged else 1.12), 0.24).set_trans(Tween.TRANS_BACK)
 		boss_crown.albedo_color = Color("#ff2c5f") if enraged else Color("#e56587")
@@ -1891,6 +1913,11 @@ func _process(delta: float) -> void:
 			var marker: MeshInstance3D = enemy_poison_indicators[cell]
 			if is_instance_valid(marker):
 				marker.position.y = 2.03 + 0.13 * sin(clock * 4.1 + float(cell) * 0.45)
+	if boss_enraged and visual_quality > 0 and piece_nodes.has(4):
+		var boss_aura: Node3D = (piece_nodes[4] as Node3D).get_node_or_null("BossEnrageAura")
+		if boss_aura != null and boss_aura.visible:
+			boss_aura.rotation.y = clock * 0.8
+			boss_aura.position.y = sin(clock * 2.1) * 0.06
 	for index in piece_nodes.keys():
 		if moving_nodes.has(index): continue
 		var actor: Node3D = piece_nodes[index]
