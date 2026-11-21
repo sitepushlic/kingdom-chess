@@ -1199,6 +1199,22 @@ func _run() -> void:
 	if game.battlefield_3d.piece_nodes.has(4):
 		_assert_ok(absf((game.battlefield_3d.piece_nodes[4] as Node3D).position.y) < 0.001, "Boss returns to board height after enrage")
 
+	# Floating combat numbers must be visible in the 3D SubViewport.
+	# The legacy 2D chess grid is hidden, so UI labels alone are insufficient.
+	var numbers_before: int = game.battlefield_3d.board_root.get_child_count()
+	game.battlefield_3d.show_combat_number(60, 37, false)
+	_assert_ok(game.battlefield_3d.board_root.get_child_count() == numbers_before + 1, "Damage creates a world-space combat number")
+	var damage_label: Label3D = game.battlefield_3d.board_root.get_child(game.battlefield_3d.board_root.get_child_count() - 1) as Label3D
+	_assert_ok(damage_label != null and damage_label.text == "−37" and damage_label.no_depth_test, "3D damage number is readable over the battlefield")
+	game.battlefield_3d.show_combat_number(60, 12, true)
+	var heal_label: Label3D = game.battlefield_3d.board_root.get_child(game.battlefield_3d.board_root.get_child_count() - 1) as Label3D
+	_assert_ok(heal_label != null and heal_label.text == "+12", "Healing uses distinct 3D number and positive sign")
+	var numbers_valid: int = game.battlefield_3d.board_root.get_child_count()
+	game.battlefield_3d.show_combat_number(-1, 30)
+	game.battlefield_3d.show_combat_number(64, 30)
+	game.battlefield_3d.show_combat_number(60, 0)
+	_assert_ok(game.battlefield_3d.board_root.get_child_count() == numbers_valid, "Invalid cells and zero values cannot allocate combat labels")
+
 	# Quality-tier combat regression: low graphics must never allocate
 	# translucent transient meshes, while medium retains visible impacts.
 	game.battlefield_3d.set_visual_quality(0)
