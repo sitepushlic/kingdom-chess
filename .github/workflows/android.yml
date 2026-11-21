@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Godot gameplay and 3D art verification
 on:
   push:
     branches: [main]
@@ -175,12 +175,18 @@ jobs:
         run: |
           set -o pipefail
           timeout 240s ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://tests/smoke.gd 2>&1 | tee smoke.log
+          if grep -Eq "TEST FAILED:|SMOKE ASSERTIONS FAILED|SCRIPT ERROR:|Parse Error:" smoke.log; then
+            echo "=== Actionable Godot smoke failures ==="
+            grep -En -B 3 -A 5 "TEST FAILED:|SMOKE ASSERTIONS FAILED|SCRIPT ERROR:|Parse Error:" smoke.log | tail -n 120
+            exit 1
+          fi
           grep -q "KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED" smoke.log
           if grep -Eq "SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:" smoke.log; then
             echo "Godot emitted script or parser errors; refusing APK export"
             exit 1
           fi
       - name: Export debug APK
+        if: false # APK intentionally paused at user request; only Godot and graphics tests run
         run: |
           set -o pipefail
           mkdir -p build
@@ -237,6 +243,7 @@ jobs:
             export.log
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
+        if: false # APK intentionally paused
         with:
           name: kingdom-chess-android
           path: build/kingdom-chess-debug.apk
