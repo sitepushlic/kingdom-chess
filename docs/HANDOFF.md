@@ -503,3 +503,15 @@ For EVERY future implementation session:
 3. Complete HP-aware checkmate/king defeat logic and action economy, add deterministic scenarios.
 4. Continue original authored GLB characters, gear rarity visuals, region art, animation/VFX, then profile on real Android.
 5. Record confirmed CI/export results, exact commits and remaining blockers in the next full handoff. No claims of APK/game completion without verified builds and playtests.
+
+## Full handoff — 2026-11-21, LAN snapshot schema
+
+**Game target:** Godot 4.3 Android 3D chess RPG, chess-legal movement/king objective, AP/HP combat, 30 unlockable heroes, seven equipment rarities, 18 missions across six regions, fair PvP, LAN co-op, original rigged 3D models and animations. Architecture: `scripts/main.gd` game/UI/LAN/save; `scripts/battlefield_3d.gd` 3D rendering; `scripts/progression.gd` progression; `scripts/hero_roster.gd` hero data; `tests/smoke.gd` regressions; `.github/workflows/android.yml` smoke and APK.
+
+**This run:** `5bf5ca5430ed338f6cb25f4dae8ea35d43d572d7` adds full `valid_raid_snapshot` validation of required typed network metadata, turn, AP, raid phase/stage, boss HP, target, wave, acted indices, board and HP before applying any client snapshot. `0ad275a4fbf399b0916722967f0c5bf6d317e344` adds tests for valid host snapshots, missing phase, invalid turn and invalid acted square. Source/test commits accepted by GitHub. This commit documents handoff.
+
+**Verification:** Godot CI run, Android APK and two-device LAN are NOT confirmed. Do not claim runtime success. Potential validator compatibility with all raid transitions and snapshots requires executing tests. No FPS measurements or Android playtests.
+
+**Remaining work:** complete HP-aware checkmate and no-softlock defensive AP; test LAN authority, reconnect and action replay; ensure all saved battles migrate safely; create/import commercial-quality original rigged 3D hero models, seven-tier gear visuals, animation/VFX and regional art; benchmark graphics quality tiers on real Android; audit campaign balance and hero unlock gates.
+
+**Next autonomous execution:** (1) obtain and inspect latest Actions job logs; fix errors; (2) verify raid snapshot schema against all gameplay states and extend host authority tests; (3) fix remaining chess/RPG endgame rules with deterministic tests; (4) implement authored GLB/animation and visual polish; (5) test Android and append exact commits, verification and risks to this full handoff. Earlier history retained above.
