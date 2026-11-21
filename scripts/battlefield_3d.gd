@@ -64,6 +64,11 @@ var fx_enabled := true
 # Geometry cache: instances retain independent transforms/materials, but identical
 # primitive vertex buffers are shared across chess tiles, castle and combat art.
 var primitive_mesh_cache: Dictionary = {}
+# Smooth biome lighting transitions without allocating materials or extra lights.
+var region_light_target: Color = Color("#7c92b1")
+var region_background_target: Color = Color("#0b1422")
+var region_rim_target: Color = Color("#ff9b4a")
+var region_light_transition := 0.0
 
 func set_visual_quality(tier: int) -> void:
 	visual_quality = clampi(tier, 0, 2)
@@ -1260,10 +1265,11 @@ func set_region(region_index: int) -> void:
 	# Region lighting changes the actual 3D scene, not just tile colours.
 	# Keep ambient illumination high enough to distinguish pieces on mobile.
 	var environment: Environment = world_environment.environment
-	environment.background_color = palette[0].darkened(0.72)
-	environment.ambient_light_color = palette[1].lightened(0.20)
+	region_background_target = palette[0].darkened(0.72)
+	region_light_target = palette[1].lightened(0.20)
+	region_rim_target = palette[2]
+	region_light_transition = 1.0
 	key_light.light_color = palette[1].lightened(0.35)
-	rim_light.light_color = palette[2]
 	rim_light.light_energy = 1.25 if region_index == 5 else 1.6
 	_rebuild_region_scenery(region_index, palette)
 	region_scenery.visible = visual_quality > 0
@@ -1611,6 +1617,19 @@ func _animate_limbs(rig: Node3D, clip: String) -> void:
 
 func _process(delta: float) -> void:
 	clock += delta
+	# A short palette crossfade makes each new region visually distinct.
+	if region_light_transition > 0.0 and world_environment != null:
+		var blend: float = minf(1.0, delta * 3.5)
+		var env: Environment = world_environment.environment
+		env.background_color = env.background_color.lerp(region_background_target, blend)
+		env.ambient_light_color = env.ambient_light_color.lerp(region_light_target, blend)
+		if rim_light != null:
+			rim_light.light_color = rim_light.light_color.lerp(region_rim_target, blend)
+		region_light_transition = maxf(0.0, region_light_transition - delta)
+		if region_light_transition == 0.0:
+			env.background_color = region_background_target
+			env.ambient_light_color = region_light_target
+			if rim_light != null: rim_light.light_color = region_rim_target
 	# Hidden lights and low-quality flames do not need per-frame updates.
 	if fx_enabled:
 		for i in range(torch_flames.size()):
