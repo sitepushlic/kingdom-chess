@@ -116,6 +116,28 @@ def validate(path, require_animation=True):
             index=gltf["accessors"][primitive["indices"]]
             assert index["count"]==36 and index["type"]=="SCALAR", f"{path}: expected 12 cube triangles"
             triangles += index["count"] // 3
+    # Verify triangle winding agrees with supplied outward normals; otherwise
+    # backface culling can make entire faces disappear in Godot.
+    first_primitive=gltf["meshes"][0]["primitives"][0]
+    def read_accessor(index):
+        accessor=gltf["accessors"][index]
+        view=gltf["bufferViews"][accessor["bufferView"]]
+        offset=json_end+8+8+view.get("byteOffset",0)+accessor.get("byteOffset",0)
+        component=accessor["componentType"]
+        width=COMPONENTS[accessor["type"]]
+        code={5126:"f",5123:"H",5125:"I"}[component]
+        values=struct.unpack_from("<"+code*(accessor["count"]*width),data,offset)
+        return [values[i:i+width] for i in range(0,len(values),width)]
+    verts=read_accessor(first_primitive["attributes"]["POSITION"])
+    normals=read_accessor(first_primitive["attributes"]["NORMAL"])
+    indices=[value[0] for value in read_accessor(first_primitive["indices"])]
+    for i in range(0,len(indices),3):
+        a,b,c=(verts[indices[i+j]] for j in range(3))
+        u=[b[j]-a[j] for j in range(3)]
+        v=[c[j]-a[j] for j in range(3)]
+        cross=(u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])
+        normal=normals[indices[i]]
+        assert sum(cross[j]*normal[j] for j in range(3))>0.1, f"{path}: triangle winding opposes face normal"
     # Each mesh is instanced by nodes; estimate actual rendered triangle load.
     estimated_triangles=sum(sum(gltf["accessors"][p["indices"]]["count"]//3 for p in gltf["meshes"][node["mesh"]]["primitives"]) for node in gltf["nodes"] if "mesh" in node)
     assert estimated_triangles <= 2000, f"{path}: excessive mobile triangle count {estimated_triangles}"
