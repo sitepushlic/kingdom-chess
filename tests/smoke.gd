@@ -156,6 +156,14 @@ func _run() -> void:
 				spine_skeleton = skeleton
 				break
 		_assert_ok(spine_skeleton != null, "Godot imports actual weighted torso Skeleton3D with hip and chest bones")
+		for limb_name in ["Arm1", "Arm-1", "Leg1", "Leg-1"]:
+			var limb_skeleton_found: bool = false
+			for candidate in authored_hero.find_children("*", "Skeleton3D", true, false):
+				var skeleton: Skeleton3D = candidate as Skeleton3D
+				if skeleton.find_bone(limb_name) >= 0 and skeleton.find_bone(limb_name + "Lower") >= 0:
+					limb_skeleton_found = true
+					break
+			_assert_ok(limb_skeleton_found, "Godot imports weighted upper/lower limb bones: " + limb_name)
 		_assert_ok(fallback_rig.get_node_or_null("Arm_L") == null, "Imported hero does not duplicate fallback arms")
 		_assert_ok(original_hero_visual.find_child("RangerHood", true, false) != null or original_hero_visual.find_child("KingCrownProng1", true, false) != null, "Imported hero preserves generated silhouette")
 		_assert_ok(original_hero_visual.find_child("SurfaceDetail", true, false) == null, "Imported hero avoids redundant legacy costume nodes")
