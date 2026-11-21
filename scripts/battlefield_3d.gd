@@ -147,12 +147,14 @@ func _ready() -> void:
 	_box(Vector3(9.2, 0.48, 9.2), _material(Color("#29202a"), 0.45), board_root, Vector3(0, -0.43, 0))
 	_box(Vector3(8.6, 0.13, 8.6), gold_material, board_root, Vector3(0, -0.13, 0))
 	tile_materials = [_material(Color("#28384b"), 0.22), _material(Color("#b7a58c"), 0.22)]
+	# Reuse a single highlight material instead of allocating 64 identical PBR materials.
+	var highlight_material: StandardMaterial3D = _material(Color("#63e4bc"), 0.15, 0.4, Color("#4dd5a9"))
 	for i in range(64):
 		var x := float(i % 8) - 3.5
 		var z := float(i / 8) - 3.5
 		var tile_mat: StandardMaterial3D = tile_materials[(int(i / 8) + i % 8) % 2]
 		tiles.append(_box(Vector3(0.985, 0.10, 0.985), tile_mat, board_root, Vector3(x, 0, z)))
-		var marker := _cylinder(0.43, 0.025, _material(Color("#63e4bc"), 0.15, 0.4, Color("#4dd5a9")), board_root, Vector3(x, 0.078, z))
+		var marker := _cylinder(0.43, 0.025, highlight_material, board_root, Vector3(x, 0.078, z))
 		marker.visible = false
 		highlights.append(marker)
 		var hazard_marker := _cylinder(0.47, 0.017, hazard_materials["frost"], board_root, Vector3(x, 0.096, z))
