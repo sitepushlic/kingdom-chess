@@ -1440,6 +1440,7 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 	anticipation.tween_property(attacker, "position", start + direction * 0.25 + Vector3(0, 0.19, 0), 0.12).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
 	anticipation.tween_property(attacker, "position", start, 0.17).set_trans(Tween.TRANS_BACK)
 	_spawn_attack_trail(source, target, magical)
+	_spawn_hit_impact(target, magical)
 	# Low graphics tier intentionally omits translucent attack geometry and
 	# camera shake; it still plays the complete actor animation.
 	if fx_enabled and visual_quality > 0 and board_root != null and distance_vector.length_squared() > 0.0001:
@@ -1468,6 +1469,35 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 			camera_shake.tween_property(camera, "position", base_camera_position + Vector3(0.09, -0.06, 0), 0.045)
 			camera_shake.tween_property(camera, "position", base_camera_position + Vector3(-0.07, 0.04, 0), 0.055)
 			camera_shake.tween_property(camera, "position", base_camera_position, 0.11)
+
+func _spawn_hit_impact(target: int, magical: bool) -> void:
+	# An impact must read at chessboard scale without adding GPU lights.
+	# All geometry is short-lived and released by its own tween.
+	if not fx_enabled or visual_quality == 0 or board_root == null: return
+	var center: Vector3 = _square_position(target) + Vector3(0, 0.16, 0)
+	var tint: Color = Color("#b79bff") if magical else Color("#ffbf72")
+	var material: StandardMaterial3D = _material(tint, 0.0, 0.2, tint)
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var shockwave: MeshInstance3D = _ring(0.24, 0.026, material, board_root, center)
+	shockwave.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	shockwave.scale = Vector3(0.35, 0.3, 0.35)
+	var ripple := create_tween()
+	ripple.set_parallel(true)
+	ripple.tween_property(shockwave, "scale", Vector3(2.6, 0.3, 2.6), 0.32).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	ripple.tween_property(shockwave, "transparency", 1.0, 0.32)
+	ripple.chain().tween_callback(shockwave.queue_free)
+	var count: int = 4 if visual_quality == 1 else 8
+	for i in range(count):
+		var angle: float = TAU * float(i) / float(count)
+		var radial: Vector3 = Vector3(cos(angle), 0, sin(angle))
+		var spark: MeshInstance3D = _sphere(0.045 if magical else 0.035, material, board_root, center + radial * 0.08)
+		spark.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var burst := create_tween()
+		burst.set_parallel(true)
+		burst.tween_property(spark, "position", center + radial * (0.34 if magical else 0.26) + Vector3(0, 0.36 + float(i % 3) * 0.09, 0), 0.26).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		burst.tween_property(spark, "scale", Vector3.ZERO, 0.26)
+		burst.chain().tween_callback(spark.queue_free)
 
 func _spawn_attack_trail(source: int, target: int, magical: bool) -> void:
 	# Layered rising energy trail. All transient geometry is released after the tween.
