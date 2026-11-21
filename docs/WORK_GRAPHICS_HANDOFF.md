@@ -418,3 +418,11 @@ Commits on `main`:
 - **`588a96e2dbee54190e48f17eb6e4ff38c9495245`**: core GLB validator requires signature headgear geometry to be parented to `Head` across all 72 characters.
 **Verification:** source changes committed. Complete GLB generation, Python validation, Godot import, CI and Android APK still have no confirmed successful run in this conversation. Do not describe as production-complete 3D.
 **Next:** obtain GitHub Actions logs/run IDs, fix any test/import/export failures; review neck/headgear movement, refine character silhouettes and environment, optimize Android rendering.
+
+## 47. Fix additional armor floating during attacks: shoulders and knees — 2026-11-21
+- **`e04a196fec563d11286ce62d5047ad4b3dd2be57`**: Forge archetype knee plates (`ForgeKnee1`, `ForgeKnee-1`) now initially attach to hip/leg pivots and then reparent to `Leg1Lower`/`Leg-1Lower`, preserving bind-space world position. They now inherit the knee/shin animation instead of floating under static BodyRig.
+- **`2bcc8678ed30ec6556cabd0f7a2249b22dfed96a`**, **`84d24e24c3cded5f62bffb0e9855d9c72d57bc05`**: independent rig QA and main GLB validator check forged knee parentage; rig QA additionally checks original world-space Y=0.36.
+- **`984b5836a0bb2a899c874c1ee84f121d9f34a8cf`**: royal shoulder pauldrons (`RoyalShoulder±1`) and the raider shoulder plate (`RaiderShoulder`) are now parented to their upper arm pivots so they swing with shoulder attacks while preserving original rest position.
+- **`826cf3219f4775de1b0d9a848fba9fe1f0f30924`**, **`b4489b42f40e4a724c1599f9fc3682175f72dd17`**: independent rig QA and main validator enforce upper-arm pauldron attachment, with original rest-height checks.
+**Verification limits:** GitHub source commits confirmed; full generator execution, Python tests, Godot import, runtime animation and Android APK remain unverified. The work fixes rig hierarchy by construction; actual visual results require running the engine.
+**Next:** prioritize obtaining CI run logs, execute 72-GLB generator/validators and Godot import, resolve any errors, then assess shoulder/knee clipping and expand character/environment 3D art.
