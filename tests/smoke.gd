@@ -76,6 +76,11 @@ func _run() -> void:
 					var reward: Dictionary = Progression.roll_item_for_progress(reward_level, reward_wins, reward_boss, 3)
 					_assert_ok(Progression.is_valid_equipment_item(reward), "Campaign reward remains a valid item")
 					_assert_ok(Progression.can_equip(reward, reward_wins, reward_level), "Campaign reward never rolls above player level or rarity gate")
+	# A common-rarity drop cannot carry legendary-tier power after reward gating.
+	for starter_attempt in range(100):
+		var gated_item: Dictionary = Progression.roll_item_for_progress(1, 0, true, 3)
+		_assert_ok(int(gated_item["power"]) <= 11, "Starter loot power stays within the level-one common-item roll range")
+		_assert_ok(Progression.can_equip(gated_item, 0, 1), "Gated starter reward is immediately usable")
 	_assert_ok(HeroRoster.HEROES.size() == 30, "30 unique authored heroes are available")
 	var hero_ids: Dictionary = {}
 	var rarity_counts: Dictionary = {}
