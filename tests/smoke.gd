@@ -1117,6 +1117,21 @@ func _run() -> void:
 	_assert_ok(game.battlefield_3d.highlights[60].material_override == game.battlefield_3d.selection_material, "Selected piece retains priority highlight")
 	game.battlefield_3d.sync_board(game.pieces, -1, [], -1)
 
+	# Last-move indicators must be real board-space rings, not new
+	# per-move allocations, and must clear on a new match.
+	_assert_ok(game.battlefield_3d.last_move_markers.size() == 2, "Two persistent 3D last-move rings exist")
+	game.battlefield_3d._set_last_move_visual(52, 36)
+	_assert_ok(game.battlefield_3d.last_move_cells == [52, 36], "Last-move history records source and destination")
+	_assert_ok(game.battlefield_3d.last_move_markers[0].visible and game.battlefield_3d.last_move_markers[1].visible, "Last-move rings become visible")
+	_assert_ok(game.battlefield_3d.last_move_markers[0].position.x == game.battlefield_3d._square_position(52).x, "Origin ring follows source chess square")
+	var original_last_move_mesh: Mesh = game.battlefield_3d.last_move_markers[0].mesh
+	game.battlefield_3d._set_last_move_visual(36, 28)
+	_assert_ok(game.battlefield_3d.last_move_markers[0].mesh == original_last_move_mesh, "Repeated moves reuse existing last-move mesh")
+	game.battlefield_3d._set_last_move_visual(-1, 90)
+	_assert_ok(game.battlefield_3d.last_move_cells == [36, 28], "Invalid move cannot corrupt last-move markers")
+	game.battlefield_3d.clear_last_move_visual()
+	_assert_ok(game.battlefield_3d.last_move_cells.is_empty() and not game.battlefield_3d.last_move_markers[0].visible and not game.battlefield_3d.last_move_markers[1].visible, "New match clears both last-move rings")
+
 	# The currently selected 3D square must pulse, while legal move
 	# indicators remain static and selection state resets on deselection.
 	game.battlefield_3d.sync_board(game.pieces, 60, [52], -1)
