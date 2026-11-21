@@ -358,6 +358,14 @@ func _load_authored_character(kind: String, parent: Node3D) -> bool:
 						if idle_animation != null:
 							idle_animation.loop_mode = Animation.LOOP_LINEAR
 						player.play(idle_name)
+						# Return to idle after one-shot hit, move, attack or cast.
+						# Signal is emitted by AnimationPlayer on clip completion.
+						player.animation_finished.connect(func(finished: StringName) -> void:
+							if not is_instance_valid(player) or not is_instance_valid(model):
+								return
+							if str(finished) != idle_name and player.has_animation(idle_name):
+								player.play(idle_name)
+						)
 				return true
 			model.free()
 	# An original static OBJ remains the art fallback if no GLB is available.
