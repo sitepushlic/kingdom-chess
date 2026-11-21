@@ -1402,6 +1402,33 @@ func _run() -> void:
 	if game.battlefield_3d.piece_nodes.has(4):
 		_assert_ok(absf((game.battlefield_3d.piece_nodes[4] as Node3D).position.y) < 0.001, "Boss returns to board height after enrage")
 
+	# Chained leap animation must cancel the previous leap and transfer
+	# the moving-square lock, even if the first tween has not advanced.
+	var leap_source: int = -1
+	for leap_cell in game.battlefield_3d.piece_nodes.keys():
+		if int(leap_cell) >= 48 and int(leap_cell) <= 63:
+			leap_source = int(leap_cell)
+			break
+	if leap_source >= 0:
+		var leap_actor: Node3D = game.battlefield_3d.piece_nodes[leap_source]
+		var leap_target_a: int = 40
+		var leap_target_b: int = 32
+		game.battlefield_3d.animate_move(leap_source, leap_target_a)
+		var first_leap: Tween = leap_actor.get_meta("move_tween", null) as Tween
+		_assert_ok(first_leap != null and game.battlefield_3d.moving_nodes.has(leap_target_a), "First 3D leap tracks actor and locks destination")
+		game.battlefield_3d.animate_move(leap_target_a, leap_target_b)
+		var second_leap: Tween = leap_actor.get_meta("move_tween", null) as Tween
+		_assert_ok(first_leap != null and not first_leap.is_running() and second_leap != first_leap, "Chained leap cancels old actor position tween")
+		_assert_ok(not game.battlefield_3d.moving_nodes.has(leap_target_a) and game.battlefield_3d.moving_nodes.has(leap_target_b), "Chained leap transfers moving-square lock")
+		if second_leap != null:
+			second_leap.kill()
+		game.battlefield_3d.moving_nodes.erase(leap_target_b)
+		game.battlefield_3d.piece_nodes.erase(leap_target_b)
+		game.battlefield_3d.piece_types.erase(leap_target_b)
+		game.battlefield_3d.piece_nodes[leap_source] = leap_actor
+		game.battlefield_3d.piece_types[leap_source] = str(game.pieces[leap_source])
+		leap_actor.position = game.battlefield_3d._square_position(leap_source)
+
 	# Floating combat numbers must be visible in the 3D SubViewport.
 	# The legacy 2D chess grid is hidden, so UI labels alone are insufficient.
 	var numbers_before: int = game.battlefield_3d.board_root.get_child_count()
