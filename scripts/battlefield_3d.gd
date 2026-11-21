@@ -52,6 +52,9 @@ func set_visual_quality(tier: int) -> void:
 	for index in range(torches.size()):
 		var light: OmniLight3D = torches[index]
 		light.visible = visual_quality >= 2 or (visual_quality == 1 and index % 2 == 0)
+		# Match decorative flame geometry to the light budget; invisible flames must not render.
+		if index < torch_flames.size():
+			torch_flames[index].visible = light.visible
 	if rim_light != null:
 		rim_light.visible = visual_quality > 0
 
