@@ -282,13 +282,22 @@ static func limit_reward_to_progress(item: Dictionary, wins: int, level: int) ->
 	return result
 
 static func roll_item_for_progress(level: int, wins: int, boss: bool = false, luck: int = 0) -> Dictionary:
-	var item: Dictionary = roll_item(level, boss, luck)
-	var cap: int = rarity_cap(wins, level)
-	if int(item["rarity"]) <= cap: return item
+	# Reward must be usable immediately: random item level can roll +1 above
+	# the player, while rarity is independently gated by wins AND level.
+	var player_level: int = clampi(level, 1, 50)
+	var item: Dictionary = roll_item(player_level, boss, luck)
+	var cap: int = rarity_cap(wins, player_level)
+	if int(item["rarity"]) <= cap and int(item["level"]) <= player_level:
+		return item
 	for attempt in range(40):
-		item = roll_item(level, boss, 0)
-		if int(item["rarity"]) <= cap: return item
-	return limit_reward_to_progress(item, wins, level)
+		item = roll_item(player_level, boss, 0)
+		if int(item["rarity"]) <= cap and int(item["level"]) <= player_level:
+			return item
+	# Preserve actual generated combat stats; only the legal rarity/level
+	# gates are lowered. Recalculate neither attack nor armor upward.
+	item = limit_reward_to_progress(item, wins, player_level)
+	item["level"] = mini(int(item["level"]), player_level)
+	return item
 
 static func roll_item(level: int, boss: bool = false, luck: int = 0) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
