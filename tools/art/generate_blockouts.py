@@ -411,26 +411,64 @@ def make_character(identifier, boss=False):
         # transform. All vertex positions already contain bind-space offsets.
         old_mesh["mesh"]=len(meshes)
         old_mesh["skin"]=len(skins)
+        # Subdivide the four side faces at the elbow/knee level. The
+        # additional middle ring prevents the entire limb from bending as
+        # a single stretched cube when the lower joint rotates.
+        limb_vertices=[]
+        limb_normals=[]
+        limb_triangles=[]
+        for normal,face in FACE_CORNERS:
+            if normal[1]!=0:
+                quads=[face]
+            else:
+                upper=[]
+                lower=[]
+                # FACE_CORNERS are ordered around each face; clip the quad
+                # against y=0 to create two independently weighted bands.
+                def clip_y(vertices,keep_above):
+                    result=[]
+                    for edge in range(len(vertices)):
+                        v=vertices[edge]
+                        w=vertices[(edge+1)%len(vertices)]
+                        inside_v=(v[1]>=0 if keep_above else v[1]<=0)
+                        inside_w=(w[1]>=0 if keep_above else w[1]<=0)
+                        if inside_v: result.append(v)
+                        if inside_v != inside_w:
+                            t=-v[1]/(w[1]-v[1])
+                            result.append(tuple(v[k]+t*(w[k]-v[k]) for k in range(3)))
+                    return result
+                quads=[clip_y(face,False),clip_y(face,True)]
+            for quad in quads:
+                assert len(quad)==4, f"Invalid limb quad {limb_name}: {quad}"
+                offset=len(limb_vertices)
+                limb_vertices.extend(quad)
+                limb_normals.extend([normal]*4)
+                limb_triangles.extend(offset+index for index in (0,1,2,0,2,3))
         verts=[]
         weights=[]
         joints=[]
-        for x,y,z in CUBE_VERTS:
+        for x,y,z in limb_vertices:
             verts.extend((center[0]+x*dimensions[0]/2,
                           center[1]+y*dimensions[1]/2,
                           center[2]+z*dimensions[2]/2))
-            distal=.82 if y<0 else .18
+            distal={-1:.12,0:.50,1:.88}[y]
             weights.extend((1-distal,distal,0,0))
             joints.extend((0,1,0,0))
         mins=[center[j]-dimensions[j]/2 for j in range(3)]
         maxs=[center[j]+dimensions[j]/2 for j in range(3)]
-        pos_index=accessor(verts,"72f",24,5126,"VEC3",34962,
+        vertex_count=len(limb_vertices)
+        pos_index=accessor(verts,str(vertex_count*3)+"f",vertex_count,5126,"VEC3",34962,
                            (mins,maxs))
-        joint_index=accessor(joints,"96B",24,5121,"VEC4",34962)
-        weight_index=accessor(weights,"96f",24,5126,"VEC4",34962)
+        normal_index=accessor([v for n in limb_normals for v in n],
+                              str(vertex_count*3)+"f",vertex_count,5126,"VEC3",34962)
+        joint_index=accessor(joints,str(vertex_count*4)+"B",vertex_count,5121,"VEC4",34962)
+        weight_index=accessor(weights,str(vertex_count*4)+"f",vertex_count,5126,"VEC4",34962)
+        triangle_index=accessor(limb_triangles,str(len(limb_triangles))+"H",
+                                len(limb_triangles),5123,"SCALAR",34963)
         meshes.append({"name":limb_name+"DeformingSurface","primitives":[{
-            "attributes":{"POSITION":pos_index,"NORMAL":normals,
+            "attributes":{"POSITION":pos_index,"NORMAL":normal_index,
                           "JOINTS_0":joint_index,"WEIGHTS_0":weight_index},
-            "indices":indices,"material":1}]})
+            "indices":triangle_index,"material":1}]})
         root=pivot["translation"]
         lower=[root[0],root[1]+lower_offset,root[2]]
         inverse=[]
