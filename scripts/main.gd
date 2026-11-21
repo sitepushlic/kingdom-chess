@@ -113,6 +113,8 @@ var battlefield_container: SubViewportContainer
 const GRAPHICS_SETTINGS_PATH := "user://graphics.cfg"
 var graphics_quality := 1
 var graphics_button: Button
+var coordinates_button: Button
+var coordinates_visible: bool = true
 var castle: Dictionary = {"forge":0,"barracks":0,"treasury":0,"academy":0,"infirmary":0}
 var castle_dialog: AcceptDialog
 var castle_list: ItemList
@@ -581,6 +583,8 @@ void fragment() {
 	_make_action_button("♟  МОЯ КОЛЛЕКЦИЯ ДОСОК", _open_board_gallery, column)
 	graphics_button = _make_action_button("", _cycle_graphics_quality, column)
 	_update_graphics_label()
+	coordinates_button = _make_action_button("", _toggle_coordinates, column)
+	_update_coordinates_label()
 	_make_action_button("❔  КАК ИГРАТЬ", _show_tutorial, column)
 	_make_action_button("ПРОДОЛЖИТЬ БИТВУ", _menu_continue, column)
 	main_menu.visible = true
@@ -739,6 +743,7 @@ func _load_graphics_quality() -> void:
 		var saved: Variant = config.get_value("graphics", "quality", 1)
 		if typeof(saved) == TYPE_INT:
 			graphics_quality = clampi(saved, 0, 2)
+		coordinates_visible = bool(config.get_value("graphics", "coordinates", true))
 
 func _update_graphics_label() -> void:
 	if graphics_button != null:
@@ -747,11 +752,27 @@ func _update_graphics_label() -> void:
 func _cycle_graphics_quality() -> void:
 	graphics_quality = (graphics_quality + 1) % 3
 	if battlefield_3d != null:
-		battlefield_3d.set_visual_quality(graphics_quality)
+	battlefield_3d.set_visual_quality(graphics_quality)
+	battlefield_3d.set_coordinate_labels_enabled(coordinates_visible)
+	_save_graphics_preferences()
+	_update_graphics_label()
+
+func _save_graphics_preferences() -> void:
 	var config := ConfigFile.new()
 	config.set_value("graphics", "quality", graphics_quality)
+	config.set_value("graphics", "coordinates", coordinates_visible)
 	config.save(GRAPHICS_SETTINGS_PATH)
-	_update_graphics_label()
+
+func _update_coordinates_label() -> void:
+	if coordinates_button != null:
+		coordinates_button.text = "♟  КООРДИНАТЫ: " + ("ВКЛ" if coordinates_visible else "ВЫКЛ")
+
+func _toggle_coordinates() -> void:
+	coordinates_visible = not coordinates_visible
+	if battlefield_3d != null:
+		battlefield_3d.set_coordinate_labels_enabled(coordinates_visible)
+	_save_graphics_preferences()
+	_update_coordinates_label()
 
 func _show_main_menu() -> void:
 	if not lan_connected:
