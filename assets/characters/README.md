@@ -24,3 +24,6 @@ The runtime uses `CHARACTER_SCENE_PATHS` and `_load_authored_character` in `scri
 
 ## Current original OBJ art
 Six original low-poly chess silhouettes are stored as `.obj` files. They are actual authored mesh assets and load via Godot's OBJ importer. Their geometry is intentionally simple; they are **not** skinned, do not include skeletal animation, and do not replace the requirement for polished rigged GLB hero/enemy models and PBR textures. Runtime character pivot animations work with these static meshes.
+
+## Asset selection priority (2026-11-21)
+The runtime now **prefers animated GLB PackedScenes**, then the original low-poly OBJ art, and finally procedural meshes. This ensures adding production-quality rigged models actually replaces placeholders. Current OBJ meshes receive separate class-specific metal costume geometry and emissive gemstone accents at runtime. These accents do not constitute PBR texture maps or skeletal animation.
