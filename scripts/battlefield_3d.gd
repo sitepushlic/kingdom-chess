@@ -1654,6 +1654,10 @@ func _process(delta: float) -> void:
 		if moving_nodes.has(index): continue
 		var actor: Node3D = piece_nodes[index]
 		if is_instance_valid(actor):
-			actor.rotation.y = sin(clock * 0.6 + float(index)) * (0.09 if index == 4 and boss_enraged else 0.035)
+			var idle_phase: float = clock * (0.83 if index == 4 else 1.15) + float(index) * 0.41
+			actor.rotation.y = sin(idle_phase) * (0.09 if index == 4 and boss_enraged else 0.035)
+			# Distinct subtle idle silhouettes: breathing and weight shift only.
+			# No square-coordinate displacement; movement tweens own the actor while active.
+			actor.rotation.z = sin(idle_phase * 0.72) * (0.014 if visual_quality >= 1 else 0.0)
 			if index == 4 and boss_enraged:
 				actor.position.y = 0.11 + sin(clock * 3.0) * 0.07
