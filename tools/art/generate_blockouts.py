@@ -34,6 +34,14 @@ def make_character(identifier, boss=False):
         [0.78,0.55,0.19,1], [0.36,0.67,0.70,1],
     ]
     accent = palette[(num-1)%len(palette)]
+    if identifier.startswith("enemy_"):
+        region = (num - 31)//6
+        biome_tint = [
+            [0.83,0.36,0.24,1], [0.39,0.73,0.95,1],
+            [0.25,0.70,0.43,1], [0.67,0.42,0.91,1],
+            [0.40,0.57,0.95,1], [0.82,0.20,0.38,1],
+        ][region]
+        accent = [round(accent[i]*.35 + biome_tint[i]*.65,4) for i in range(3)]+[1]
     if boss: accent = [0.72,0.16+num*0.04,0.27+num*0.03,1]
     mats = [
         {"name":"Armor","pbrMetallicRoughness":{"baseColorFactor":accent,"metallicFactor":0.65,"roughnessFactor":0.38}},
@@ -114,6 +122,21 @@ def make_character(identifier, boss=False):
     box("WeaponBlade",(.43,1.18,0),(.12,.47,.10),1)
     if identifier.startswith("enemy_"):
         region = (num - 31)//6
+        enemy_class = (num - 31)%6
+        # Each enemy chess class gets a different weapon or shield profile.
+        if enemy_class == 0:
+            box("PawnBuckler",(-.43,.88,-.12),(.34,.38,.10),1)
+        elif enemy_class == 1:
+            box("RookTowerShield",(-.46,.87,-.11),(.42,.64,.12),1)
+        elif enemy_class == 2:
+            box("KnightLance",(.43,1.26,0),(.09,1.12,.09),1)
+        elif enemy_class == 3:
+            box("BishopFocus",(-.44,1.45,-.07),(.22,.24,.18),3)
+        elif enemy_class == 4:
+            for side in (-1,1):
+                box("QueenTwinBlade"+str(side),(side*.46,1.16,-.10),(.11,.66,.10),1)
+        else:
+            box("KingGreatblade",(.43,1.20,0),(.26,.78,.11),3)
         for i in range(region + 1):
             box("RegionMark"+str(i),(-.24 + i*.085,1.02,-.19),(.06,.11,.07),3)
         if region >= 3:
