@@ -75,11 +75,26 @@ jobs:
           keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey
       - name: Check Python art pipeline syntax
         run: python3 -m compileall -q tools/art
+      - name: Cache generated 3D art for faster Godot builds
+        id: art-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            assets/characters/*.glb
+            assets/equipment/*.glb
+          key: kingdom-art-v3-${{ runner.os }}-${{ hashFiles('tools/art/generate_blockouts.py', 'tools/art/generate_equipment.py') }}
+      - name: Verify cached 3D art count
+        if: steps.art-cache.outputs.cache-hit == 'true'
+        run: |
+          test "$(find assets/characters -maxdepth 1 -name '*.glb' | wc -l)" -eq 72
+          test "$(find assets/equipment -maxdepth 1 -name '*.glb' | wc -l)" -eq 21
       - name: Generate original GLB character blockouts
+        if: steps.art-cache.outputs.cache-hit != 'true'
         run: |
           set -o pipefail
           python3 tools/art/generate_blockouts.py 2>&1 | tee art-generation.log
       - name: Generate 21 modular equipment GLBs
+        if: steps.art-cache.outputs.cache-hit != 'true'
         run: python3 tools/art/generate_equipment.py
       - name: Validate all generated GLB assets
         run: |
