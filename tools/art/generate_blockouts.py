@@ -134,6 +134,15 @@ def make_character(identifier, boss=False):
         box("Eye"+str(side),(side*.075,1.34,-.144),(.053,.047,.016),4 if boss else 1)
         box("CheekGuard"+str(side),(side*.142,1.25,-.09),(.045,.14,.11),1)
     box("BrowRidge",(0,1.405,-.14),(.25,.047,.04),1)
+    # Facial landmarks give each character a readable head at portrait
+    # camera distance. They are children of Head and inherit neck motion.
+    box("NoseBridge",(0,1.315,-.148),(.065,.125,.065),2)
+    box("NoseTip",(0,1.265,-.181),(.085,.052,.060),2)
+    box("Mouth",(0,1.204,-.145),(.105,.018,.023),0)
+    for side in (-1,1):
+        box("Pupil"+str(side),(side*.075,1.34,-.158),(.020,.024,.009),0)
+        box("Ear"+str(side),(side*.160,1.30,0),(.050,.115,.065),2)
+        box("LowerCheek"+str(side),(side*.100,1.226,-.124),(.095,.040,.034),2)
     box("BeltBuckle",(0,.57,-.153),(.12,.10,.055),3)
     box("ChestInsignia",(0,.92,-.143),(.16,.19,.045),3)
     for side in (-1,1):
