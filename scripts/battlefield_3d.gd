@@ -324,8 +324,15 @@ const CHARACTER_SCENE_PATHS := {
 }
 
 func _load_authored_character(kind: String, parent: Node3D) -> bool:
-	# Production-quality animated GLB must take priority over the low-poly OBJ placeholder.
+	# Original generated GLB blockouts are available when the art pipeline ran.
+	# Authored hero-ID meshes supersede the six class-only legacy placeholders.
 	var path: String = str(CHARACTER_SCENE_PATHS.get(kind, ""))
+	if not bool(parent.get_meta("hero", true)) and bool(parent.get_meta("boss", false)):
+		path = "res://assets/characters/boss_region_%d.glb" % clampi(current_region, 0, 5)
+	elif bool(parent.get_meta("hero", false)) and not selected_hero_visual.is_empty() and str(selected_hero_visual.get("piece", "")) == kind:
+		var hero_id: String = str(selected_hero_visual.get("id", ""))
+		if hero_id.is_valid_filename() and hero_id.begins_with("hero_"):
+			path = "res://assets/characters/%s.glb" % hero_id
 	if path != "" and ResourceLoader.exists(path):
 		var scene: Resource = load(path)
 		if scene is PackedScene:
@@ -575,6 +582,7 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	var unit := Node3D.new()
 	var white := letter == letter.to_upper()
 	unit.set_meta("hero", white)
+	unit.set_meta("boss", is_boss)
 	var material := hero_material if white else enemy_material
 	var accent := gold_material if white else dark_material
 	_cylinder(0.31, 0.16, accent, unit, Vector3(0, 0.08, 0))
