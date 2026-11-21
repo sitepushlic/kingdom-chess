@@ -1029,6 +1029,14 @@ func _run() -> void:
 	_assert_ok(game.sanitize_hero_poison({48: 2}, invalid_poison_board).is_empty(), "Enemy pawn cannot receive allied poison status")
 	invalid_poison_board[48] = "P"
 	_assert_ok(int(game.sanitize_hero_poison({48: 2}, invalid_poison_board).get(48, 0)) == 2, "Valid hero pawn retains poison")
+	# Every chess role gets a distinctive heraldic silhouette even if
+	# external GLB imports are absent. Check both teams and all six classes.
+	for role in ["P", "R", "N", "B", "Q", "K"]:
+		for team_role in [role, role.to_lower()]:
+			var plinth_test_unit: Node3D = game.battlefield_3d._build_piece(team_role, false, false)
+			var plinth: Node3D = plinth_test_unit.get_node_or_null("ClassInsignia_" + role)
+			_assert_ok(plinth != null and plinth.get_child_count() >= 2, "3D class heraldry has distinct geometry: " + team_role)
+			plinth_test_unit.queue_free()
 	var scenery_counts: Array[int] = []
 	var region_light_colors: Array[Color] = []
 	for region_index in range(6):
