@@ -394,6 +394,18 @@ def make_character(identifier, boss=False):
         limb_poses["attack"]["Arm-1"]=[0,.30,-.85,-.35,.25,0]
         limb_poses["cast"]["Arm1"]=[0,-.40,-1.70,-1.40,0]
         limb_poses["cast"]["Arm-1"]=[0,-.40,-1.70,-1.40,0]
+    def sample_motion(poses, target_count):
+        """Sample the complete gesture curve without dropping its final pose."""
+        if len(poses)==target_count:
+            return list(poses)
+        output=[]
+        for index in range(target_count):
+            phase=index*(len(poses)-1)/(target_count-1)
+            left=int(phase)
+            right=min(left+1,len(poses)-1)
+            blend=phase-left
+            output.append(poses[left]*(1-blend)+poses[right]*blend)
+        return output
     node_ids = {node["name"]: idx for idx,node in enumerate(nodes)}
     animations=[]
     for name,(times,positions) in clips.items():
@@ -451,10 +463,9 @@ def make_character(identifier, boss=False):
                 if name in ("move","attack","cast","idle"):
                     return (math.sin(half),0.0,0.0,math.cos(half))
                 return (0.0,0.0,math.sin(half),math.cos(half))
-            poses=[limb_quat(angle) for angle in angles]
-            if len(poses)!=len(times):
-                # Hold the last pose for clips with four timeline samples.
-                poses = (poses + [poses[-1]]*len(times))[:len(times)]
+            # Authored five/six-pose boss and archetype gestures are resampled
+            # to the clip timeline, preserving the recovery pose at the end.
+            poses=[limb_quat(angle) for angle in sample_motion(angles,len(times))]
             packed=[value for pose in poses for value in pose]
             output=accessor(packed,str(len(packed))+"f",len(poses),5126,"VEC4")
             samplers.append({"input":t,"output":output,"interpolation":"LINEAR"})
