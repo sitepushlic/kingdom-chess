@@ -149,7 +149,7 @@ func _run() -> void:
 	# Generated GLBs are required in CI before Godot import. Verify hero-ID
 	# and region-boss models really load and contain all six authored clip names.
 	var required_clips := ["idle", "move", "attack", "hit", "death", "cast"]
-	for asset_name in ["hero_01", "hero_15", "hero_30", "boss_region_0", "boss_region_5"]:
+	for asset_name in ["hero_01", "hero_15", "hero_30", "boss_region_0", "boss_region_5", "enemy_p_region_0", "enemy_n_region_3", "enemy_k_region_5"]:
 		var asset_path: String = "res://assets/characters/%s.glb" % asset_name
 		_assert_ok(ResourceLoader.exists(asset_path), "Generated GLB exists: " + asset_name)
 		var imported: Resource = load(asset_path)
