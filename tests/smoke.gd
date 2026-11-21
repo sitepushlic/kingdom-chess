@@ -1046,6 +1046,9 @@ func _run() -> void:
 		scenery_counts.append(scenery.get_child_count())
 		var landmark: Node3D = scenery.get_node_or_null("BiomeLandmark_%d" % region_index)
 		_assert_ok(landmark != null, "Each biome constructs its unique 3D landmark group")
+		_assert_ok(game.battlefield_3d.biome_landmark_motion.size() >= 1 and game.battlefield_3d.biome_landmark_motion.size() <= 4, "Each biome animates a bounded number of accent meshes")
+		for animated_accent in game.battlefield_3d.biome_landmark_motion:
+			_assert_ok(is_instance_valid(animated_accent["node"]), "Biome animated accents refer to live scene geometry")
 		if landmark != null:
 			_assert_ok(landmark.get_child_count() >= 10, "Each biome has substantial landmark geometry")
 			for part in landmark.get_children():
