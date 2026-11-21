@@ -78,6 +78,7 @@ var gear_material_cache: Dictionary = {}
 var equipment_scene_cache: Dictionary = {}
 var character_scene_cache: Dictionary = {}
 var health_bar_materials: Dictionary = {}
+var coordinate_labels: Array[Label3D] = []
 var fallback_costume_materials: Dictionary = {}
 var critical_health_material: StandardMaterial3D
 var combat_number_serial: int = 0
@@ -95,6 +96,8 @@ func set_visual_quality(tier: int) -> void:
 	fx_enabled = visual_quality > 0
 	if region_scenery != null:
 		region_scenery.visible = visual_quality > 0
+	# Coordinate labels are tactical UI: keep them visible at all quality tiers.
+	# They remain lightweight and are not affected by the scenery budget.
 	if key_light != null:
 		key_light.shadow_enabled = visual_quality >= 2
 	for index in range(torches.size()):
@@ -348,6 +351,7 @@ func _ready() -> void:
 			file_label.rotation_degrees = Vector3(-90, 0, 0)
 			file_label.no_depth_test = false
 			board_root.add_child(file_label)
+			coordinate_labels.append(file_label)
 			var rank_label := Label3D.new()
 			rank_label.name = "RankCoordinate_%s_%d" % [rank_text, side]
 			rank_label.text = rank_text
@@ -358,6 +362,7 @@ func _ready() -> void:
 			rank_label.rotation_degrees = Vector3(-90, 0, 0)
 			rank_label.no_depth_test = false
 			board_root.add_child(rank_label)
+			coordinate_labels.append(rank_label)
 	# Reuse a single highlight material instead of allocating 64 identical PBR materials.
 	var highlight_material: StandardMaterial3D = _material(Color("#63e4bc"), 0.15, 0.4, Color("#4dd5a9"))
 	for i in range(64):
