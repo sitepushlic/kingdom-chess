@@ -210,6 +210,23 @@ func _gear_material(slot: String) -> Material:
 	var palette := [Color("#b9c6d5"), Color("#62c7b6"), Color("#548dea"), Color("#aa78f5"), Color("#efac57"), Color("#e96d86"), Color("#fff0a4")]
 	return _material(palette[rarity], 0.82, 0.23, palette[rarity] * (0.18 + float(int(item.get("upgrade", 0))) * 0.04))
 
+# Physical rarity marks are deliberately countable at mobile scale; the seven tiers
+# have distinct silhouettes, not only different shader colors.
+func _add_rarity_insignia(slot: String, parent: Node3D, at: Vector3) -> void:
+	if not hero_gear.has(slot): return
+	var rarity: int = clampi(int(hero_gear[slot].get("rarity", 0)), 0, 6)
+	var crest := Node3D.new()
+	crest.name = "Rarity_" + slot
+	crest.position = at
+	parent.add_child(crest)
+	var mat: Material = _gear_material(slot)
+	# Tier zero has a single plain rivet; each higher tier adds a raised gem.
+	_sphere(0.055, mat, crest, Vector3.ZERO)
+	for n in range(rarity):
+		var angle: float = TAU * float(n) / float(maxi(rarity, 1))
+		var gem := _sphere(0.038, mat, crest, Vector3(cos(angle) * 0.13, 0.045, sin(angle) * 0.13))
+		gem.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
 const CHARACTER_SCENE_PATHS := {
 	"P": "res://assets/characters/pawn.glb",
 	"R": "res://assets/characters/rook.glb",
@@ -309,16 +326,19 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	if white and not hero_gear.is_empty():
 		if hero_gear.has("Тело"):
 			var armor_mat := _gear_material("Тело")
+			_add_rarity_insignia("Тело", unit, Vector3(0, 0.52, -0.26))
 			_cylinder(0.29, 0.15, armor_mat, unit, Vector3(0, 0.32, 0))
 			for side in [-1.0, 1.0]:
 				_box(Vector3(0.12, 0.28, 0.28), armor_mat, unit, Vector3(side * 0.27, 0.48, 0))
 		if hero_gear.has("Оружие"):
 			var weapon_mat := _gear_material("Оружие")
+			_add_rarity_insignia("Оружие", unit, Vector3(0.42, 1.15, 0))
 			_cylinder(0.045, 0.82, weapon_mat, unit, Vector3(0.42, 0.68, 0))
 			_box(Vector3(0.33, 0.065, 0.13), weapon_mat, unit, Vector3(0.42, 0.87, 0))
 			_cylinder(0.09, 0.21, weapon_mat, unit, Vector3(0.42, 1.13, 0), 0.015)
 		if hero_gear.has("Реликвия"):
 			var relic_mat := _gear_material("Реликвия")
+			_add_rarity_insignia("Реликвия", unit, Vector3(-0.39, 0.83, 0))
 			_sphere(0.13, relic_mat, unit, Vector3(-0.39, 0.81, 0))
 			_cylinder(0.05, 0.32, gold_material, unit, Vector3(-0.39, 0.57, 0))
 		var set_count := 0
