@@ -136,6 +136,8 @@ func _run() -> void:
 	game.battlefield_3d.set_selected_hero_visual(hero_visual)
 	_assert_ok(game.battlefield_3d.selected_hero_signature == "hero_01", "Selected hero identity reaches 3D renderer")
 	var original_hero_visual := game.battlefield_3d._build_piece("K")
+	_assert_ok(original_hero_visual.get_node_or_null("VisualRig") != null, "Humanoid character has a separate animation rig")
+	_assert_ok(original_hero_visual.find_child("HeroIdentity_01", true, false) != null, "Hero's identity mesh is attached to animation rig")
 	_assert_ok(original_hero_visual.find_child("HeroIdentity_01", true, false) != null, "Hero has a distinct visible 3D identity crest")
 	game.battlefield_3d.set_selected_hero_visual(HeroRoster.get_hero("hero_30"))
 	var rare_hero_visual := game.battlefield_3d._build_piece("K")
