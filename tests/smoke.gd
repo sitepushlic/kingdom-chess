@@ -143,6 +143,8 @@ func _run() -> void:
 		_assert_ok(authored_hero.find_child("Arm1", true, false) != null, "Imported hero has articulated right arm")
 		_assert_ok(authored_hero.find_child("Leg1", true, false) != null, "Imported hero has articulated right leg")
 		_assert_ok(fallback_rig.get_node_or_null("Arm_L") == null, "Imported hero does not duplicate fallback arms")
+		_assert_ok(original_hero_visual.find_child("RangerHood", true, false) != null or original_hero_visual.find_child("KingCrownProng1", true, false) != null, "Imported hero preserves generated silhouette")
+		_assert_ok(original_hero_visual.find_child("SurfaceDetail", true, false) == null, "Imported hero avoids redundant legacy costume nodes")
 	else:
 		_assert_ok(fallback_rig.get_node_or_null("Arm_L") != null and fallback_rig.get_node_or_null("Arm_R") != null, "Fallback humanoid has articulated arms")
 		_assert_ok(fallback_rig.get_node_or_null("Leg_L") != null and fallback_rig.get_node_or_null("Leg_R") != null, "Fallback humanoid has articulated legs")
@@ -152,6 +154,10 @@ func _run() -> void:
 	game.battlefield_3d.set_selected_hero_visual(HeroRoster.get_hero("hero_30"))
 	var rare_hero_visual := game.battlefield_3d._build_piece("K")
 	_assert_ok(rare_hero_visual.find_child("HeroIdentity_30", true, false) != null, "Highest rarity hero has distinct 3D crest")
+	var authored_boss_visual: Node3D = game.battlefield_3d._build_piece("k", true, false)
+	_assert_ok(authored_boss_visual.find_child("AuthoredCharacter", true, false) != null, "Regional boss imports its dedicated 3D scene")
+	_assert_ok(authored_boss_visual.find_child("EmberHorn1", true, false) != null or authored_boss_visual.find_child("GlacierSpire0", true, false) != null, "Regional boss retains authored physical landmarks")
+	authored_boss_visual.queue_free()
 	# Generated GLBs are required in CI before Godot import. Verify hero-ID
 	# and region-boss models really load and contain all six authored clip names.
 	var required_clips := ["idle", "move", "attack", "hit", "death", "cast"]
