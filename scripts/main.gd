@@ -1123,10 +1123,10 @@ func _effective_level() -> int:
 	return player_level
 
 func _attack_bonus() -> int:
-	return _item_stat("attack")
+	return _item_stat("attack") + (int(HeroRoster.get_hero(selected_hero)["attack"]) if mode == "raid" else 0)
 
 func _armor_bonus() -> int:
-	return _item_stat("armor")
+	return _item_stat("armor") + (int(HeroRoster.get_hero(selected_hero)["armor"]) if mode == "raid" else 0)
 
 func _max_hp(piece: String, friendly: bool = true) -> int:
 	return HP[piece.to_upper()] + (_item_stat("hp") + int(HeroRoster.get_hero(selected_hero)["hp"]) if friendly and mode == "raid" else 0)
@@ -1147,7 +1147,7 @@ func _deal_damage(target: int, raw_damage: int, attacker_is_hero: bool) -> int:
 				poison_marks[target] = mini(5, int(poison_marks.get(target, 0)) + 1)
 			var enemy_armor: int = (18 + raid_stage * 5) if target == 4 else (5 + raid_stage * 2)
 			amount = Progression.damage_after_armor(amount, enemy_armor, _item_stat("penetration"))
-			var crit_chance: int = _item_stat("crit")
+			var crit_chance: int = _item_stat("crit") + int(HeroRoster.get_hero(selected_hero)["crit"])
 			if randi_range(1, 100) <= crit_chance:
 				amount = int(ceil(amount * 1.5))
 				battle_log = "КРИТИЧЕСКИЙ УДАР!"
@@ -1915,7 +1915,7 @@ func _draw() -> void:
 	phase_label.text = "ФАЗА II • ЯРОСТЬ ПАДШЕГО" if boss_phase == 2 else "ФАЗА I • ПРОБУЖДЕНИЕ"
 	inventory_label.text = "Ур. %d  •  Опыт: %d/%d  •  Золото: %d  •  Зелья: %d" % [player_level,experience,Progression.experience_needed(player_level),gold,potions]
 	equipment_label.text = "⚔ +%d  ⛨ +%d  ♥ +%d  ✦ %d%%  ☽ %d%%\nТрофеи: %d  •  Побед: %d" % [_attack_bonus(),_armor_bonus(),_item_stat("hp"),_item_stat("crit"),_item_stat("lifesteal"),equipment.size(),raid_wins]
-	info.text = ("⛨ ЩИТ АКТИВЕН\n" if shield_active else "") + ("ГЛАВА %d • %s\nМИССИЯ: %s\nЦЕЛЬ: %s\nБОСС: %d/%d HP • Раунд %d\n" % [raid_stage, raid_region, str(raid_mission.get("title", raid_encounter)), str(raid_mission.get("goal", "Победи босса.")), boss_hp, 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35, raid_round] if mode == "raid" else "") + battle_log
+	info.text = ("♛ ЛИДЕР: %s • %s\n" % [HeroRoster.get_hero(selected_hero)["name"], HeroRoster.TIER_NAMES[int(HeroRoster.get_hero(selected_hero)["rarity"])]] if mode == "raid" else "") + ("⛨ ЩИТ АКТИВЕН\n" if shield_active else "") + ("ГЛАВА %d • %s\nМИССИЯ: %s\nЦЕЛЬ: %s\nБОСС: %d/%d HP • Раунд %d\n" % [raid_stage, raid_region, str(raid_mission.get("title", raid_encounter)), str(raid_mission.get("goal", "Победи босса.")), boss_hp, 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35, raid_round] if mode == "raid" else "") + battle_log
 	if selected >= 0 and selected < 64 and pieces[selected] != "":
 		var hero: String = pieces[selected]
 		var hero_attack: int = DAMAGE[hero.to_upper()] + ((_attack_bonus() + (_effective_level() - 1) * 2) if mode == "raid" and _team(hero) == 1 else 0)
