@@ -104,6 +104,47 @@ def build(slot, tier):
             for i in range(tier-3):
                 a=i*math.tau/(tier-3)
                 box("RelicCrystal"+str(i),(math.cos(a)*.15,math.sin(a)*.15,-.09),(.10,.14,.09),2,a)
+    # Rarity progression is geometric as well as chromatic: every item
+    # gains a distinctive physical silhouette and a readable enchanted core.
+    # The added shapes use existing meshes/materials, without new textures.
+    if slot=="weapon":
+        box("WeaponPommel",(0,-.24,0),(.16+tier*.018,.13,.15),1)
+        box("WeaponCrossguard",(0,.18,0),(.30+tier*.028,.08,.11),1)
+        if tier>=2:
+            for side in (-1,1):
+                box("WeaponGuardWing"+str(side),
+                    (side*(.20+tier*.014),.23,0),(.13,.19+tier*.025,.10),1,side*.24)
+        if tier>=4:
+            box("WeaponPowerCrystal",(0,1.23,0),(.16+tier*.016,.21+tier*.022,.11),2)
+        if tier>=6:
+            for side in (-1,1):
+                box("WeaponAscendantBlade"+str(side),
+                    (side*.33,.95,0),(.13,.52,.09),2,side*.26)
+    elif slot=="armor":
+        box("ArmorGorget",(0,.28,-.06),(.34+tier*.02,.11,.16),1)
+        box("ArmorCenterSeal",(0,-.025,-.15),(.12+tier*.014,.18+tier*.015,.045),1)
+        for side in (-1,1):
+            box("ArmorRibPlate"+str(side),(side*.22,-.18,-.08),
+                (.09+tier*.01,.22,.13),0,side*.10)
+        if tier>=3:
+            for side in (-1,1):
+                box("ArmorCrestFin"+str(side),(side*.31,.32,.03),
+                    (.10,.25+tier*.035,.12),1,side*.19)
+        if tier>=4:
+            box("ArmorPowerCrystal",(0,.11,-.20),(.14,.16,.07),2)
+    else:
+        box("RelicSocket",(0,-.19,.03),(.16+tier*.018,.15,.16),0)
+        for side in (-1,1):
+            box("RelicWing"+str(side),(side*(.17+tier*.013),.06,.015),
+                (.12,.22+tier*.025,.11),1,side*.22)
+        if tier>=2:
+            box("RelicRunePillar",(0,.28,.02),(.085,.25+tier*.028,.085),1)
+        if tier>=4:
+            box("RelicPowerCrystal",(0,.40,.02),(.14+tier*.014,.16,.12),2)
+        if tier>=6:
+            for side in (-1,1):
+                box("RelicAscendantRay"+str(side),(side*.32,.34,.01),
+                    (.10,.38,.10),2,side*.32)
     blob=bytearray()
     views=[]
     accessors=[]
