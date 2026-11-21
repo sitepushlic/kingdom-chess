@@ -13,6 +13,20 @@ func _assert_ok(condition: bool, description: String) -> void:
 		quit(1)
 
 func _run() -> void:
+	_assert_ok(Progression.rarity_cap(0, 1) == 0, "New players can only obtain common gear")
+	_assert_ok(Progression.upgrade_cap(0, 1) == 2, "New players cannot upgrade beyond +2")
+	_assert_ok(Progression.rarity_cap(18, 1) == 0, "Campaign wins alone cannot bypass level requirement")
+	_assert_ok(Progression.rarity_cap(0, 50) == 0, "High level alone cannot bypass chapter progression")
+	_assert_ok(Progression.rarity_cap(18, 35) == 6, "Endgame unlocks relic rarity after both gates")
+	_assert_ok(Progression.upgrade_cap(18, 35) == 12, "Endgame unlocks +12 upgrades")
+	var late_reward: Dictionary = Progression.first_clear_reward(3)
+	var early_reward: Dictionary = Progression.limit_reward_to_progress(late_reward, 3, 3)
+	_assert_ok(int(early_reward["rarity"]) <= Progression.rarity_cap(3, 3), "Chapter rewards obey rarity cap")
+	_assert_ok(int(early_reward["trait_id"]) == -1, "Early chapter reward cannot grant legendary trait")
+	_assert_ok(not Progression.can_equip(late_reward, 0, 1), "Starting player cannot equip overpowered chapter reward")
+	for loot_test in range(20):
+		var starter_drop: Dictionary = Progression.roll_item_for_progress(1, 0, true, 3)
+		_assert_ok(int(starter_drop["rarity"]) == 0, "Boss loot and luck cannot bypass starting rarity")
 	_assert_ok(HeroRoster.HEROES.size() == 30, "30 unique authored heroes are available")
 	var hero_ids: Dictionary = {}
 	var rarity_counts: Dictionary = {}
