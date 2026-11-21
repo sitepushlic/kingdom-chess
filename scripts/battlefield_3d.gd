@@ -64,6 +64,9 @@ var fx_enabled := true
 # Geometry cache: instances retain independent transforms/materials, but identical
 # primitive vertex buffers are shared across chess tiles, castle and combat art.
 var primitive_mesh_cache: Dictionary = {}
+# Reused VFX resources: avoid shader/material allocations on each attack.
+var impact_materials: Dictionary = {}
+var attack_trail_materials: Dictionary = {}
 # Smooth biome lighting transitions without allocating materials or extra lights.
 var region_light_target: Color = Color("#7c92b1")
 var region_background_target: Color = Color("#0b1422")
@@ -1553,9 +1556,13 @@ func _spawn_hit_impact(target: int, magical: bool) -> void:
 	if not fx_enabled or visual_quality == 0 or board_root == null: return
 	var center: Vector3 = _square_position(target) + Vector3(0, 0.16, 0)
 	var tint: Color = Color("#b79bff") if magical else Color("#ffbf72")
-	var material: StandardMaterial3D = _material(tint, 0.0, 0.2, tint)
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var key: String = "magic" if magical else "physical"
+	if not impact_materials.has(key):
+		var fresh: StandardMaterial3D = _material(tint, 0.0, 0.2, tint)
+		fresh.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		fresh.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		impact_materials[key] = fresh
+	var material: StandardMaterial3D = impact_materials[key]
 	var shockwave: MeshInstance3D = _ring(0.24, 0.026, material, board_root, center)
 	shockwave.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	shockwave.scale = Vector3(0.35, 0.3, 0.35)
@@ -1585,14 +1592,22 @@ func _spawn_attack_trail(source: int, target: int, magical: bool) -> void:
 	if direction.length_squared() < 0.01: return
 	var segments: int = 4 if visual_quality == 1 else 8
 	var tint: Color = Color("#b69bff") if magical else Color("#ffd68b")
-	var glow: StandardMaterial3D = _material(tint, 0.0, 0.15, tint)
-	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	glow.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.075 if magical else 0.052
-	mesh.height = 0.15 if magical else 0.104
-	mesh.radial_segments = 6
-	mesh.rings = 4
+	var trail_key: String = "magic" if magical else "physical"
+	if not attack_trail_materials.has(trail_key):
+		var trail_glow: StandardMaterial3D = _material(tint, 0.0, 0.15, tint)
+		trail_glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		trail_glow.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		attack_trail_materials[trail_key] = trail_glow
+	var glow: StandardMaterial3D = attack_trail_materials[trail_key]
+	var mesh_key: String = "trail_mesh:" + trail_key
+	if not primitive_mesh_cache.has(mesh_key):
+		var trail_mesh := SphereMesh.new()
+		trail_mesh.radius = 0.075 if magical else 0.052
+		trail_mesh.height = 0.15 if magical else 0.104
+		trail_mesh.radial_segments = 6
+		trail_mesh.rings = 4
+		primitive_mesh_cache[mesh_key] = trail_mesh
+	var mesh: Mesh = primitive_mesh_cache[mesh_key]
 	for step in range(segments):
 		var ratio: float = float(step + 1) / float(segments + 1)
 		var spark := MeshInstance3D.new()
