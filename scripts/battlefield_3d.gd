@@ -1160,8 +1160,14 @@ func set_boss_phase(phase: int) -> void:
 		var aura: Node3D = boss.find_child("BossEnrageAura", true, false) as Node3D
 		if aura != null: aura.visible = enraged and visual_quality > 0
 		var target_scale: Vector3 = Vector3.ONE * (1.42 if enraged else 1.12)
+		# A second phase transition may arrive before the first scale
+		# animation ends. Cancel the old tween before changing target.
+		var old_phase_tween: Tween = boss.get_meta("phase_scale_tween", null) as Tween
+		if old_phase_tween != null and old_phase_tween.is_running():
+			old_phase_tween.kill()
 		if phase_changed:
-			var burst := create_tween()
+			var burst := create_tween().bind_node(boss)
+			boss.set_meta("phase_scale_tween", burst)
 			burst.tween_property(boss, "scale", target_scale, 0.24).set_trans(Tween.TRANS_BACK)
 		else:
 			boss.scale = target_scale
