@@ -236,7 +236,12 @@ static func is_valid_equipment_item(item: Dictionary) -> bool:
 		return false
 	if int(item["trait_id"]) < -1 or int(item["trait_id"]) >= TRAITS.size():
 		return false
-	for stat in ["power", "attack", "armor", "hp", "crit", "lifesteal", "penetration", "block", "bleed"]:
+	# Never trust a locally edited save to inject million-point combat gear.
+	# The procedural generator stays far below these generous hard ceilings.
+	for stat in ["power", "attack", "armor", "hp"]:
+		if int(item[stat]) < 0 or int(item[stat]) > 10000:
+			return false
+	for stat in ["crit", "lifesteal", "penetration", "block", "bleed"]:
 		if int(item[stat]) < 0:
 			return false
 	for percent in ["crit", "lifesteal", "penetration", "block", "bleed"]:
