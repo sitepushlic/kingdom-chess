@@ -135,7 +135,34 @@ def make_character(identifier, boss=False):
         box("Mask",(0,1.37,-.17),(.41,.15,.15),1)
         box("MaskSpike",(0,1.57,0),(.08,.33,.10),3)
     box("WeaponGrip",(.43,.75,0),(.09,.61,.09),3)
-    box("WeaponBlade",(.43,1.18,0),(.12,.47,.10),1)
+    if boss:
+        # Bosses carry monumental, region-distinct relic weapons.
+        box("BossRelicBlade",(.43,1.22,0),(.19+num*.03,.58+num*.07,.12),1)
+        for i in range(num):
+            box("BossRelicProng"+str(i),(.30+i*.09,1.57+num*.03,0),(.08,.20,.10),3)
+    elif identifier.startswith("enemy_"):
+        box("EnemyBasicBlade",(.43,1.18,0),(.12,.47,.10),1)
+    else:
+        # Five hero fighting styles: each receives an original weapon
+        # silhouette in addition to the six distinct head signatures.
+        if family == 0:
+            box("RoyalLongsword",(.43,1.22,0),(.13,.59,.10),1)
+            box("RoyalCrossguard",(.43,.93,0),(.40,.075,.10),3)
+        elif family == 1:
+            box("RaiderAxeHaft",(.43,1.11,0),(.08,.62,.09),1)
+            box("RaiderAxeHead",(.59,1.42,0),(.38,.27,.12),1)
+        elif family == 2:
+            box("RangerBowStave",(.43,1.17,0),(.07,.77,.08),1)
+            for side in (-1,1):
+                box("RangerBowTip"+str(side),(.34,1.17+side*.36,0),(.24,.09,.08),3)
+        elif family == 3:
+            box("ForgeHammerHaft",(.43,1.12,0),(.08,.62,.08),1)
+            box("ForgeHammerHead",(.43,1.46,0),(.49,.20,.22),1)
+        else:
+            box("MageStaff",(.43,1.15,0),(.08,.75,.08),1)
+            box("MageCrystal",(.43,1.58,0),(.25,.28,.23),3)
+        for i in range(signature):
+            box("WeaponRune"+str(i),(.43,1.02+i*.07,-.09),(.055,.055,.045),3)
     if identifier.startswith("enemy_"):
         region = (num - 31)//6
         enemy_class = (num - 31)%6
