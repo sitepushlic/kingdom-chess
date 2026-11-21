@@ -293,10 +293,26 @@ static func roll_item_for_progress(level: int, wins: int, boss: bool = false, lu
 		item = roll_item(player_level, boss, 0)
 		if int(item["rarity"]) <= cap and int(item["level"]) <= player_level:
 			return item
-	# Preserve actual generated combat stats; only the legal rarity/level
-	# gates are lowered. Recalculate neither attack nor armor upward.
-	item = limit_reward_to_progress(item, wins, player_level)
+	# Do not disguise a high-rarity, high-power roll as common loot.
+	# A guaranteed legal baseline drop is preferable to an overpowered fallback.
+	item = roll_item(player_level, false, 0)
 	item["level"] = mini(int(item["level"]), player_level)
+	var rolled_rarity: int = int(item["rarity"])
+	if rolled_rarity > cap:
+		var adjusted_power: int = maxi(1, int(item["power"]) - (rolled_rarity - cap) * (4 + int(int(item["level"]) / 8.0)))
+		item["power"] = adjusted_power
+		item["rarity"] = cap
+		item["set_id"] = -1 if cap < 3 else int(item["set_id"])
+		item["trait_id"] = -1 if cap < 4 else int(item["trait_id"])
+		var slot: String = str(item["slot"])
+		item["attack"] = adjusted_power if slot == "Оружие" else int(adjusted_power * (0.18 if slot == "Тело" else 0.35))
+		item["armor"] = int(adjusted_power * (0.72 if slot == "Тело" else 0.08))
+		item["hp"] = adjusted_power * (3 if slot == "Тело" else (1 if slot == "Реликвия" else 0))
+		item["crit"] = mini(35, (2 + cap * 3 + int(adjusted_power / 12.0)) if slot == "Оружие" else (cap if slot == "Реликвия" else 0))
+		item["lifesteal"] = mini(24, 2 + cap * 2) if slot == "Реликвия" else 0
+		item["penetration"] = mini(40, 3 + cap * 4) if slot == "Оружие" else 0
+		item["block"] = mini(35, 3 + cap * 3) if slot == "Тело" else 0
+		item["bleed"] = 0
 	return item
 
 static func roll_item(level: int, boss: bool = false, luck: int = 0) -> Dictionary:
