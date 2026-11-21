@@ -130,3 +130,12 @@ Every development step saved to `main`:
 3. **`0269abcc1c1c7e74e5fa58a82885befbcc1aff85`** — imported AnimationPlayer resumes looping `idle` when a one-shot move/attack/hit/cast clip finishes, rather than freezing in its final action pose.
 **Verification:** GitHub commits saved, but Godot 4.3 import, Actions success, visual motion, and Android APK **not yet verified**. Generator and validator are not yet demonstrated to run successfully in this chat.
 **Remaining priority-1:** actual skinned/rigged hero GLBs (30), unique rigged enemies and six bosses, original 21 modular gear meshes with sockets, six polished authored biomes and 18 mission variants, improved materials/lighting/VFX, verified Godot/CI import and Android device performance. Generated blockouts remain temporary.
+
+## 14. Biome-specific enemy GLB pipeline — 2026-11-21
+- **`af9f9e331a48fc10165048c0cfc76c569569c7b5`**: generator now creates 36 additional enemy GLB blockouts (six chess classes × six regions). Total generated models: **72** (30 heroes, six bosses, 36 enemy variants).
+- **`25ec06aded9faa5e988519999888c8cd97421ef2`**: Python binary/animation validator requires all 72 assets.
+- **`5ea3aa057b7d976ce31fcebbe44cd25d8fb82224`**: battlefield loads `enemy_<class>_region_<region>.glb` for enemy non-boss pieces; bosses retain dedicated region GLBs.
+- **`e9e7f3155ff1f2fc098aeab7782010156f333743`**: enemy archetypes have distinct head silhouettes and region-marked geometry; later regions gain extra armor.
+- **`634c35bd80d5090b8d092bfdffe36cb50ae75adc`**: Godot smoke includes representative regional enemy GLB import and six animation checks.
+- **Verification:** GitHub code commits confirmed. 72 generated binaries, Python validation, Godot imports and Android APK have **not been observed successfully running**. All generated models remain stylized blockouts with independently animated rigid mesh nodes, not final skinned characters.
+- **Remaining:** actual CI run inspection and fixes; 30 fully skinned hero assets, enemy and boss art polish, skinned animation, 21 gear meshes with sockets, six polished regions and 18 mission variants, VFX, device performance, Android QA. Priority 1 not complete.
