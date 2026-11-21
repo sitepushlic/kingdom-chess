@@ -90,6 +90,36 @@ def validate(path, require_animation=True):
         assert gltf["accessors"][skin["inverseBindMatrices"]]["count"]==2, f"{path}: missing bind matrices"
         for joint_index in skin["joints"]:
             assert 0<=joint_index<node_count, f"{path}: invalid skin joint"
+        # A skin is only valid if each inverse-bind matrix cancels its
+        # joint's world-space rest transform. This catches distorted meshes
+        # that pass superficial JOINTS_0 / WEIGHTS_0 presence checks.
+        parents={}
+        for parent_index,node in enumerate(gltf["nodes"]):
+            for child in node.get("children",[]):
+                parents[child]=parent_index
+        def world_rest_translation(index):
+            result=[0.0,0.0,0.0]
+            while True:
+                node=gltf["nodes"][index]
+                # Generated joints have translation-only bind transforms.
+                assert "rotation" not in node or node["rotation"]==[0,0,0,1], f"{path}: nontrivial joint rest rotation needs full matrix validation"
+                for axis,value in enumerate(node.get("translation",[0,0,0])):
+                    result[axis]+=value
+                if index not in parents: break
+                index=parents[index]
+            return result
+        for skin_index,skin_data in enumerate(gltf["skins"]):
+            assert len(skin_data["joints"])==2, f"{path}: skin {skin_index} must use two joints"
+            ibm_accessor=gltf["accessors"][skin_data["inverseBindMatrices"]]
+            assert ibm_accessor["type"]=="MAT4" and ibm_accessor["count"]==2, f"{path}: skin {skin_index} invalid inverse binds"
+            ibm_view=gltf["bufferViews"][ibm_accessor["bufferView"]]
+            ibm_start=json_end+8+ibm_view.get("byteOffset",0)+ibm_accessor.get("byteOffset",0)
+            inverse_matrices=struct.unpack_from("<32f",data,ibm_start)
+            for joint_position,joint_index in enumerate(skin_data["joints"]):
+                matrix=inverse_matrices[joint_position*16:(joint_position+1)*16]
+                rest=world_rest_translation(joint_index)
+                assert all(abs(matrix[12+axis]+rest[axis])<1e-4 for axis in range(3)), f"{path}: skin {skin_index} inverse bind disagrees with joint rest pose"
+                assert all(abs(matrix[i]-1)<1e-5 for i in (0,5,10,15)), f"{path}: skin {skin_index} invalid bind matrix diagonal"
         skinned=[node for node in gltf["nodes"] if "skin" in node]
         assert len(skinned)==6 and {node["skin"] for node in skinned}==set(range(6)), f"{path}: missing skinned character meshes"
         assert {node.get("name") for node in skinned}=={"SkinnedCape","SkinnedTorso","Arm1Mesh","Arm-1Mesh","Leg1Mesh","Leg-1Mesh"}, f"{path}: unexpected skinned geometry"
