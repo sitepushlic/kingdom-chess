@@ -450,10 +450,11 @@ func set_selected_hero_visual(hero: Dictionary) -> void:
 	selected_hero_signature = next_signature
 	selected_hero_visual = hero.duplicate(true)
 	hero_model_cell = -1
-	# Force a fresh model on the next board synchronization so the selected
-	# hero's identity appears in 3D, not only in the roster UI.
-	for cell in piece_types.keys():
-		if str(piece_types[cell]) == str(hero.get("piece", "")):
+	# Refresh only the previous hero bearer. The next sync chooses a new
+	# eligible bearer without destroying every unit of the same class.
+	for cell in piece_nodes.keys():
+		var bearer: Node3D = piece_nodes[cell]
+		if bool(bearer.get_meta("selected_hero_piece", false)):
 			piece_types[cell] = ""
 
 func _add_hero_signature_costume(hero_number: int, rarity: int, parent: Node3D, mat: Material) -> void:
