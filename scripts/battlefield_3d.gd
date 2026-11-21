@@ -12,6 +12,7 @@ var hazard_markers: Array[MeshInstance3D] = []
 var king_warning: MeshInstance3D
 var checked_king_square := -1
 var poison_indicators: Dictionary = {}
+var enemy_poison_indicators: Dictionary = {}
 var active_hazards: Array[int] = []
 var hazard_type := ""
 var hazard_materials: Dictionary = {}
@@ -1384,17 +1385,24 @@ func set_hazards(cells: Array[int], modifier: String) -> void:
 		marker.visible = cells.has(index)
 		if marker.visible: marker.material_override = material
 
-func set_poison_indicators(statuses: Dictionary) -> void:
-	for cell in poison_indicators.keys():
-		if not statuses.has(cell):
-			(poison_indicators[cell] as MeshInstance3D).queue_free()
-			poison_indicators.erase(cell)
+func set_poison_indicators(statuses: Dictionary, enemy_statuses: Dictionary = {}) -> void:
+	# Hero debuffs and enemy poison stacks use separate floating 3D indicators.
+	# The effect is attached to a board cell but rebuilt as the unit moves.
+	_update_poison_marker_group(poison_indicators, statuses, hazard_materials["poison"], 2.25)
+	_update_poison_marker_group(enemy_poison_indicators, enemy_statuses, hazard_materials["poison"], 2.03)
+
+func _update_poison_marker_group(markers: Dictionary, statuses: Dictionary, material: Material, height: float) -> void:
+	for cell in markers.keys():
+		if not statuses.has(cell) or int(statuses.get(cell, 0)) <= 0:
+			if is_instance_valid(markers[cell]):
+				(markers[cell] as MeshInstance3D).queue_free()
+			markers.erase(cell)
 	for cell in statuses.keys():
 		if typeof(cell) != TYPE_INT or cell < 0 or cell >= 64: continue
-		if int(statuses[cell]) <= 0 or poison_indicators.has(cell): continue
-		var marker := _sphere(0.13, hazard_materials["poison"], board_root, _square_position(cell) + Vector3(0, 2.25, 0))
+		if int(statuses[cell]) <= 0 or markers.has(cell): continue
+		var marker: MeshInstance3D = _sphere(0.13, material, board_root, _square_position(cell) + Vector3(0, height, 0))
 		marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		poison_indicators[cell] = marker
+		markers[cell] = marker
 
 func set_checked_king(index: int) -> void:
 	checked_king_square = index if index >= 0 and index < 64 else -1
@@ -1814,6 +1822,15 @@ func _process(delta: float) -> void:
 	for marker in hazard_markers:
 		if marker.visible and fx_enabled:
 			marker.scale = Vector3(0.91 + 0.07 * sin(clock * 5.0), 1.0, 0.91 + 0.07 * sin(clock * 5.0))
+	if fx_enabled:
+		for cell in poison_indicators.keys():
+			var marker: MeshInstance3D = poison_indicators[cell]
+			if is_instance_valid(marker):
+				marker.position.y = 2.25 + 0.10 * sin(clock * 3.2 + float(cell) * 0.3)
+		for cell in enemy_poison_indicators.keys():
+			var marker: MeshInstance3D = enemy_poison_indicators[cell]
+			if is_instance_valid(marker):
+				marker.position.y = 2.03 + 0.13 * sin(clock * 4.1 + float(cell) * 0.45)
 	for index in piece_nodes.keys():
 		if moving_nodes.has(index): continue
 		var actor: Node3D = piece_nodes[index]
