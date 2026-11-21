@@ -154,6 +154,39 @@ func _ready() -> void:
 	_box(Vector3(9.2, 0.48, 9.2), _material(Color("#29202a"), 0.45), board_root, Vector3(0, -0.43, 0))
 	_box(Vector3(8.6, 0.13, 8.6), gold_material, board_root, Vector3(0, -0.13, 0))
 	tile_materials = [_material(Color("#28384b"), 0.22), _material(Color("#b7a58c"), 0.22)]
+	# A sculpted chessboard frame and coordinate markers make the 3D RPG
+	# arena immediately recognizable as chess, even without the HUD.
+	var edge_wood: StandardMaterial3D = _material(Color("#433246"), 0.18, 0.32)
+	var inlay: StandardMaterial3D = _material(Color("#e0bb74"), 0.72, 0.22)
+	for side in [-1, 1]:
+		_box(Vector3(9.1, 0.16, 0.18), edge_wood, board_root, Vector3(0, -0.035, float(side) * 4.13))
+		_box(Vector3(0.18, 0.16, 9.1), edge_wood, board_root, Vector3(float(side) * 4.13, -0.035, 0))
+		_box(Vector3(8.3, 0.035, 0.025), inlay, board_root, Vector3(0, 0.049, float(side) * 4.075))
+		_box(Vector3(0.025, 0.035, 8.3), inlay, board_root, Vector3(float(side) * 4.075, 0.049, 0))
+	for index in range(8):
+		var coordinate: String = "ABCDEFGH".substr(index, 1)
+		var rank_text: String = str(8 - index)
+		for side in [-1, 1]:
+			var file_label := Label3D.new()
+			file_label.name = "FileCoordinate_%s_%d" % [coordinate, side]
+			file_label.text = coordinate
+			file_label.font_size = 24
+			file_label.pixel_size = 0.0035
+			file_label.modulate = Color("#f4dca8")
+			file_label.position = Vector3(float(index) - 3.5, 0.075, float(side) * 4.26)
+			file_label.rotation_degrees = Vector3(-90, 0, 0)
+			file_label.no_depth_test = false
+			board_root.add_child(file_label)
+			var rank_label := Label3D.new()
+			rank_label.name = "RankCoordinate_%s_%d" % [rank_text, side]
+			rank_label.text = rank_text
+			rank_label.font_size = 24
+			rank_label.pixel_size = 0.0035
+			rank_label.modulate = Color("#f4dca8")
+			rank_label.position = Vector3(float(side) * 4.26, 0.075, float(index) - 3.5)
+			rank_label.rotation_degrees = Vector3(-90, 0, 0)
+			rank_label.no_depth_test = false
+			board_root.add_child(rank_label)
 	# Reuse a single highlight material instead of allocating 64 identical PBR materials.
 	var highlight_material: StandardMaterial3D = _material(Color("#63e4bc"), 0.15, 0.4, Color("#4dd5a9"))
 	for i in range(64):
