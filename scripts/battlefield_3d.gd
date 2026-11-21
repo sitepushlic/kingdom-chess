@@ -77,6 +77,7 @@ var gear_material_cache: Dictionary = {}
 var equipment_scene_cache: Dictionary = {}
 var character_scene_cache: Dictionary = {}
 var health_bar_materials: Dictionary = {}
+var fallback_costume_materials: Dictionary = {}
 var critical_health_material: StandardMaterial3D
 var combat_number_serial: int = 0
 var combat_number_limit: int = 18
@@ -707,9 +708,17 @@ func _load_authored_character(kind: String, parent: Node3D) -> bool:
 func _add_character_surface_detail(kind: String, white: bool, parent: Node3D) -> void:
 	# Low-poly OBJ art gains a legible, class-specific layered metal costume.
 	# Details are children of VisualRig and participate in all character animations.
-	var armor := _material(Color("#b5c6d4") if white else Color("#704d64"), 0.78, 0.29)
-	var edge := _material(Color("#f3d58b") if white else Color("#c85679"), 0.83, 0.22)
-	var gem := _material(Color("#63d8f3") if white else Color("#f15a99"), 0.22, 0.20, Color("#2289c0") if white else Color("#a91f57"))
+	var team_key: String = "hero" if white else "enemy"
+	if not fallback_costume_materials.has(team_key):
+		fallback_costume_materials[team_key] = [
+			_material(Color("#b5c6d4") if white else Color("#704d64"), 0.78, 0.29),
+			_material(Color("#f3d58b") if white else Color("#c85679"), 0.83, 0.22),
+			_material(Color("#63d8f3") if white else Color("#f15a99"), 0.22, 0.20, Color("#2289c0") if white else Color("#a91f57"))
+		]
+	var materials: Array = fallback_costume_materials[team_key]
+	var armor: Material = materials[0]
+	var edge: Material = materials[1]
+	var gem: Material = materials[2]
 	match kind:
 		"P":
 			_ring(0.20, 0.028, armor, parent, Vector3(0, 0.44, 0))
