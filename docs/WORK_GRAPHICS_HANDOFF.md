@@ -324,3 +324,11 @@ Commits on `main` this batch:
 - **`e55faa96063bd385120714ee1255f2d8fcdecd62`**, **`641b1d195ffdde343b2304949be1e8ff9348ec4b`**: integrated these negative tests into both fast art CI and Android CI.
 **Observed verification:** only successful GitHub file commits; no actual Python validator, Godot import or Android APK execution observed. The strict six-skeleton expectation could reveal importer differences; if it fails, inspect actual imported `Skeleton3D` trees rather than weakening tests without evidence.
 **Next priority:** obtain Actions job logs and correct failures; verify APK, inspect visual deforming rigs and socket alignment on device, then progress beyond blockout geometry.
+
+## 35. Expanded animation and glTF binary corruption gates — 2026-11-21
+Commits:
+- **`a23cb12395061e1cd596d9c0bc5396a1d6bf4318`**: GLB validator now rejects misaligned accessors, invalid matrix component types and incomplete or invalid bounding metadata.
+- **`c822668ad3a4222a538987ec7f5207d4c818b974`**: added three more negative regression tests: animation key count mismatch, duplicate timeline timestamp and misaligned buffer view. Combined regression suite now tests six deliberately corrupted GLBs plus a pristine GLB.
+- **`ab728d445491c24e68f56177c9d381a244cbcb21`**: motion validator now checks all **36 enemy characters** across six animations and seven deforming/animated joints, including attack recovery, in addition to 30 heroes and six bosses.
+**Important status:** GitHub source commits succeeded. No successful CI run, local Python execution, Godot import or Android APK observed. The expanded tests are unverified until a runner executes them. This work improves defect detection, not visual production quality.
+**Next:** read actual GitHub Actions failures, repair the generator/import/validator as required, confirm APK; then prioritize improved original character topology, materials and mobile device visual QA.
