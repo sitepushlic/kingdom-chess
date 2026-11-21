@@ -130,6 +130,7 @@ func set_visual_quality(tier: int) -> void:
 
 var hero_model_cell: int = -1
 var move_material: StandardMaterial3D
+var capture_material: StandardMaterial3D
 
 func _material(color: Color, metallic: float = 0.0, roughness: float = 0.42, emission: Color = Color.BLACK) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -250,6 +251,7 @@ func _ready() -> void:
 	selection_material = _material(Color("#f6c76b"), 0.2, 0.3, Color("#9d5732"))
 	danger_material = _material(Color("#ed5c65"), 0.2, 0.3, Color("#9d5732"))
 	move_material = _material(Color("#61d7b6"), 0.2, 0.3, Color("#9d5732"))
+	capture_material = _material(Color("#f5a258"), 0.24, 0.28, Color("#a65b21"))
 	hazard_materials = {"frost": _material(Color("#68d6ff"), 0.15, 0.24, Color("#2a8acb")), "poison": _material(Color("#a9e967"), 0.15, 0.24, Color("#5d9c2b")), "rift": _material(Color("#d78aff"), 0.15, 0.24, Color("#903bd2")), "boss": _material(Color("#ff6c77"), 0.18, 0.22, Color("#cf3346"))}
 	var world := WorldEnvironment.new()
 	var env := Environment.new()
@@ -1669,7 +1671,12 @@ func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int,
 			highlights[index].scale = Vector3.ONE
 			highlights[index].position.y = 0.078
 		if highlights[index].visible:
-			highlights[index].material_override = selection_material if index == selected else (danger_material if index == danger else move_material)
+			var is_capture: bool = false
+			if selected >= 0 and selected < 64 and legal_squares.has(index) and piece != "":
+				var attacker: String = str(pieces[selected])
+				if attacker != "":
+					is_capture = (attacker == attacker.to_upper()) != (piece == piece.to_upper())
+			highlights[index].material_override = selection_material if index == selected else (danger_material if index == danger else (capture_material if is_capture else move_material))
 	for index in piece_nodes.keys():
 		if not moving_nodes.has(index):
 			var piece_node: Node3D = piece_nodes[index]
