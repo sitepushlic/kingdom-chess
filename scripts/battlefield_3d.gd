@@ -73,6 +73,7 @@ var attack_trail_materials: Dictionary = {}
 var biome_material_cache: Dictionary = {}
 var gear_material_cache: Dictionary = {}
 var equipment_scene_cache: Dictionary = {}
+var character_scene_cache: Dictionary = {}
 var castle_material_cache: Dictionary = {}
 # Smooth biome lighting transitions without allocating materials or extra lights.
 var region_light_target: Color = Color("#7c92b1")
@@ -602,6 +603,17 @@ const CHARACTER_SCENE_PATHS := {
 	"K": "res://assets/characters/king.glb"
 }
 
+func _get_character_scene(path: String) -> PackedScene:
+	if character_scene_cache.has(path):
+		return character_scene_cache[path] as PackedScene
+	if not ResourceLoader.exists(path):
+		return null
+	var resource: Resource = load(path)
+	if resource is PackedScene:
+		character_scene_cache[path] = resource
+		return resource as PackedScene
+	return null
+
 func _load_authored_character(kind: String, parent: Node3D) -> bool:
 	# Original generated GLB blockouts are available when the art pipeline ran.
 	# Authored hero-ID meshes supersede the six class-only legacy placeholders.
@@ -615,10 +627,10 @@ func _load_authored_character(kind: String, parent: Node3D) -> bool:
 		var hero_id: String = str(selected_hero_visual.get("id", ""))
 		if hero_id.is_valid_filename() and hero_id.begins_with("hero_"):
 			path = "res://assets/characters/%s.glb" % hero_id
-	if path != "" and ResourceLoader.exists(path):
-		var scene: Resource = load(path)
-		if scene is PackedScene:
-			var model: Node = (scene as PackedScene).instantiate()
+	if path != "":
+		var scene: PackedScene = _get_character_scene(path)
+		if scene != null:
+			var model: Node = scene.instantiate()
 			if model is Node3D:
 				model.name = "AuthoredCharacter"
 				parent.add_child(model)
