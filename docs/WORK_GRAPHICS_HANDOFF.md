@@ -197,3 +197,8 @@ A substantial continuous batch was committed directly to `main`:
 - **`b7de4cdbe90428d33a1696358b19b0e273baa078`**: CI publishes all 93 generated GLBs as a downloadable 14-day art-pack artifact.
 **Verification:** GitHub commits confirmed. This environment cannot reach GitHub raw URLs to run Python scripts locally; no Godot binary is available. CI status, generated artifact and Android APK remain **unverified**, not passed. The models are low-poly articulated blockouts, not fully skinned character assets.
 **Remaining priority 1:** observe real GitHub Actions run and logs, resolve any generator/Godot errors, upgrade to actual skinning and skeletal rigs, build polished hero/monster designs, improve lighting/material textures and 18 locations, Android device profiling and QA.
+
+## 21. Downloadable art inspection manifest — 2026-11-21
+- **`fb371b426ac923ba721042cbaa9b35235bc80073`**: `tools/art/export_art_report.py` emits `build/art_manifest.json` listing all 93 GLBs with SHA-256, file size, rendered triangle count, node count, materials, clip names and geometry signatures.
+- **`47bf9afe3bb358a8f0a876741b484fdb76355e4b`**, **`2788bc1626eb97c6bd69588c4bed148f530bdf1f`**: Android workflow syntax-checks, generates and uploads this manifest alongside 93-GLB art pack and import/smoke diagnostics.
+- **Verification remains pending:** scripts and CI changes committed, but the actual Python run, Godot import and Android build have not been observed succeeding. No green status should be claimed.
