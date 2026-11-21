@@ -1446,7 +1446,48 @@ func _team(p: String) -> int:
 	if p == "": return 0
 	return 1 if p == p.to_upper() else -1
 
+# A threatened king cannot walk into a square attacked by an enemy chess piece.
+# This uses geometric threats, independent of HP: even a surviving defender
+# controls its capture squares. Raid boss movement is handled separately.
+func _king_destination_safe(source: int, destination: int) -> bool:
+	if source < 0 or source >= 64 or destination < 0 or destination >= 64: return false
+	var moving_team: int = _team(pieces[source])
+	if moving_team == 0: return false
+	var simulated: Array = pieces.duplicate()
+	simulated[destination] = simulated[source]
+	simulated[source] = ""
+	for enemy in range(64):
+		if _team(simulated[enemy]) != -moving_team: continue
+		if _chess_attacks_square(simulated, enemy, destination): return false
+	return true
+
+# Pure attack geometry: pawns threaten diagonals even when a square is empty.
+func _chess_attacks_square(board: Array, source: int, target: int) -> bool:
+	if source < 0 or source >= 64 or target < 0 or target >= 64 or source == target: return false
+	var piece: String = str(board[source])
+	if piece == "": return false
+	var dr: int = int(target / 8) - int(source / 8)
+	var dc: int = target % 8 - source % 8
+	var kind: String = piece.to_upper()
+	if kind == "P":
+		return dr == (-1 if piece == "P" else 1) and absi(dc) == 1
+	if kind == "N": return (absi(dr) == 2 and absi(dc) == 1) or (absi(dr) == 1 and absi(dc) == 2)
+	if kind == "K": return maxi(absi(dr), absi(dc)) == 1
+	if kind == "R" and dr != 0 and dc != 0: return false
+	if kind == "B" and absi(dr) != absi(dc): return false
+	if kind == "Q" and not (dr == 0 or dc == 0 or absi(dr) == absi(dc)): return false
+	var step_r: int = signi(dr)
+	var step_c: int = signi(dc)
+	var r: int = int(source / 8) + step_r
+	var c: int = source % 8 + step_c
+	while r != int(target / 8) or c != target % 8:
+		if board[r * 8 + c] != "": return false
+		r += step_r
+		c += step_c
+	return true
+
 func _legal(a: int, b: int) -> bool:
+	if a < 0 or a >= 64 or b < 0 or b >= 64: return false
 	if a == b or pieces[a] == "": return false
 	if _team(pieces[a]) == _team(pieces[b]): return false
 	var p: String = pieces[a].to_upper()
@@ -1457,7 +1498,9 @@ func _legal(a: int, b: int) -> bool:
 	var dr: int = r1 - r0
 	var dc: int = c1 - c0
 	if p == "N": return (abs(dr) == 2 and abs(dc) == 1) or (abs(dr) == 1 and abs(dc) == 2)
-	if p == "K": return max(abs(dr),abs(dc)) == 1
+	if p == "K":
+		if maxi(absi(dr), absi(dc)) != 1: return false
+		return mode == "raid" or _king_destination_safe(a, b)
 	if p == "P":
 		var f := -1 if _team(pieces[a]) == 1 else 1
 		if dc == 0 and pieces[b] == "":
