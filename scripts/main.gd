@@ -2145,6 +2145,7 @@ func _draw() -> void:
 		battlefield_3d.set_region(clampi(raid_stage - 1, 0, 5) if mode == "raid" else 0)
 		battlefield_3d.set_boss_phase(boss_phase if mode == "raid" else 1)
 		battlefield_3d.set_hero_gear(equipment, equipped_slots)
+		battlefield_3d.set_selected_hero_visual(HeroRoster.get_hero(selected_hero))
 		var forecast: Array[int] = []
 		var boss_forecast: Array[int] = []
 		if mode == "raid" and winner == "":
