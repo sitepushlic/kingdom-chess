@@ -1230,6 +1230,14 @@ func _run() -> void:
 	game.battlefield_3d.show_combat_number(60, 0)
 	_assert_ok(game.battlefield_3d.board_root.get_child_count() == numbers_valid, "Invalid cells and zero values cannot allocate combat labels")
 
+	# Main gameplay events must invoke the 3D label path and avoid the
+	# invisible legacy button-label animation on the hidden chess grid.
+	var old_2d_children: int = game.buttons[60].get_child_count()
+	var before_popup_3d: int = game.battlefield_3d.board_root.get_child_count()
+	game._damage_popup(60, 19, false)
+	_assert_ok(game.battlefield_3d.board_root.get_child_count() > before_popup_3d, "Gameplay damage popup reaches visible 3D scene")
+	_assert_ok(game.buttons[60].get_child_count() == old_2d_children, "Hidden 2D grid does not allocate invisible damage labels")
+
 	# Quality-tier combat regression: low graphics must never allocate
 	# translucent transient meshes, while medium retains visible impacts.
 	game.battlefield_3d.set_visual_quality(0)
