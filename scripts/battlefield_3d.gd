@@ -44,6 +44,8 @@ var fx_enabled := true
 func set_visual_quality(tier: int) -> void:
 	visual_quality = clampi(tier, 0, 2)
 	fx_enabled = visual_quality > 0
+	if region_scenery != null:
+		region_scenery.visible = visual_quality > 0
 	if key_light != null:
 		key_light.shadow_enabled = visual_quality >= 2
 	for index in range(torches.size()):
@@ -516,6 +518,7 @@ func set_region(region_index: int) -> void:
 	rim_light.light_color = palette[2]
 	rim_light.light_energy = 1.25 if region_index == 5 else 1.6
 	_rebuild_region_scenery(region_index, palette)
+	region_scenery.visible = visual_quality > 0
 
 func set_hazards(cells: Array[int], modifier: String) -> void:
 	if active_hazards == cells and hazard_type == modifier: return
@@ -711,6 +714,7 @@ func _process(delta: float) -> void:
 		if torches[i].visible:
 			torches[i].light_energy = 1.15 + flicker * 0.22
 	for n in range(animated_scenery.size()):
+		if not fx_enabled: break
 		var orb: MeshInstance3D = animated_scenery[n]
 		if is_instance_valid(orb):
 			orb.position.y = 1.60 + sin(clock * 1.8 + float(n) * 1.57) * 0.15
