@@ -79,6 +79,7 @@ var equipment_scene_cache: Dictionary = {}
 var character_scene_cache: Dictionary = {}
 var health_bar_materials: Dictionary = {}
 var coordinate_labels: Array[Label3D] = []
+var coordinates_enabled: bool = true
 var fallback_costume_materials: Dictionary = {}
 var critical_health_material: StandardMaterial3D
 var combat_number_serial: int = 0
@@ -207,6 +208,13 @@ func _ring(major_radius: float, tube_radius: float, material: Material, parent: 
 	instance.position = at
 	parent.add_child(instance)
 	return instance
+
+func set_coordinate_labels_enabled(enabled: bool) -> void:
+	# Tactical labels can be hidden without touching the chessboard meshes.
+	coordinates_enabled = enabled
+	for coordinate_label in coordinate_labels:
+		if is_instance_valid(coordinate_label):
+			coordinate_label.visible = enabled
 
 func set_board_visual_style(style_index: int) -> void:
 	# -1 returns to the current biome palette; other choices persist across
@@ -352,6 +360,7 @@ func _ready() -> void:
 			file_label.no_depth_test = false
 			board_root.add_child(file_label)
 			coordinate_labels.append(file_label)
+			file_label.visible = coordinates_enabled
 			var rank_label := Label3D.new()
 			rank_label.name = "RankCoordinate_%s_%d" % [rank_text, side]
 			rank_label.text = rank_text
@@ -363,6 +372,7 @@ func _ready() -> void:
 			rank_label.no_depth_test = false
 			board_root.add_child(rank_label)
 			coordinate_labels.append(rank_label)
+			rank_label.visible = coordinates_enabled
 	# Reuse a single highlight material instead of allocating 64 identical PBR materials.
 	var highlight_material: StandardMaterial3D = _material(Color("#63e4bc"), 0.15, 0.4, Color("#4dd5a9"))
 	for i in range(64):
