@@ -1205,6 +1205,16 @@ func _run() -> void:
 	var medium_fx_before: int = game.battlefield_3d.board_root.get_child_count()
 	game.battlefield_3d.hit(60)
 	_assert_ok(game.battlefield_3d.board_root.get_child_count() > medium_fx_before, "Medium graphics tier creates visible combat impact VFX")
+	var shock_mesh: Mesh = game.battlefield_3d.primitive_mesh_cache["hit_shock_torus"]
+	var hit_material: Material = game.battlefield_3d.impact_materials["damage"]
+	game.battlefield_3d.hit(60, true)
+	_assert_ok(game.battlefield_3d.primitive_mesh_cache["hit_shock_torus"] == shock_mesh, "Healing and damage share the same torus mesh")
+	_assert_ok(game.battlefield_3d.impact_materials.has("heal"), "Healing VFX uses distinct mint-colored material")
+	var heal_material: Material = game.battlefield_3d.impact_materials["heal"]
+	game.battlefield_3d.hit(60, false)
+	game.battlefield_3d.hit(60, true)
+	_assert_ok(game.battlefield_3d.impact_materials["damage"] == hit_material and game.battlefield_3d.impact_materials["heal"] == heal_material, "Repeated heals and damage reuse cached VFX materials")
+
 	game.battlefield_3d.set_visual_quality(0)
 	var low_self_before: int = game.battlefield_3d.board_root.get_child_count()
 	game.battlefield_3d.attack(60, 60, true)
