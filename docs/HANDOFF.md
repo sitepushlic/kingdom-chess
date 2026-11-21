@@ -1,3 +1,19 @@
+## 2026-11-21 — LIVE LEGENDARY VFX, BOSS STATE, ATTACK RESOURCE REUSE (LATEST)
+**Standing requirements:** Do maximum meaningful work per turn, always update HANDOFF, finish game graphics/gameplay. **APK build/export/signing explicitly paused until user reverses it.** No claims of successful Godot tests without actual logs.
+
+### Committed to GitHub main in this pass
+- `83cb5ed0` **Boss visual state survives actor recreation:** `sync_board` now immediately restores phase-two aura visibility and 1.42x boss scale when a new king/boss is instantiated mid-enrage; `set_region` also resets shared boss crown color and emission outside enrage, avoiding stale boss tint.
+- `ecac49ea` **Legendary gear dynamic graphics settings:** high-rarity equipment now creates at most two socket-bound `EnchantmentHalo_*` rings once, independent of initial graphics setting. `set_visual_quality(0/1/2)` hides both / shows first / shows both without reloading the GLB or rebuilding a character. Metadata `enchantment_level` drives visibility. This fixes low->high graphics previously never restoring absent gear VFX.
+- `7a0e1632` **Gear regression tests:** verify two tier-six halos, low/medium/high visibility toggles on a tracked actor, and restore the original test piece/gear afterward.
+- `8d9a8b36` **Attack resource reuse:** melee/magic beam meshes cached by attack type, quality and quantized chess-square distance, and two shared PBR materials. Avoids allocating new CylinderMesh and StandardMaterial3D per attack. Individual MeshInstance3D and tween remain independent.
+- `4a7f46b4` **Attack regression:** repeated same-length physical attacks reuse the same cached mesh/material; magic attack gets separate geometry/material.
+- `61f0d80f` **Floating label lifecycle:** world-space damage/heal label tweens are now bound to their Label3D nodes, so 18-label cap evictions cannot leave active tweens targeting freed nodes.
+
+### Verification / remaining
+- GitHub source edits committed. **Full Godot import, Python art generation, tests and CI passing not confirmed in this session.** These tests were written, not executed.
+- Prior fixes include boss aura recursive lookup under `VisualRig`, regional HP preservation, 72 GLB character cache, 21 gear cache, visible 3D combat HUD.
+- Next: obtain first actual CI failure logs, run Python art validators and Godot smoke, fix failures, improve visual quality and character animations, check economy/balance and polish UX. **Do not touch APK.**
+
 ## 2026-11-21 — CRITICAL HP READABILITY AND 3D COMBAT UI PERFORMANCE (LATEST)
 **Standing user instructions:** Make as much meaningful progress per turn as possible; update HANDOFF on every turn; finish game/graphics. **Do not build/export/sign APK until user explicitly reverses instruction.** Never claim tests passed without execution evidence.
 
