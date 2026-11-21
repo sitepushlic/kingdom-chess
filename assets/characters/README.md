@@ -1,6 +1,6 @@
 # Original 3D character assets — import contract
 
-The engine can now load six original Godot-imported GLB character models from this directory. **No GLB files are shipped yet.** The current runtime renders procedural chess-piece placeholders until an original model is committed.
+The engine can now load six original Godot-imported GLB character models from this directory. **Six original low-poly OBJ meshes are now shipped** (pawn, rook, knight, bishop, queen, king). These are simple authored geometric chess characters, not rigged commercial-quality GLBs. The runtime prefers each OBJ mesh, then tries a matching GLB, then uses procedural fallback.
 
 | Chess class | Asset file | Facing |
 |---|---|---|
@@ -21,3 +21,6 @@ The engine can now load six original Godot-imported GLB character models from th
 
 ## Integration
 The runtime uses `CHARACTER_SCENE_PATHS` and `_load_authored_character` in `scripts/battlefield_3d.gd`. Imported scenes must remain loadable through Godot's `ResourceLoader`. Run the Godot smoke tests and Android export after adding each asset. Verify animations and draw calls on physical devices.
+
+## Current original OBJ art
+Six original low-poly chess silhouettes are stored as `.obj` files. They are actual authored mesh assets and load via Godot's OBJ importer. Their geometry is intentionally simple; they are **not** skinned, do not include skeletal animation, and do not replace the requirement for polished rigged GLB hero/enemy models and PBR textures. Runtime character pivot animations work with these static meshes.
