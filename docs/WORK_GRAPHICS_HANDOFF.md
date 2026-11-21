@@ -47,8 +47,14 @@ Starting SHA: `b5858e4618c25f6fe1481c8aaea3d1f0cf086f69`.
 - Root cause isolated locally: Godot 4.3 treats `.blend` files under the project as Blender-importable scenes and hangs when Blender source is in the scanned resource tree. Six authored GLBs import successfully. Moving the editable `.blend` into `assets/characters/authored_details/blender_source/` with `.gdignore` allows editor import to complete (exit 0).
 - With the fix staged locally: Godot 4.3 editor import passed; main scene remained running until expected 25 s timeout (124) with no matched parser/import errors; `tests/smoke.gd` reached `KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED`, including all six new detail assertions. Headless dummy-renderer `mesh_get_surface_count(null)` warnings were emitted by existing smoke setup. Exact-commit CI is still required.
 
+### Import fix verified — source commit `b7d103a715df773d4e7b34b0d3c51456dcd050ee`
+- Updated `tools/art/create_hero_signatures_batch_01.py` to save the editable `.blend` under the ignored source folder and disabled Blender `.blend1` backups. Tracked `blender_source/.gdignore`; the six GLBs stay in the Godot-scanned assets folder.
+- Local Python art checks passed: compileall, 72 character GLBs, 21 gear GLBs, 30/6/36 motion validation, 288 limbs/72 torsos, 432 rig attachments, all 16 corruption cases rejected, and reproducibility for 93 GLBs.
+- Local Godot 4.3: editor import exit 0; main scene reached expected 25 s timeout (124) with no matched load/parser errors; smoke reached its passing marker and new six detail assertions. Harmless headless dummy-renderer null-mesh warnings remain visible in smoke output.
+- Exact-commit Actions passed: [fast art 44943423313](https://github.com/sitepushlic/kingdom-chess/actions/runs/44943423313) and [Godot 4.3 44943423402](https://github.com/sitepushlic/kingdom-chess/actions/runs/44943423402), job `136965398081`; import, main-scene launch, and gameplay smoke all succeeded.
+
 ### Next action
-Commit this import fix and updated source path; verify both workflows for the new exact source SHA. Then build the first full original rigged hero body and clips, not only more head accessories. APK remains untouched.
+Build the first full original rigged hero body and required animation clips using the established source/export/import path; keep the six signature modules attached to the animated head. Then repeat the exact Godot and art checks. APK remains untouched.
 
 ## 1. USER'S DIRECT ORDERS — HIGHEST PRIORITY
 1. Finish **priority 1: complete playable 3D graphics** for Kingdom Chess, not a demo, static concept art, or another batch of superficial procedural blockouts.
