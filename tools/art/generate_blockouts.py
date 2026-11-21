@@ -391,8 +391,8 @@ def make_character(identifier, boss=False):
         old_mesh_index=next(i for i in pivot["children"]
                             if nodes[i].get("name")==limb_name+"Mesh")
         old_mesh=nodes[old_mesh_index]
-        # Reuse the original mesh node as a skinned node, but move it under
-        # BodyRig so its world transform remains identity at bind time.
+        # Reuse the original mesh node as a skinned node under BodyRig.
+        # Its bind-pose geometry is authored in BodyRig-local coordinates.
         pivot["children"].remove(old_mesh_index)
         nodes[1]["children"].append(old_mesh_index)
         center=[pivot["translation"][j]+old_mesh["translation"][j]
@@ -407,6 +407,8 @@ def make_character(identifier, boss=False):
         old_mesh.pop("scale",None)
         old_mesh.pop("rotation",None)
         old_mesh["translation"]=[0,0,0]
+        # Imported skinned meshes must not retain the original rigid cube
+        # transform. All vertex positions already contain bind-space offsets.
         old_mesh["mesh"]=len(meshes)
         old_mesh["skin"]=len(skins)
         verts=[]
