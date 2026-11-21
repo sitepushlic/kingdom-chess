@@ -70,3 +70,12 @@ This batch is committed to `main`, not verified in Godot:
 - `5826ab4cda349a3aa1a14431f5cbd6065dd09162`: tests 21 tier/slot mesh combinations.
 - Environment check in this session: local runtime has neither Godot nor Blender; no actual Godot parser/test run, Android APK or visual device inspection was performed. **The code is unverified and may have errors.** Run Godot 4.3 headless and fix any errors before relying on it.
 - Highest priority next: install/run Godot in a capable environment; audit smoke test and 3D node tree; produce original rigged GLB characters, boss art and modular equipment; integrate authored animation clips and mobile performance; complete 6 regions and Android checks. Preserve priority 1 restriction.
+
+## 7. Subsequent graphics batch — 2026-11-21
+Committed to `main`:
+- `8b460b5cd86a7086158e4902446aa0d305898ab2`: six unique large region background constructions (furnace gate, glacier arch, sacred tree, astral library portal, storm observatory, void throne) beyond the existing 12 perimeter props and four corner monuments.
+- `7e70db4d5c666c2813ff198e7a43d6d310e1168f`: smoke tests building all six region backdrops and checking nonempty 3D geometry.
+- `1ab1b9da0cf0eeca5058b2874a47fb58ace0b54c`: six region-specific boss adornment silhouettes integrated into `_build_piece` when `is_boss`. Boss model still uses procedural base mesh; not a finished authored/rigged boss.
+- Environment check: local execution runtime has Python `trimesh` and `numpy` but neither Godot nor Blender binaries. Godot smoke tests and Android export **not run**; tests are added but **unverified**. Need inspect actual Godot import and CI errors as next priority.
+- **Important:** current boss model is constructed using `current_region`; when changing region while the same boss node persists, `sync_board` may need explicit rebuild to refresh boss adornments. Verify and fix.
+- Do not report priority 1 as completed. Original rigged GLBs, animation library, authored 21 equipment variants, mission-specific environments, device performance and Android validation remain.
