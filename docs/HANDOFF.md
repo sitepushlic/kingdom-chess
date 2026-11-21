@@ -457,3 +457,27 @@ For EVERY future implementation session:
 3. Add authored/licensed 3D characters and animations, optimize render resources and profile on Android.
 4. Run reproducible campaign progression/balance simulations; verify rarity and hero unlocks at all gates.
 5. Record exact commits and verified/unverified test outcomes in the next full handoff, without claiming finished game or FPS.
+
+## FULL HANDOFF — 2026-11-21, AP budget integrity
+
+### Product and system state
+- Goal: Godot 4.3 portrait Android 3D chess/RPG preserving chess geometry and king victory, with HP, damage, defensive skills, action points, fair PvP, quest-gated heroes and equipment, campaign, authored 3D models, animations and VFX.
+- Implemented foundations: 30 hero definitions; seven gear rarity tiers; 18 campaign missions in six regions; arena and raid modes; chess attack geometry and HP-aware capture checks; procedural 3D board, scenery, lighting, check warning and three graphics tiers; save and LAN framework. None of this implies full game QA or commercial-ready graphics.
+- Architecture: `scripts/main.gd` gameplay/UI/LAN/save, `scripts/battlefield_3d.gd` 3D presentation, `scripts/progression.gd` loot and campaign, `scripts/hero_roster.gd` heroes, `tests/smoke.gd` headless tests, `.github/workflows/android.yml` CI/export.
+
+### Commits this run
+- `42b73cdc6d5450cbffdcbccf92f5a79f383ed8d7`: reject all `_tap` actions when AP is zero or negative. Previously `_tap` lacked an AP guard, allowing an extra action when invoked with AP=0, including through LAN host processing. This preserves intended two-action budget; defensive AP replenishment in `_end_turn` remains separate.
+- `e96c21089b7c8711dd1f78c93e3a9429c2fe75e7`: regression tests verify that no-AP taps do not select units or alter the board and that regular play resumes after AP restoration.
+- This documentation commit records full state, risks and next steps.
+
+### Validation and unresolved blockers
+- GitHub accepted the code and test commits. Latest Actions run status **not confirmed**. Web access to the Actions listing was unavailable and GitHub commit combined statuses previously returned empty. Do not claim the smoke tests or Android APK succeeded.
+- Existing test suite needs execution in Godot 4.3 headless; tests for checkmate, king HP, legal captures and AP/turn boundaries need extension. Real-device Android frame-rate, thermal, input and two-phone networking are unmeasured.
+- Commercial-quality rigged 3D character art, animations, original regional environments and seven distinct equipment rarity appearances are unfinished. Gameplay balance, campaign variety, audio, UX and persistence migration need QA.
+
+### Autonomous next steps
+1. Obtain latest GitHub Actions run/job logs through available connector or GitHub UI; fix failures and verify APK export.
+2. Audit LAN host action validation and turn/AP authority; add tests for invalid RPC, action replay and checkmate/AP softlocks.
+3. Implement and import original authored GLB heroes and animation sets; verify license and Android rendering.
+4. Expand deterministic battle simulation and progression tests for all unlock gates, check responses, and HP rules.
+5. Profile Android hardware, then update this full handoff with measured results and exact commits. Do not claim production readiness without real test evidence.
