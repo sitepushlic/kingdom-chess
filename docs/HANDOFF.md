@@ -1,3 +1,21 @@
+## 2026-11-21 — EXTENDED CHARACTER RIG / EQUIPMENT CACHE / QA PASS (LATEST)
+**User constraints:** Make maximal substantive progress per turn; update HANDOFF each time. **Do not build/export/sign APK** until explicitly requested. Keep reports short and factual. No green Godot or asset-generation run has been observed; do not assert success.
+
+### Committed on main this pass
+- `3cd2b827` **Fix actual art validator defect:** a literal `\\n` embedded in a Python comment accidentally commented out the 2,500-triangle-per-character assert. Restored an active assertion, updated 6,000-triangle cap to account for new geometry. **Not benchmarked on mobile**; cap is a conservative provisional bound, not measured performance.
+- `79e481c0` **Animated rig attachment:** newly generated enemy pawn dagger, knight lance, queen sceptre, rook shield and boss wing armor now follow corresponding animated arm pivots. Head pieces including new ascendant wings and moon blades follow `Head` rather than floating at world position.
+- `465d2ab6` **CI cleanup:** removed obsolete `export_presets.cfg` requirement from Godot-only art/test workflow; no Android export steps added.
+- `f3422bc0` **Rig regression QA:** `tools/art/test_rig_attachments.py` now asserts correct parent hierarchy and finite world bind positions for new hero head ornaments, enemy role weapons, crowns and boss wings.
+- `f3862f30` **Runtime equipment optimization:** `scripts/battlefield_3d.gd` now caches imported `PackedScene` per one of 21 GLB equipment paths and PBR gear material per `slot:rarity:upgrade` to avoid repeated load and material allocation during inventory changes.
+- `107f69ab` **GDScript parse fix:** corrected branch indentation after equipment cache refactor (73 nested lines adjusted).
+- `66d16afb` **Gameplay smoke tests:** assert 21 imported GLBs return stable scene identities, no cache duplicates, same rarity/upgrade reuses material, changing upgrade creates distinct material.
+- Previous pass (immediately preceding): 30 hero identity silhouette enhancements, 36 enemy chess role loadouts, six boss crown variants, 21 enhanced equipment GLBs, strict validator checks (`f6d76a47`, `d7a44b30`, `1aa5b505`, `e76f641a`, `06365f17`).
+
+### Verification and remaining risks
+- Changes are committed to GitHub main, but **full GLB generation, Python validator execution, Godot import, smoke tests and visual inspection have NOT been confirmed green** in this session. This runtime has no local Godot executable and cannot reach GitHub raw URLs; GitHub connector has file editing but no generic latest workflow run listing.
+- High priority: inspect first failed GitHub Actions diagnostics; run full Python art generation and tests; fix any parse/mesh/rigger issues. Then validate 72 characters and 21 equipment imports in a real Godot renderer, optimize on mobile, complete game UX/balance. No APK work.
+- Keep checking possible GDScript warnings from type inference and Godot GLB skeleton bone mapping. Never claim finished or tested until verified.
+
 ## 2026-11-21 — MAJOR 3D CHARACTER AND EQUIPMENT SILHOUETTE PASS (LATEST)
 **User standing instruction:** maximize substantive work per turn; update HANDOFF every turn. **APK is paused: do not export, build or sign APK until explicitly requested.** Continue completing game and production graphics. Do not claim tests passed without logs.
 
