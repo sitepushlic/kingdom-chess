@@ -224,6 +224,15 @@ func _run() -> void:
 		_assert_ok(region_meshes >= 20, "Region %d has 3D environmental landmarks" % region_index)
 		region_counts.append(region_meshes)
 	_assert_ok(region_counts.size() == 6, "Six distinct environment scenes can be constructed")
+	# Three mission layouts per region must be visually distinct.
+	game.battlefield_3d.set_region(2)
+	var mission_geometry_counts: Array[int] = []
+	for variant in range(3):
+		game.battlefield_3d.set_mission_visual_variant(variant)
+		mission_geometry_counts.append(game.battlefield_3d.region_scenery.get_child_count())
+	_assert_ok(mission_geometry_counts[0] != mission_geometry_counts[1], "Mission standard and obelisk layouts have distinct geometry")
+	_assert_ok(mission_geometry_counts[1] != mission_geometry_counts[2], "Mission obelisk and ward layouts have distinct geometry")
+	game.battlefield_3d.set_mission_visual_variant(0)
 	game.battlefield_3d.set_region(1)
 
 	game.battlefield_3d.set_visual_quality(0)
