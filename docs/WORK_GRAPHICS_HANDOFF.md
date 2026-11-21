@@ -163,3 +163,15 @@ Implemented as one continuous batch (no user involvement):
 - **`cdc5e0d81a6b95d508312562d5161132211917f5`**: CI checks Python syntax for all three art scripts before generating assets.
 - **`172b334487be29d81469af83918cabe4dea5f095`**, **`4bc9fce949512c7d17d10bd3d060fe73cd3dd5d0`**: character and equipment blockout PBR materials use double-sided rendering so cuboid faces remain visible despite minimal shared-vertex geometry.
 - The 93 GLB files are expected outputs of CI generators, **not** committed binaries or proof of successful execution. Environment lacks Godot/Blender and outbound DNS, so the GitHub Actions result and Android APK are **not verified**. Next highest priority is obtaining real CI logs and resolving any failures before claiming asset pipeline passes.
+
+## 18. Full-batch graphics hardening and articulation — 2026-11-21
+User requested the maximum practical work in one pass; changes committed directly to `main`:
+- **`e2666df24a106268e1bbe76aa0cdd9b8ce7c82e3`**: imported equipment retains stable `Rarity_<slot>` marker, fixing a regression against existing Godot smoke tests.
+- **`963c92ac6839f5e246423f0b0ec0249853ed071f`**: changing selected hero invalidates only the previous bearer, not every unit of that chess class.
+- **`f2f27d05816b20cdab0f9884708af7c0d87ba3c6`**: generated characters now have independent shoulder/hip pivot nodes and child limb meshes. Rotations happen at joints rather than mesh centers. **Not skinned/skeletal rigs**.
+- **`c8e4ac9bd23bc252d630be6677af18e3e159de98`**: validator enforces pivot-to-mesh hierarchy for arms/legs on all 72 character GLBs.
+- **`24efc07f85d013e283f405de84e77c6ea069e488`**: validator checks scene graph indices, animation targets, sampler indices and keyframe counts.
+- **`a65cf1a61751f441dbec0edaf1ce0439e2ff0ad1`**: all 30 heroes receive class-family weapon silhouettes and signature runes; six bosses get distinct oversized relic weapons.
+- **`f1fe114770ae3f6a9a926d26f97822a57b9eba5d`**, **`b5a0cfb5d8e3f8f64c553f12da5cd33039771f6b`**: new `tools/art/check_reproducibility.py` and CI step regenerate all 93 GLBs and verify byte-for-byte SHA-256 equality.
+**Verification:** GitHub commits confirmed; neither local Python generator execution nor Godot import nor Android APK has been observed succeeding. GitHub workflow-run lookup for a prior commit returned no PR-triggered runs, **not** proof of success or failure. Tests are committed but their pass status remains unknown.
+**Remaining priority-1:** actual CI execution/logs, skinned/rigged production assets for 30 heroes + 36 enemies + six bosses, refined equipment sockets and textures, six final 3D biomes/18 levels, effects, Android performance and device QA. Do not call this graphics-complete.
