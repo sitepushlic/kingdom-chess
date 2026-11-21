@@ -159,3 +159,10 @@ For EVERY future implementation session:
 - Commit `0c24e10` (`tests/smoke.gd`): extended smoke tests to write a poisoned battle to disk, clear live status, restore it and verify the remaining two ticks. Added invalid-status recovery cases for enemy units, out-of-range cells, excessive durations and nonnumeric values, plus legacy save compatibility.
 - These tests exercise the existing implementation in `58a2be0` rather than introducing an untested new combat feature. Newest CI must complete before claiming regression coverage passes; verify Android debug APK artifact in the successful run.
 - Next: display poisoned-unit status in 3D/UI, implement distinct mission objectives and victory checks, test LAN reconnect and actual Android devices; replace procedural art with authored production assets. No release readiness claim.
+
+## Automated development — 3D poison status feedback (2026-11-21)
+- Verified **CI #195 success** before edits: https://github.com/sitepushlic/kingdom-chess/actions/runs/44860866721 (debug Android APK workflow). This validates the preceding poison save round-trip regression, not the new visuals.
+- Commit `0a55f5b`: 3D battlefield now renders a small green emissive status marker above poisoned heroes and removes markers when the effect expires or is cleared.
+- Commit `15e62e1`: battle redraw feeds current poison statuses to the 3D battlefield; status markers clear outside active raid battles.
+- Commit `3b1964f`: smoke tests assert marker creation and removal.
+- Latest CI after these commits requires verification. Known limitations: marker is a simple procedural sphere rather than final authored VFX; device visibility and performance are not tested. Prioritize distinct mission win conditions, authored art, two-phone networking tests and signed Android release pipeline.
