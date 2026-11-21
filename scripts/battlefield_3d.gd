@@ -163,6 +163,19 @@ func _ready() -> void:
 		_box(Vector3(0.18, 0.16, 9.1), edge_wood, board_root, Vector3(float(side) * 4.13, -0.035, 0))
 		_box(Vector3(8.3, 0.035, 0.025), inlay, board_root, Vector3(0, 0.049, float(side) * 4.075))
 		_box(Vector3(0.025, 0.035, 8.3), inlay, board_root, Vector3(float(side) * 4.075, 0.049, 0))
+	# Four carved corner plinths with gem insets, outside the playable
+	# squares. Keep them static and under the mobile light budget.
+	var corner_stone: StandardMaterial3D = _material(Color("#625168"), 0.28, 0.47)
+	var corner_gem: StandardMaterial3D = _material(Color("#6ecfcb"), 0.22, 0.24, Color("#327d9b"))
+	for corner_x in [-1, 1]:
+		for corner_z in [-1, 1]:
+			var corner_at := Vector3(float(corner_x) * 4.25, -0.04, float(corner_z) * 4.25)
+			var pedestal: MeshInstance3D = _cylinder(0.21, 0.22, corner_stone, board_root, corner_at, 0.14)
+			pedestal.name = "BoardCornerPlinth_%d_%d" % [corner_x, corner_z]
+			_box(Vector3(0.33, 0.055, 0.33), inlay, board_root, corner_at + Vector3(0, 0.13, 0))
+			var gem: MeshInstance3D = _sphere(0.085, corner_gem, board_root, corner_at + Vector3(0, 0.22, 0))
+			gem.name = "BoardCornerGem_%d_%d" % [corner_x, corner_z]
+			gem.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for index in range(8):
 		var coordinate: String = "ABCDEFGH".substr(index, 1)
 		var rank_text: String = str(8 - index)
