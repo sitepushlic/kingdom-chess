@@ -127,7 +127,7 @@ jobs:
             echo "Godot main scene exited unexpectedly: $status"
             exit "$status"
           fi
-          if grep -Eq "SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|ERROR:.*glTF" game-launch.log; then
+          if grep -Eq "SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:|ERROR:.*glTF|ERROR:.*Failed to load|ERROR:.*Cannot open" game-launch.log; then
             echo "Godot main scene emitted script/import errors"
             exit 1
           fi
