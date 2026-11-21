@@ -1790,6 +1790,11 @@ func animate_move(source: int, target: int) -> void:
 	piece_types.erase(source)
 	piece_nodes[target] = actor
 	if hero_model_cell == source: hero_model_cell = target
+	# A rapid follow-up move can happen before the previous leap ends.
+	# Kill the earlier tween, then let only the newest move own the actor.
+	var previous_move: Tween = actor.get_meta("move_tween", null) as Tween
+	if previous_move != null and previous_move.is_running():
+		previous_move.kill()
 	moving_nodes[target] = true
 	var destination := _square_position(target)
 	var move_rig: Node3D = actor.get_meta("visual_rig", null)
@@ -1801,9 +1806,14 @@ func animate_move(source: int, target: int) -> void:
 		_play_authored_clip(move_rig, "move")
 		_animate_limbs(move_rig, "move")
 	var tween := create_tween().bind_node(actor)
+	actor.set_meta("move_tween", tween)
 	tween.tween_property(actor, "position", destination + Vector3(0, 0.9, 0), 0.19).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(actor, "position", destination, 0.22).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(func(): moving_nodes.erase(target))
+	tween.tween_callback(func():
+		if is_instance_valid(actor) and actor.get_meta("move_tween", null) == tween:
+			moving_nodes.erase(target)
+			actor.remove_meta("move_tween")
+	)
 
 func attack(source: int, target: int, magical: bool = false) -> void:
 	if not piece_nodes.has(source): return
