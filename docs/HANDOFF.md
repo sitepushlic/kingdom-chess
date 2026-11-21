@@ -273,3 +273,9 @@ For EVERY future implementation session:
 - Commit `6ecbea4` adds smoke regression assertions for lethal pinned captures and white/black pawn promotion with HP preservation.
 - Commit `924a552` shows **ШАХ!** in arena status when the active king is geometrically threatened.
 - **CI not verified; no Android APK or device validation claimed.** Must check GitHub Actions and fix errors before declaring playable. The current arena still has two action points per turn, and the check indicator does not yet force a legal check resolution. Boss raid uses its own rules. Next: check-resolution turn gate, persistent combat states and safe end conditions; castling, en passant, underpromotion and balance remain open.
+
+## Arena check-response gate — 2026-11-21
+- Commit `ad50146`: `_end_turn` refuses to hand over an arena turn while the active king remains geometrically checked; grants a defensive AP and clears acted restrictions so HP-based chess-RPG battles can resolve a threat over several strikes. Raid boss turns unchanged.
+- Commit `a94865a`: checks for at least one legal arena action when the king is threatened; declares victory for the other side if no actions exist. This is a **simplified no-legal-action checkmate**, not yet fully HP-aware: a nonlethal attack might be legal without actually resolving check.
+- Commit `692994a`: smoke test covers refusal to pass a checked king, defensive AP and acted reset.
+- CI/runtime **not verified**; review Actions and test on Godot 4.3 before release. Outstanding: HP-aware mate solver, potential repeated defensive AP if all strikes fail, special chess moves, PvP balancing, mobile QA, production 3D assets. Do not call orthodox chess complete.
