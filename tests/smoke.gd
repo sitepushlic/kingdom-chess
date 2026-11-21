@@ -39,6 +39,21 @@ func _run() -> void:
 	_assert_ok(Progression.board_unlock_reason(2, [0], 0, 900).contains("побед"), "Board unlock requires campaign progress")
 	_assert_ok(Progression.board_unlock_reason(2, [0], 6, 0).contains("золота"), "Board unlock requires enough gold")
 	_assert_ok(Progression.board_unlock_reason(2, [0], 6, 900).contains("Доступно"), "Board unlock becomes available after both gates")
+	# Corrupted/edited local saves must never inject oversized equipment bonuses.
+	var legitimate_gear: Dictionary = Progression.roll_item(1)
+	_assert_ok(Progression.is_valid_equipment_item(legitimate_gear), "Generated starter equipment passes validation")
+	for inflated_stat in ["power", "attack", "armor", "hp"]:
+		var forged_gear: Dictionary = legitimate_gear.duplicate(true)
+		forged_gear[inflated_stat] = 100000
+		_assert_ok(not Progression.is_valid_equipment_item(forged_gear), "Forged oversized " + inflated_stat + " is rejected")
+	var forged_inventory: Dictionary = Progression.default_profile()
+	var forged_attack: Dictionary = legitimate_gear.duplicate(true)
+	forged_attack["attack"] = 100000
+	forged_inventory["items"] = [forged_attack]
+	forged_inventory["slots"] = {"Оружие":0,"Тело":0,"Реликвия":0}
+	var sanitized_inventory: Dictionary = Progression.sanitize_profile(forged_inventory)
+	_assert_ok(sanitized_inventory["items"].is_empty(), "Forged equipment is removed from saved inventory")
+	_assert_ok(int(sanitized_inventory["slots"]["Оружие"]) == -1, "Forged equipment cannot remain equipped")
 	_assert_ok(Progression.rarity_cap(0, 1) == 0, "New players can only obtain common gear")
 	_assert_ok(Progression.upgrade_cap(0, 1) == 2, "New players cannot upgrade beyond +2")
 	_assert_ok(Progression.rarity_cap(18, 1) == 0, "Campaign wins alone cannot bypass level requirement")
