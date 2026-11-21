@@ -857,6 +857,38 @@ func _add_region_boss_costume(parent: Node3D) -> void:
 			var disc := _ring(0.38, 0.06, metal, parent, Vector3(0, 1.40, 0.20))
 			disc.rotation.x = PI * 0.45
 
+func _add_chess_class_plinth(kind: String, white: bool, parent: Node3D) -> void:
+	# Readable role silhouettes on the chess base, even when an authored
+	# GLB has not imported. Emblems sit below feet and never obscure animation.
+	var insignia := Node3D.new()
+	insignia.name = "ClassInsignia_" + kind
+	parent.add_child(insignia)
+	var metal: Material = gold_material if white else boss_crown
+	var base: Material = hero_material if white else enemy_material
+	match kind:
+		"P": # Vanguard: four simple studs mark a basic recruit.
+			for side in [-1.0, 1.0]:
+				_sphere(0.035, metal, insignia, Vector3(side * 0.16, 0.286, -0.15))
+		"R": # Fortress: square corner battlements.
+			for side in [-1.0, 1.0]:
+				_box(Vector3(0.10, 0.09, 0.10), metal, insignia, Vector3(side * 0.18, 0.30, -0.12))
+				_box(Vector3(0.07, 0.06, 0.08), base, insignia, Vector3(side * 0.18, 0.36, -0.12))
+		"N": # Cavalry: diagonal steel chevrons.
+			for side in [-1.0, 1.0]:
+				var slash: MeshInstance3D = _box(Vector3(0.07, 0.035, 0.23), metal, insignia, Vector3(side * 0.12, 0.292, -0.15))
+				slash.rotation.y = side * 0.65
+		"B": # Mystic: twin concentric ritual halos.
+			_ring(0.18, 0.019, metal, insignia, Vector3(0, 0.29, 0))
+			_ring(0.10, 0.014, base, insignia, Vector3(0, 0.298, 0))
+		"Q": # Sovereign mage: five-point jewel crown around the base.
+			for i in range(5):
+				var theta: float = TAU * float(i) / 5.0
+				_sphere(0.040, metal, insignia, Vector3(cos(theta) * 0.17, 0.30, sin(theta) * 0.17))
+		"K": # King: crossed bars under a central crown gem.
+			_box(Vector3(0.35, 0.04, 0.06), metal, insignia, Vector3(0, 0.29, 0))
+			_box(Vector3(0.06, 0.04, 0.35), metal, insignia, Vector3(0, 0.30, 0))
+			_sphere(0.075, metal, insignia, Vector3(0, 0.34, 0))
+
 func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bool = true) -> Node3D:
 	var unit := Node3D.new()
 	var white := letter == letter.to_upper()
@@ -872,6 +904,7 @@ func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bo
 	_ring(0.235, 0.016, accent, unit, Vector3(0, 0.265, 0))
 
 	var kind := letter.to_upper()
+	_add_chess_class_plinth(kind, white, unit)
 	var imported_character: bool = _load_authored_character(kind, unit)
 	if not imported_character:
 		_add_humanoid_costume(kind, white, unit)
