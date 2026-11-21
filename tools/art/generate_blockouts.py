@@ -461,6 +461,31 @@ def make_character(identifier, boss=False):
                 pivot["children"].remove(child_index)
                 nodes[lower_joint_index].setdefault("children",[]).append(child_index)
                 child["translation"][1]-=lower_offset
+        # Authored weapons are ordinary mesh nodes and previously stayed
+        # under BodyRig, so attacks animated an empty hand while the
+        # blade/staff floated in place. Bind right-hand weapon geometry to
+        # the distal arm bone and offhand shields/foci to the left arm.
+        # Their existing BodyRig-local translation is converted to
+        # lower-bone-local coordinates without moving the rest pose.
+        if is_arm:
+            weapon_prefixes=(
+                ("WeaponGrip","BossRelic","EnemyBasicBlade","RoyalLongsword",
+                 "RoyalCrossguard","RaiderAxe","RangerBow","ForgeHammer",
+                 "MageStaff","MageCrystal","WeaponRune","KnightLance",
+                 "QueenTwinBlade1","KingGreatblade")
+                if limb_name=="Arm1" else
+                ("PawnBuckler","RookTowerShield","BishopFocus","QueenTwinBlade-1")
+            )
+            lower_world=[pivot["translation"][j]+(lower_offset if j==1 else 0)
+                         for j in range(3)]
+            for child_index in list(nodes[1]["children"]):
+                child=nodes[child_index]
+                if not any(child.get("name","").startswith(prefix) for prefix in weapon_prefixes):
+                    continue
+                nodes[1]["children"].remove(child_index)
+                nodes[lower_joint_index].setdefault("children",[]).append(child_index)
+                child["translation"]=[child["translation"][j]-lower_world[j]
+                                      for j in range(3)]
         old_mesh.pop("scale",None)
         old_mesh.pop("rotation",None)
         old_mesh["translation"]=[0,0,0]
