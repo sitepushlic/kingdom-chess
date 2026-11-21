@@ -572,7 +572,7 @@ func _run() -> void:
 	for character_path in character_paths:
 		var imported_scene: PackedScene = game.battlefield_3d._get_character_scene(character_path)
 		_assert_ok(imported_scene != null and imported_scene == game.battlefield_3d._get_character_scene(character_path), "Character GLB import cached: " + character_path)
-	_assert_ok(game.battlefield_3d.character_scene_cache.size() == 72, "All 72 unique hero, enemy and boss GLBs cached")
+	_assert_ok(character_paths.size() == 72 and game.battlefield_3d.character_scene_cache.size() >= 72, "All 72 unique hero, enemy and boss GLBs cached alongside optional legacy class models")
 	_assert_ok(game.battlefield_3d._get_character_scene("res://assets/characters/missing_999.glb") == null, "Missing character scene handled safely")
 
 	# Imported 21-model cache avoids repeated disk/import lookups on
