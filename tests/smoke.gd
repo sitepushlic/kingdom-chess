@@ -71,6 +71,16 @@ func _run() -> void:
 	game.pieces[53] = ""
 	game.pieces[52] = ""
 	_assert_ok(game._king_threatened(game.pieces, 1), "Rook gives check on open file")
+	# A rook can remove a checking attacker with a lethal RPG strike, but a
+	# nonlethal hit must not count as a check escape.
+	game.pieces[52] = "R"
+	game.health[4] = 10
+	_assert_ok(game._legal(52, 4), "Lethal capture of checking rook resolves check")
+	game.health[4] = 150
+	_assert_ok(not game._legal(52, 4), "Nonlethal strike cannot leave king in check")
+	game.pieces[52] = ""
+	game.health[4] = 150
+
 	_assert_ok(game.battlefield_3d != null, "3D board exists for check warning")
 	_assert_ok(game.battlefield_3d.tile_materials.size() == 2, "Chessboard uses two reusable 3D tile materials")
 	_assert_ok(game.battlefield_3d.tiles.size() == 64, "Chessboard retains all 64 3D tiles")
