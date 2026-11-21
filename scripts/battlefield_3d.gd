@@ -277,6 +277,11 @@ func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 							socket.scale = Vector3.ONE * 0.72
 					parent.add_child(socket)
 					socket.add_child(gear_model)
+					# Preserve the stable rarity marker used by UI/tests and
+					# provide an attachment point for additional tier VFX.
+					var rarity_marker := Node3D.new()
+					rarity_marker.name = "Rarity_" + slot
+					socket.add_child(rarity_marker)
 					return
 				gear_model.free()
 	var mat: Material = _gear_material(slot)
