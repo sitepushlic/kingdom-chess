@@ -237,8 +237,17 @@ const CHARACTER_SCENE_PATHS := {
 }
 
 func _load_authored_character(kind: String, parent: Node3D) -> bool:
-	# Artists can replace the procedural placeholder without changing combat code.
-	# The GLB root must face local -Z and fit within a one-tile footprint.
+	# Prefer original authored OBJ mesh if supplied; imported rigged GLB remains supported.
+	var obj_path := "res://assets/characters/%s.obj" % str({"P":"pawn","R":"rook","N":"knight","B":"bishop","Q":"queen","K":"king"}.get(kind, ""))
+	if ResourceLoader.exists(obj_path):
+		var mesh_resource: Resource = load(obj_path)
+		if mesh_resource is Mesh:
+			var instance := MeshInstance3D.new()
+			instance.name = "AuthoredCharacter"
+			instance.mesh = mesh_resource as Mesh
+			instance.material_override = hero_material if parent.get_meta("hero", true) else enemy_material
+			parent.add_child(instance)
+			return true
 	var path: String = str(CHARACTER_SCENE_PATHS.get(kind, ""))
 	if path == "" or not ResourceLoader.exists(path): return false
 	var scene: Resource = load(path)
@@ -254,6 +263,7 @@ func _load_authored_character(kind: String, parent: Node3D) -> bool:
 func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	var unit := Node3D.new()
 	var white := letter == letter.to_upper()
+	unit.set_meta("hero", white)
 	var material := hero_material if white else enemy_material
 	var accent := gold_material if white else dark_material
 	_cylinder(0.31, 0.16, accent, unit, Vector3(0, 0.08, 0))
