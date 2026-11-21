@@ -11,15 +11,16 @@ Starting source SHA: `ae427c0eb0405d18f79348cf0e26562e1ccca87b`.
 - `scripts/battlefield_3d.gd`: optional tween/rig/health metadata now uses a `has_meta()` guard, preventing repeated engine errors during normal redraws and animation transitions. Self-targeted attacks still animate the actor but no longer allocate zero-length attack effects.
 - `tests/smoke.gd`: fixed a duplicate local variable that prevented the smoke suite from parsing. Made board palette setup deterministic, aligned cache checks with added VFX materials, searched heraldry under the rig hierarchy, used float tolerance for marker height, and guarded optional tween metadata reads.
 
-### Local evidence (working tree; record final commit/CI after push)
+### Verified evidence for source commit `066764bdd52468e318f622cb295188f06044f54b`
 - Art pipeline passed: `compileall`; generators reported 30 heroes + 36 enemies + 6 bosses and 21 equipment GLBs; structure validation checked 72 characters; motion validation passed; limb QA checked 288 limbs/72 torsos; rig QA checked 72 GLBs/432 armor attachments; corruption tests rejected all 16 malformed GLBs; reproducibility passed for 93 GLBs; art report: 93 GLBs, 6,693,376 bytes, 283,248 aggregate triangles.
 - Godot **4.3**: editor import exited 0; main scene ran to the expected 25-second timeout (124) without matched script/import errors; `tests/smoke.gd` exited 0 with `KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED`.
 - Godot 4.7.2 local import/smoke also passed as an additional check. Earlier 4.7.2 smoke failures exposed a test parse issue and outdated assertions; those were corrected before the passing run.
 - No rendered screenshot, mobile frame-time profile, physical device test, or APK build/export/sign/upload was performed. Generated models remain procedural blockouts; the graphics priority is not complete.
-- Previous failing Actions runs `44936307760` and `44936307793` were both on `4b027da6`; they failed at the same rook-head attachment assertion before Godot import. A new source push must trigger fresh Actions, and its exact-SHA results must be recorded below.
+- GitHub Actions passed on this exact source SHA: [fast art run 44940064543](https://github.com/sitepushlic/kingdom-chess/actions/runs/44940064543) and [Godot run 44940064537](https://github.com/sitepushlic/kingdom-chess/actions/runs/44940064537), job `136955084394`. Godot 4.3 import, actual main-scene launch, and gameplay smoke all passed. Both GLB validation and 432-socket rig QA passed. The full Godot workflow skipped only cache-hit verification and reproducibility because it was a push run; reproducibility passed in the fast-art workflow and locally.
+- The previous failures `44936307760` and `44936307793` were both on `4b027da6` and failed at the rook-head attachment assertion before Godot import; that blocker is resolved.
 
 ### First next action
-Check both Actions workflows for the pushed source SHA and inspect complete logs. Fix any new failures. Then continue the graphics gates below; do not treat passing procedural QA/import as final visual acceptance. APK remains untouched.
+Continue Gate B: inspect the complete canonical hero roster and current `docs/ART_MANIFEST.md`, then make the manifest a per-asset production/QA matrix with exact hero IDs, paths, silhouettes, materials, rigs, clips, budgets, and evidence status. Follow with authored-asset work and rendered visual inspection; passing procedural QA/import is not final visual acceptance. APK remains untouched.
 
 ## 1. USER'S DIRECT ORDERS — HIGHEST PRIORITY
 1. Finish **priority 1: complete playable 3D graphics** for Kingdom Chess, not a demo, static concept art, or another batch of superficial procedural blockouts.
