@@ -241,7 +241,9 @@ def make_character(identifier, boss=False):
         leg_prefixes=("RoyalGreaveCrest","RaiderShinFang","ForgeKneeRivet",
                       "MageBootRunes","BossBootSpur","CrimsonClaw")
         attachment=None
-        if name.startswith(arm_prefixes):
+        if name in ("RoyalShieldRim","RoyalShieldCore"):
+            attachment="Arm-1"
+        elif name.startswith(arm_prefixes):
             suffix=name[-2:] if name.endswith("-1") else name[-1:]
             attachment="Arm"+suffix
         elif name.startswith(leg_prefixes):
