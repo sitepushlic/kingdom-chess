@@ -142,8 +142,13 @@ func _run() -> void:
 	if authored_hero != null:
 		_assert_ok(authored_hero.find_child("Arm1", true, false) != null, "Imported hero has articulated right arm")
 		_assert_ok(authored_hero.find_child("Leg1", true, false) != null, "Imported hero has articulated right leg")
-		_assert_ok(authored_hero.find_child("CapeShoulder", true, false) != null, "Imported hero has shoulder cape skin joint")
-		_assert_ok(authored_hero.find_child("CapeHem", true, false) != null, "Imported hero has animated cape hem joint")
+		var cape_skeleton: Skeleton3D = null
+		for candidate in authored_hero.find_children("*", "Skeleton3D", true, false):
+			var skeleton: Skeleton3D = candidate as Skeleton3D
+			if skeleton.find_bone("CapeShoulder") >= 0 and skeleton.find_bone("CapeHem") >= 0:
+				cape_skeleton = skeleton
+				break
+		_assert_ok(cape_skeleton != null, "Godot imports cape as actual Skeleton3D with shoulder and hem bones")
 		_assert_ok(fallback_rig.get_node_or_null("Arm_L") == null, "Imported hero does not duplicate fallback arms")
 		_assert_ok(original_hero_visual.find_child("RangerHood", true, false) != null or original_hero_visual.find_child("KingCrownProng1", true, false) != null, "Imported hero preserves generated silhouette")
 		_assert_ok(original_hero_visual.find_child("SurfaceDetail", true, false) == null, "Imported hero avoids redundant legacy costume nodes")
