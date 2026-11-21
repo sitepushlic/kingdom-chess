@@ -195,3 +195,10 @@ For EVERY future implementation session:
 - Commit `1f3266e` adds `CHARACTER_SCENE_PATHS` mapping for six chess classes (pawn, rook, knight, bishop, queen, king), `_load_authored_character` to load imported GLB PackedScenes and fallback to existing procedural geometry if absent or invalid. This establishes a direct replacement path for art without rewriting board/HP/combat mechanics; **no authored GLB models have been supplied yet**. Imported model must fit a 1x1 tile, face local -Z, with base at local Y=0.
 - Commit `4efab6f` adds smoke checks for six class asset slots and fallback model HP bar.
 - Verify newest CI, correct any remaining GDScript parser/runtime failures and inspect artifact upload. Next actual asset work: create and import six ORIGINAL rigged GLBs, class animations and PBR materials, add rarity-specific armor and weapon meshes, benchmark on Android. This is a pipeline, not completed character art.
+
+## Multi-commit 3D character animation stage (2026-11-21)
+- Verified **CI #214 success** before these edits: https://github.com/sitepushlic/kingdom-chess/actions/runs/44870536829 . It confirms the previous region environment and GLB-import pipeline smoke tests and debug APK export.
+- Commit `a68534a`: character geometry is parented under independent `VisualRig` per chess piece; battle health bars remain outside the animated pivot. Attack and movement trigger rig rotation tweens. If an imported GLB exposes an `AnimationPlayer` with `attack` or `move` clips, the runtime plays the authored clip as well. This is a meaningful animation step but NOT skeletal animation until rigged GLBs are actually supplied.
+- Commit `50c3b79`: smoke tests verify all six classes expose populated `VisualRig` nodes.
+- Commit `cb63985`: `assets/characters/README.md` documents original GLB requirements, six class paths, orientation, dimensions, animation names, licensing and Android QA. **No authored character GLB files are in this commit**.
+- CI after edits is pending; verify newest non-cancelled run, inspect failures, and fix before claiming it passes. Continue with original GLB character asset production and mobile visual QA.
