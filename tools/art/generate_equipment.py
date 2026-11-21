@@ -92,8 +92,8 @@ def build(slot, tier):
     append(TRIANGLES,"36H",5123,36,"SCALAR",34963)
     while len(blob)%4: blob.append(0)
     materials=[
-        {"name":"TierMetal","pbrMetallicRoughness":{"baseColorFactor":PALETTE[tier],"metallicFactor":.75,"roughnessFactor":.34}},
-        {"name":"TierInlay","pbrMetallicRoughness":{"baseColorFactor":[.93,.79,.46,1],"metallicFactor":.8,"roughnessFactor":.25}},
+        {"name":"TierMetal","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":PALETTE[tier],"metallicFactor":.75,"roughnessFactor":.34}},
+        {"name":"TierInlay","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":[.93,.79,.46,1],"metallicFactor":.8,"roughnessFactor":.25}},
     ]
     document={"asset":{"version":"2.0","generator":"Kingdom Chess modular equipment"},
               "scene":0,"scenes":[{"nodes":[0]}],"nodes":nodes,"meshes":meshes,
