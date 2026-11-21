@@ -159,6 +159,19 @@ func _run() -> void:
 		hero_art_signatures[art_key] = true
 		costume.free()
 	_assert_ok(hero_art_signatures.size() == 30, "All 30 hero art recipes are represented")
+	# Equipment rarity must change physical geometry for all three slots.
+	var saved_gear: Dictionary = game.battlefield_3d.hero_gear.duplicate(true)
+	for slot in ["Оружие", "Тело", "Реликвия"]:
+		var previous_count := -1
+		for tier in range(7):
+			game.battlefield_3d.hero_gear[slot] = {"rarity": tier, "upgrade": 0}
+			var equipment := Node3D.new()
+			game.battlefield_3d._add_equipment_geometry(slot, equipment)
+			var mesh_count: int = equipment.get_child_count()
+			_assert_ok(mesh_count > 0 and mesh_count != previous_count, "%s tier %d has distinct equipment geometry" % [slot, tier])
+			previous_count = mesh_count
+			equipment.free()
+	game.battlefield_3d.hero_gear = saved_gear
 	game.battlefield_3d.set_selected_hero_visual(hero_visual)
 	_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == Color("#243e59"), "Region palette updates shared dark material")
 	_assert_ok(game.battlefield_3d.tile_materials[1].albedo_color == Color("#92b7d0"), "Region palette updates shared light material")
