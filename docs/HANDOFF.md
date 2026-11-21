@@ -299,3 +299,10 @@ For EVERY future implementation session:
 - `0747298`: connected arena king-threat state to the 3D renderer; clears on raid mode and after a win.
 - `59d0fd2`: smoke assertions verify visible indicator on checked square and cleanup when check clears.
 - This is procedural geometry for gameplay clarity, **not authored commercial-quality character art**. Godot runtime and CI for these commits have **not been verified**. Confirm headless smoke test and Android debug export in Actions; inspect actual Android viewport for legibility and overdraw.
+
+
+## Automated CI recovery — 2026-11-21 (after #282)
+- Inspected GitHub Actions #282 (https://github.com/sitepushlic/kingdom-chess/actions/runs/44890538169): **failed** during gameplay smoke, before Android export. The first fatal assertion was `TEST FAILED: 3D board exists for check warning` at `tests/smoke.gd:71`, followed by a nil `set_checked_king` call. The smoke test was executing from `SceneTree._initialize` immediately after `root.add_child(game)`, before the main scene's 3D battlefield was initialized. Repeated dummy renderer mesh warnings were also present, but the assertion is the immediate failure.
+- Commit `1c1176e9345f5ddf9ff75d880b6d0eaa7cfa00a7`: `tests/smoke.gd` now waits one `process_frame` after adding the scene, and explicitly checks battlefield initialization before chess/check-warning assertions. This changes test sequencing, not production chess rules.
+- **CI verification pending**: the GitHub Actions list had not yet shown a run for the new commit when checked. Do not claim smoke success or APK availability for this patch. Inspect the next run and fix any remaining failures. The latest confirmed successful run in this inspection was #278, prior to the new check-warning tests.
+- Next priorities: verify test scheduling and 3D warning rendering in headless CI; implement original rigged 3D assets and animation sets, Android LOD/material budgets and real-device performance testing. Commercial visual quality remains unverified.
