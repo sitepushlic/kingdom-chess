@@ -99,6 +99,21 @@ def validate(path, require_animation=True):
         assert joints_acc["type"]=="VEC4" and joints_acc["componentType"] in (5121,5123), f"{path}: invalid joint indices"
         assert weights_acc["type"]=="VEC4" and weights_acc["componentType"]==5126, f"{path}: invalid vertex weights"
         assert joints_acc["count"]==weights_acc["count"]==24, f"{path}: skinning vertex count mismatch"
+        def decode_attribute(accessor_index):
+            acc=gltf["accessors"][accessor_index]
+            view=gltf["bufferViews"][acc["bufferView"]]
+            start=json_end+8+view.get("byteOffset",0)+acc.get("byteOffset",0)
+            width=COMPONENTS[acc["type"]]
+            fmt={5121:"B",5123:"H",5126:"f"}[acc["componentType"]]
+            values=struct.unpack_from("<"+fmt*(acc["count"]*width),data,start)
+            return [values[i:i+width] for i in range(0,len(values),width)]
+        skin_weights=decode_attribute(cape["attributes"]["WEIGHTS_0"])
+        skin_joints=decode_attribute(cape["attributes"]["JOINTS_0"])
+        assert all(abs(sum(row)-1.0)<1e-5 and all(0<=w<=1 for w in row) for row in skin_weights), f"{path}: invalid normalized skin weights"
+        assert all(all(j<len(skin["joints"]) for j in row) for row in skin_joints), f"{path}: skin joint index out of range"
+        assert any(.05<row[1]<.95 for row in skin_weights), f"{path}: cloth does not actually blend two bones"
+        inverse_matrices=decode_attribute(skin["inverseBindMatrices"])
+        assert all(abs(row[15]-1)<1e-6 and all(math.isfinite(v) for v in row) for row in inverse_matrices), f"{path}: invalid inverse bind matrices"
         assert {"Arm1","Arm-1","Leg1","Leg-1"}.issubset(node_names), f"{path}: missing independent limbs"
         for joint_name in ("Arm1","Arm-1","Leg1","Leg-1"):
             joint_index = next(i for i,node in enumerate(gltf["nodes"]) if node.get("name")==joint_name)
