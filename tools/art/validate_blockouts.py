@@ -173,6 +173,12 @@ def validate(path, require_animation=True):
                 lower_node=gltf["nodes"][by_name[lower_name]]
                 child_names={gltf["nodes"][i].get("name") for i in lower_node.get("children",[])}
                 assert set(plates)<=child_names, f"{path}: distal armor not attached to {lower_name}"
+        # Extra forge-class knee plates must deform with their shin bones.
+        for side in ("1","-1"):
+            plate="ForgeKnee"+side
+            if plate in by_name:
+                lower=gltf["nodes"][by_name["Leg"+side+"Lower"]]
+                assert by_name[plate] in lower.get("children",[]), f"{path}: {plate} not attached to lower leg"
         # The authored weapon must be parented to the animated wrist.
         right_children={gltf["nodes"][i].get("name") for i in gltf["nodes"][by_name["Arm1Lower"]].get("children",[])}
         assert "WeaponGrip" in right_children, f"{path}: weapon grip not attached to wrist"
