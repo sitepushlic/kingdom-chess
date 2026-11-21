@@ -1,3 +1,10 @@
+## CHESSBOARD VISUAL IDENTITY PASS — 2026-11-21
+- Previous full Android CI run 44919946820 was SUCCESS, and fast art validation for the latest class/biome silhouettes (44920213580) was SUCCESS. Android run 44920245578 for those silhouettes was still in progress when next edits began; check most recent run for definitive result.
+- New commits 36294c9 and caf6dc7: built an in-world sculpted 3D board frame, metallic gold edge inlays, visible A–H file labels and 1–8 rank labels on both sides of the chessboard; labels are Label3D nodes on the physical board, not just UI text. New Godot smoke assertions check representative file/rank labels. This improves chess recognition while retaining RPG presentation.
+- New commits are **not verified yet** by a complete Godot/Android run; check latest Actions and fix any Godot Label3D property/scene smoke errors. Coordinate labels and gold inlay are cosmetic only, not a game advantage.
+- User's required priority is to finish actual 3D graphics before redesigning progression/PvP/loot/learning. Existing character models remain procedural low-poly blockouts and are not final quality. Continue art production: higher-quality original meshes/materials, richer lighting and environment, character animations, VFX, board skins and visual QA. Roadmap: docs/GAME_VISION_AND_LEARNING_ROADMAP.md.
+- Do not claim complete game or physical-device QA. APK device testing deferred per user.
+
 ## 3D CLASS AND BIOME ART PASS — 2026-11-21
 - Confirmed green Android build 44919946820 (SHA 2bae3676), plus fast 3D validation 44919927266 success. Prior chest heraldry/boss emissive core details pass actual Godot import, main scene, gameplay smoke and APK export.
 - New art pass commits 6ed5e37, df15a445, b278f780: 30 heroes get class-specific royal/raider/ranger/forge/mage detail, wristbands and boot toes; 36 enemies get distinct ash/ice/sea/obsidian/sky/night silhouette accents; bosses retain luminous chest cores. New wrist and toe pieces parent to articulated lower bones; GLB validator now asserts each hero class, enemy biome and boss core exists.
