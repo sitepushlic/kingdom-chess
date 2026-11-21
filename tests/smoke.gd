@@ -42,6 +42,9 @@ func _run() -> void:
 	_assert_ok(not HeroRoster.unlocked(HeroRoster.HEROES[29], 18, 35), "Strongest hero cannot be claimed by campaign clear alone")
 	_assert_ok(HeroRoster.valid_selection("hero_30", 0, 1) == "hero_01", "Locked hero cannot be injected into save")
 	var game = MainScene.instantiate()
+	# Redraw can be requested by state transitions before _ready constructs HUD controls.
+	game._draw()
+	_assert_ok(game.status == null, "Pre-ready redraw leaves uninitialized HUD untouched")
 	root.add_child(game)
 	# Chess-first RPG movement: threat geometry, king safety and pinned pieces.
 	game.mode = "arena"
