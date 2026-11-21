@@ -175,3 +175,12 @@ User requested the maximum practical work in one pass; changes committed directl
 - **`f1fe114770ae3f6a9a926d26f97822a57b9eba5d`**, **`b5a0cfb5d8e3f8f64c553f12da5cd33039771f6b`**: new `tools/art/check_reproducibility.py` and CI step regenerate all 93 GLBs and verify byte-for-byte SHA-256 equality.
 **Verification:** GitHub commits confirmed; neither local Python generator execution nor Godot import nor Android APK has been observed succeeding. GitHub workflow-run lookup for a prior commit returned no PR-triggered runs, **not** proof of success or failure. Tests are committed but their pass status remains unknown.
 **Remaining priority-1:** actual CI execution/logs, skinned/rigged production assets for 30 heroes + 36 enemies + six bosses, refined equipment sockets and textures, six final 3D biomes/18 levels, effects, Android performance and device QA. Do not call this graphics-complete.
+
+## 19. Mesh lighting and mobile asset budgets — 2026-11-21
+This batch committed directly to `main`:
+- **`3ac1feb21ebd818e21dffb0755702f8f53d511e3`**, **`51aee2db44f36ddf7f8f4156bc86421eda29593a`**: replaced shared eight-corner cubes with 24 per-face vertices and six explicit flat normals, plus consistent triangle winding, across character and equipment GLB generators. This gives sharp low-poly shading and more predictable Godot lighting.
+- **`cdfdba11d64b8070db647515cefad028d3bcebff`**: validator requires NORMAL attributes, 24-vertex/36-index cube topology on every mesh primitive.
+- **`be6cb832a0625b26603f7ad7f40ab8bf2baa0cab`**: fifth emissive material for hero runes, mage crystal, bishop focus and boss relic prongs.
+- **`f1127b3c436dc0bf92e83853dd4e2bdd6c4a21b7`**: mobile asset budgets in Python validator: under 250 KB/GLB, at most 160 nodes and 2,000 estimated rendered triangles per generated asset.
+- **`4f1bc6fbbf4800571fcb19ffca1076c41a0f82f7`**: arm/leg locomotion and combat gestures rotate around X for forward/back swings; impact/death gestures use Z.
+**Verification:** committed to GitHub. CI and Android import **not verified**; workflow lookup for an earlier commit yielded zero runs, so cannot claim green builds. All 93 GLBs are still procedural low-poly blockouts. Priority-1 graphics remains incomplete: proper skinned rigs and animations, production meshes/materials, detailed regions, VFX and Android device QA.
