@@ -281,6 +281,11 @@ func _run() -> void:
 	_assert_ok(scenery_counts[0] != scenery_counts[1], "Fortress and frostland environments use different geometry")
 	game.battlefield_3d.set_region(0)
 	_assert_ok(game.battlefield_3d.region_scenery.get_child_count() == scenery_counts[0], "Switching regions rebuilds scenery without accumulation")
+	for asset_name in ["pawn", "rook", "knight", "bishop", "queen", "king"]:
+		var mesh_path: String = "res://assets/characters/%s.obj" % asset_name
+		_assert_ok(ResourceLoader.exists(mesh_path), "Original 3D mesh exists for " + asset_name)
+		var imported_mesh: Resource = load(mesh_path)
+		_assert_ok(imported_mesh is Mesh, "Original 3D mesh imports as a Godot Mesh: " + asset_name)
 	for class_letter in ["P", "R", "N", "B", "Q", "K"]:
 		_assert_ok(game.battlefield_3d.CHARACTER_SCENE_PATHS.has(class_letter), "Every chess class has an authored 3D asset path")
 		var sample: Node3D = game.battlefield_3d._build_piece(class_letter)
