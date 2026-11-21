@@ -279,3 +279,9 @@ For EVERY future implementation session:
 - Commit `a94865a`: checks for at least one legal arena action when the king is threatened; declares victory for the other side if no actions exist. This is a **simplified no-legal-action checkmate**, not yet fully HP-aware: a nonlethal attack might be legal without actually resolving check.
 - Commit `692994a`: smoke test covers refusal to pass a checked king, defensive AP and acted reset.
 - CI/runtime **not verified**; review Actions and test on Godot 4.3 before release. Outstanding: HP-aware mate solver, potential repeated defensive AP if all strikes fail, special chess moves, PvP balancing, mobile QA, production 3D assets. Do not call orthodox chess complete.
+
+## CI recovery session — 2026-11-21 (run #271)
+- Inspected failed [Actions #271](https://github.com/sitepushlic/kingdom-chess/actions/runs/44881590343): `Run gameplay smoke tests` failed; APK export and artifact upload were skipped. Log reports three `SCRIPT ERROR: Invalid assignment ... 'text' ... Nil` at `scripts/main.gd:2013` during `_draw`, plus multiple assertion failures involving equipment, imported animations, and network equipment stats. Many headless dummy renderer `mesh_get_surface_count` messages also occur. These are NOT a successful build.
+- Commit `0ab07c896860933c744f10ac894639e29014fe90`: prevent `_draw()` from touching HUD widgets before they have been initialized. This addresses the observed Nil assignment but does not prove the other failing assertions are fixed.
+- Commit `3e7d376fbeb35f730ad2bb4e39b025d8bb67c534`: add a pre-`_ready()` redraw regression in `tests/smoke.gd`.
+- Next: verify the new workflow result; investigate the remaining equipment / imported-animation / LAN assertions from #271; avoid weakening tests just to get green CI. Do not claim APK or commercial visual quality without evidence. Continue authored 3D art and Android profiling after CI is stable.
