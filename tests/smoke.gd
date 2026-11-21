@@ -68,6 +68,12 @@ func _run() -> void:
 	# SceneTree._initialize runs before the first frame; defer checks until the 3D viewport and HUD finish _ready.
 	await process_frame
 	_assert_ok(game.battlefield_3d != null, "3D battlefield initialized before chess warning assertions")
+	if game.battlefield_3d != null:
+		var board_root: Node3D = game.battlefield_3d.board_root
+		_assert_ok(board_root.get_node_or_null("FileCoordinate_A_-1") != null, "Chessboard displays A file coordinate")
+		_assert_ok(board_root.get_node_or_null("FileCoordinate_H_1") != null, "Chessboard displays H file coordinate")
+		_assert_ok(board_root.get_node_or_null("RankCoordinate_8_-1") != null, "Chessboard displays rank eight")
+		_assert_ok(board_root.get_node_or_null("RankCoordinate_1_1") != null, "Chessboard displays rank one")
 	# Chess-first RPG movement: threat geometry, king safety and pinned pieces.
 	game.mode = "arena"
 	game._reset()
