@@ -32,6 +32,10 @@ for folder in ("characters","equipment"):
             "bytes":len(data),
             "nodes":len(nodes),
             "triangles":triangles,
+            "skins":len(gltf.get("skins",[])),
+            "bones":sum(len(skin.get("joints",[])) for skin in gltf.get("skins",[])),
+            "skinned_meshes":sum("skin" in node for node in nodes),
+            "animation_channels":sum(len(clip.get("channels",[])) for clip in gltf.get("animations",[])),
             "materials":[m.get("name","") for m in gltf.get("materials",[])],
             "animations":[a.get("name","") for a in gltf.get("animations",[])],
             "geometry_signature":[node.get("name","") for node in nodes if "mesh" in node],
@@ -43,6 +47,9 @@ report={
     "total_bytes":sum(e["bytes"] for e in entries),
     "total_triangles":sum(e["triangles"] for e in entries),
     "max_asset_triangles":max(e["triangles"] for e in entries),
+    "total_skins":sum(e["skins"] for e in entries),
+    "total_bone_references":sum(e["bones"] for e in entries),
+    "total_animation_channels":sum(e["animation_channels"] for e in entries),
     "assets":entries,
 }
 (OUT/"art_manifest.json").write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n")
