@@ -212,6 +212,22 @@ func _run() -> void:
 	_assert_ok(game.battlefield_3d.hazard_markers[3].visible and not game.battlefield_3d.hazard_markers[0].visible, "3D hazard markers match forecasted squares")
 	game.battlefield_3d.set_hazards(Progression.hazard_cells("none", 1), "none")
 	_assert_ok(not game.battlefield_3d.hazard_markers[3].visible, "3D hazard markers clear after danger")
+	# Persistent mission poison follows the unit and expires after two enemy turns.
+	game._reset()
+	game.hero_poison[60] = 2
+	game._move(60, 52)
+	_assert_ok(not game.hero_poison.has(60) and int(game.hero_poison.get(52, 0)) == 2, "Poison follows moving hero")
+	var hp_before_poison: int = game.health[52]
+	game._tick_hero_poison()
+	_assert_ok(game.health[52] < hp_before_poison and int(game.hero_poison.get(52, 0)) == 1, "Poison damages and decrements duration")
+	game._tick_hero_poison()
+	_assert_ok(not game.hero_poison.has(52), "Poison expires after second tick")
+	game.hero_poison[52] = 2
+	game.pieces[52] = ""
+	game._tick_hero_poison()
+	_assert_ok(game.hero_poison.is_empty(), "Poison clears for removed unit")
+	game._reset()
+	_assert_ok(game.hero_poison.is_empty(), "Poison clears on new encounter")
 	_assert_ok(Progression.CAMPAIGN.size() == 18, "Complete 18-mission story campaign")
 	var mission_titles: Dictionary = {}
 	for mission in Progression.CAMPAIGN:
