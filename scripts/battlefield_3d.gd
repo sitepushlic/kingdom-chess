@@ -20,6 +20,7 @@ var gold_material: StandardMaterial3D
 var dark_material: StandardMaterial3D
 var board_root: Node3D
 var region_scenery: Node3D
+var animated_scenery: Array[MeshInstance3D] = []
 var torches: Array[OmniLight3D] = []
 var torch_flames: Array[MeshInstance3D] = []
 var current_region := -1
@@ -315,7 +316,8 @@ func set_boss_phase(phase: int) -> void:
 		boss_crown.emission_energy_multiplier = 2.8 if enraged else 0.6
 
 func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
-	# All scenery remains outside the playable 8x8 grid; no extra per-frame updates.
+	# All scenery remains outside the playable 8x8 grid; animate only four landmark accents.
+	animated_scenery.clear()
 	for child in region_scenery.get_children():
 		region_scenery.remove_child(child)
 		child.queue_free()
@@ -359,6 +361,10 @@ func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
 			var corner := Vector3(corner_x * 5.75, 0, corner_z * 5.75)
 			_cylinder(0.48, 1.7, trim, region_scenery, corner + Vector3(0, 0.50, 0), 0.34)
 			_ring(0.40, 0.055, magic, region_scenery, corner + Vector3(0, 1.35, 0))
+			if region in [1, 3, 4, 5]:
+				var orb := _sphere(0.13, magic, region_scenery, corner + Vector3(0, 1.60, 0))
+				orb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				animated_scenery.append(orb)
 
 func set_region(region_index: int) -> void:
 	if current_region == region_index: return
@@ -530,6 +536,11 @@ func _process(delta: float) -> void:
 		var flicker := sin(clock * (6.0 + float(i) * 0.27) + float(i) * 1.7)
 		torch_flames[i].scale = Vector3(0.85 + flicker * 0.12, 1.2 + flicker * 0.24, 0.85 + flicker * 0.12)
 		torches[i].light_energy = 1.15 + flicker * 0.22
+	for n in range(animated_scenery.size()):
+		var orb: MeshInstance3D = animated_scenery[n]
+		if is_instance_valid(orb):
+			orb.position.y = 1.60 + sin(clock * 1.8 + float(n) * 1.57) * 0.15
+			orb.scale = Vector3.ONE * (0.85 + sin(clock * 2.7 + float(n)) * 0.12)
 	for marker in hazard_markers:
 		if marker.visible:
 			marker.scale = Vector3(0.91 + 0.07 * sin(clock * 5.0), 1.0, 0.91 + 0.07 * sin(clock * 5.0))
