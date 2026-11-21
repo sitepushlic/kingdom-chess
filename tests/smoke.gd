@@ -247,7 +247,7 @@ func _run() -> void:
 	var armor_socket: Node = geared_bearer.find_child("GearSocket_armor", true, false)
 	_assert_ok(armor_socket != null, "Equipped armor creates imported GLB socket")
 	if armor_socket != null:
-		_assert_ok(armor_socket.get_parent().name == "BodyRig", "Chest armor follows animated torso")
+		_assert_ok(armor_socket.get_parent().name == "BodyRig" or (armor_socket.get_parent() is BoneAttachment3D and armor_socket.get_parent().bone_name == "SpineChest"), "Chest armor follows animated spine bone or torso fallback")
 	var relic_socket: Node = geared_bearer.find_child("GearSocket_relic", true, false)
 	_assert_ok(relic_socket != null, "Equipped relic creates imported GLB socket")
 	if relic_socket != null:
