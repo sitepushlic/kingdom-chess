@@ -289,17 +289,24 @@ def make_character(identifier, boss=False):
     cape_mesh_index=len(nodes)
     nodes.append({"name":"SkinnedCape","mesh":len(meshes),"skin":0})
     nodes[1]["children"].append(cape_mesh_index)
+    # Metallic shoulder clasps stay rigid, while the weighted cloth below
+    # deforms. These remain cheap shared-cube mesh instances.
+    box("CapeClaspLeft",(-.21,1.10,.19),(.11,.10,.11),3)
+    box("CapeClaspRight",(.21,1.10,.19),(.11,.10,.11),3)
     cape_positions=[]
     cape_weights=[]
     cape_joints=[]
     for xyz in CUBE_VERTS:
         x,y,z=xyz
-        cape_positions.extend((x*.34, .74+y*.38, .20+z*.035))
+        # Tapered shoulder-to-hem silhouette instead of a rectangular slab.
+        # The lower corners spread as the two-bone skin bends.
+        cape_width=.26 if y>0 else .43
+        cape_positions.extend((x*cape_width, .74+y*.38, .20+z*.035))
         hem_weight=.72 if y<0 else .08
         cape_weights.extend((1.0-hem_weight,hem_weight,0.0,0.0))
         cape_joints.extend((0,1,0,0))
     cape_pos=accessor(cape_positions,"72f",24,5126,"VEC3",34962,
-                      ([-.34,.36,.165],[.34,1.12,.235]))
+                      ([-.43,.36,.165],[.43,1.12,.235]))
     cape_normal=normals
     cape_joint=accessor(cape_joints,"96B",24,5121,"VEC4",34962)
     cape_weight=accessor(cape_weights,"96f",24,5126,"VEC4",34962)
