@@ -223,6 +223,19 @@ func _run() -> void:
 					imported_bones[skeleton.get_bone_name(bone_index)] = true
 			for required_bone in ["CapeShoulder", "CapeHem", "SpineHip", "SpineChest", "Arm1Lower", "Arm-1Lower", "Leg1Lower", "Leg-1Lower"]:
 				_assert_ok(imported_bones.has(required_bone), "Imported character has deforming bone " + required_bone + ": " + character_path)
+			# Check every generated character's animation library, not only
+			# the representative hero/enemy/boss subset below.
+			var imported_player: AnimationPlayer = character_instance.find_child("AnimationPlayer", true, false) as AnimationPlayer
+			_assert_ok(imported_player != null, "Character imports an AnimationPlayer: " + character_path)
+			if imported_player != null:
+				for required_clip in ["idle", "move", "attack", "hit", "death", "cast"]:
+					var clip_found: bool = imported_player.has_animation(required_clip)
+					for library_name in imported_player.get_animation_library_list():
+						var library: AnimationLibrary = imported_player.get_animation_library(library_name)
+						if library != null and library.has_animation(required_clip):
+							clip_found = true
+							break
+					_assert_ok(clip_found, "Character retains imported clip %s: %s" % [required_clip, character_path])
 			character_instance.free()
 	# Generated GLBs are required in CI before Godot import. Verify hero-ID
 	# and region-boss models really load and contain all six authored clip names.
