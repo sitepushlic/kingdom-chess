@@ -45,6 +45,30 @@ def validate(path, require_animation=True):
             assert uv_acc["count"]==vertex_count, f"{path}: UV and vertex count mismatch"
             assert uv_acc["min"]==[0,0] and uv_acc["max"]==[1,1], f"{path}: invalid UV coordinate range"
             assert vertex_count>=96 and triangle_count>=40, f"{path}: rigid geometry still cube blockout"
+    if require_animation:
+        # All five PBR materials must have self-contained valid PNG images.
+        assert len(gltf.get("images",[]))==5, f"{path}: missing five embedded albedo images"
+        assert len(gltf.get("textures",[]))==5, f"{path}: missing PBR texture bindings"
+        assert len(gltf.get("samplers",[]))==1, f"{path}: textures should share a sampler"
+        for material_index,material in enumerate(gltf["materials"]):
+            texture_ref=material["pbrMetallicRoughness"].get("baseColorTexture",{})
+            assert texture_ref.get("index")==material_index and texture_ref.get("texCoord")==0, f"{path}: invalid material texture binding"
+            texture=gltf["textures"][material_index]
+            assert texture["source"]==material_index and texture["sampler"]==0, f"{path}: invalid texture source"
+            img=gltf["images"][material_index]
+            assert img["mimeType"]=="image/png" and "uri" not in img, f"{path}: texture must be embedded PNG"
+            view=gltf["bufferViews"][img["bufferView"]]
+            start=json_end+8+view["byteOffset"]
+            png=data[start:start+view["byteLength"]]
+            assert png.startswith(b"\\x89PNG\\r\\n\\x1a\\n"), f"{path}: invalid embedded PNG header"
+            assert len(png)>80 and png[-12:]==b"\\x00\\x00\\x00\\x00IEND\\xaeB\\x60\\x82", f"{path}: truncated PNG"
+        for mesh in gltf["meshes"]:
+            for primitive in mesh["primitives"]:
+                attrs=primitive["attributes"]
+                assert "TEXCOORD_0" in attrs, f"{path}: mesh {mesh['name']} has no UV for PBR textures"
+                uv=gltf["accessors"][attrs["TEXCOORD_0"]]
+                pos=gltf["accessors"][attrs["POSITION"]]
+                assert uv["type"]=="VEC2" and uv["count"]==pos["count"], f"{path}: invalid UV count in {mesh['name']}"
     for acc in gltf["accessors"]:
         view = gltf["bufferViews"][acc["bufferView"]]
         byte_len = acc["count"] * COMPONENT_SIZE[acc["componentType"]] * COMPONENTS[acc["type"]]
