@@ -426,7 +426,7 @@ func _load_authored_character(kind: String, parent: Node3D) -> bool:
 								return
 							# Death is terminal. Never restart idle on a defeated
 							# character while its disappearance tween is running.
-							if str(finished).get_slice("/", -1) == "death":
+							if str(finished) == "death" or str(finished).ends_with("/death"):
 								return
 							if str(finished) != idle_name and player.has_animation(idle_name):
 								player.play(idle_name)
