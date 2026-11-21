@@ -100,7 +100,7 @@ func set_visual_quality(tier: int) -> void:
 	if rim_light != null:
 		rim_light.visible = visual_quality > 0
 	if piece_nodes.has(4):
-		var boss_aura: Node3D = (piece_nodes[4] as Node3D).get_node_or_null("BossEnrageAura")
+		var boss_aura: Node3D = (piece_nodes[4] as Node3D).find_child("BossEnrageAura", true, false) as Node3D
 		if boss_aura != null: boss_aura.visible = boss_enraged and visual_quality > 0
 	for halo in board_gem_halos:
 		halo.visible = visual_quality >= 2
@@ -1082,7 +1082,7 @@ func set_boss_phase(phase: int) -> void:
 	if piece_nodes.has(4) and piece_types.get(4, "") == "k":
 		var boss: Node3D = piece_nodes[4]
 		if not is_instance_valid(boss): return
-		var aura: Node3D = boss.get_node_or_null("BossEnrageAura")
+		var aura: Node3D = boss.find_child("BossEnrageAura", true, false) as Node3D
 		if aura != null: aura.visible = enraged and visual_quality > 0
 		var target_scale: Vector3 = Vector3.ONE * (1.42 if enraged else 1.12)
 		if phase_changed:
@@ -2037,7 +2037,7 @@ func _process(delta: float) -> void:
 			if is_instance_valid(marker):
 				marker.position.y = 2.03 + 0.13 * sin(clock * 4.1 + float(cell) * 0.45)
 	if boss_enraged and visual_quality > 0 and piece_nodes.has(4):
-		var boss_aura: Node3D = (piece_nodes[4] as Node3D).get_node_or_null("BossEnrageAura")
+		var boss_aura: Node3D = (piece_nodes[4] as Node3D).find_child("BossEnrageAura", true, false) as Node3D
 		if boss_aura != null and boss_aura.visible:
 			boss_aura.rotation.y = clock * 0.8
 			boss_aura.position.y = sin(clock * 2.1) * 0.06
