@@ -135,9 +135,9 @@ def make_character(identifier, boss=False):
                 nodes[idx]["translation"]=[center[i]-pivot["translation"][i] for i in range(3)]
                 pivot["children"].append(idx)
                 return
-        if name.startswith("Gauntlet") or name.startswith("ShinPlate") or name.startswith("Boot"):
-            side=name.split("Gauntlet")[-1] if name.startswith("Gauntlet") else (name.split("ShinPlate")[-1] if name.startswith("ShinPlate") else name.split("Boot")[-1])
-            pivot_name=("Arm" if name.startswith("Gauntlet") else "Leg")+side
+        if name.startswith("Gauntlet") or name.startswith("HeroWristBand") or name.startswith("ShinPlate") or name.startswith("Boot") or name.startswith("HeroBootToe"):
+            side=name.split("Gauntlet")[-1] if name.startswith("Gauntlet") else (name.split("HeroWristBand")[-1] if name.startswith("HeroWristBand") else (name.split("ShinPlate")[-1] if name.startswith("ShinPlate") else (name.split("HeroBootToe")[-1] if name.startswith("HeroBootToe") else name.split("Boot")[-1])))
+            pivot_name=("Arm" if name.startswith("Gauntlet") or name.startswith("HeroWristBand") else "Leg")+side
             pivot=next((n for n in nodes if n.get("name")==pivot_name),None)
             if pivot is not None:
                 node=nodes[idx]
@@ -544,7 +544,7 @@ def make_character(identifier, boss=False):
         # belong to the lower arm/shin bone, not the upper pivot; otherwise
         # they float above the bending mesh during elbow/knee flexion.
         # Preserve their world-space bind pose while changing parent.
-        rigid_prefixes=("Gauntlet",) if is_arm else ("ShinPlate","Boot","ForgeKnee")
+        rigid_prefixes=("Gauntlet","HeroWristBand") if is_arm else ("ShinPlate","Boot","HeroBootToe","ForgeKnee")
         for child_index in list(pivot["children"]):
             if child_index==lower_joint_index:
                 continue
