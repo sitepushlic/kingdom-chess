@@ -59,7 +59,21 @@ def main():
         doc,data,base=load(ART / f"boss_region_{n}.glb")
         arm=animation_track(doc,data,base,"attack","Arm1")
         assert abs(arm[-1][0])<1e-5, f"Boss {n}: attack does not recover to rest"
-    print(f"Motion validated: 30 heroes, 6 bosses, {len(signatures)} distinct hero attack profiles")
+    # Enemies use the same skeletal animation contract as heroes and bosses.
+    # Check every generated character, not only representative samples.
+    enemy_count=0
+    for region in range(6):
+        for chess_class in "prnbqk":
+            doc,data,base=load(ART / f"enemy_{chess_class}_region_{region}.glb")
+            for clip in ("idle","move","attack","hit","death","cast"):
+                for bone in ("SpineChest","CapeHem","Head","Arm1Lower","Arm-1Lower","Leg1Lower","Leg-1Lower"):
+                    poses=animation_track(doc,data,base,clip,bone)
+                    assert len(poses)>=3, f"Enemy {chess_class}/{region}: missing {clip}/{bone} motion"
+                    assert all(abs(sum(x*x for x in q)-1)<1e-4 for q in poses), f"Enemy {chess_class}/{region}: invalid quaternion {clip}/{bone}"
+            attack=animation_track(doc,data,base,"attack","Arm1")
+            assert abs(attack[0][0])<1e-5 and abs(attack[-1][0])<1e-5, f"Enemy {chess_class}/{region}: attack does not recover"
+            enemy_count+=1
+    print(f"Motion validated: 30 heroes, 6 bosses, {enemy_count} enemies, {len(signatures)} distinct hero attack profiles")
 
 if __name__=="__main__":
     main()
