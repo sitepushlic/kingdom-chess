@@ -1471,11 +1471,12 @@ func _king_threatened(board: Array, team: int) -> bool:
 func _move_preserves_king(source: int, destination: int) -> bool:
 	if mode == "raid": return true
 	if pieces[destination] != "":
-		# A nonlethal strike keeps its attacker on the source square.
-		# A king may never finish a lethal capture on an attacked square.
-		if pieces[source].to_upper() == "K":
-			return _king_destination_safe(source, destination)
-		return true
+		# Nonlethal attacks do not move; lethal captures do. Check both outcomes
+		# against the king's safety to avoid illegal RPG pin breaks.
+		var current_safe: bool = not _king_threatened(pieces, _team(pieces[source]))
+		var capture_safe: bool = _king_destination_safe(source, destination)
+		if pieces[source].to_upper() == "K": return capture_safe
+		return current_safe and capture_safe
 	return _king_destination_safe(source, destination)
 
 # Pure attack geometry: pawns threaten diagonals even when a square is empty.
@@ -1684,6 +1685,10 @@ func _move(a: int,b: int) -> void:
 	if poison_turns > 0: hero_poison[b] = poison_turns
 	pieces[b] = pieces[a]
 	health[b] = health[a]
+	# Pawn promotion retains the chess class system: reaching the back rank
+	# upgrades the unit to a queen and preserves its current HP.
+	if pieces[b] == "P" and int(b / 8) == 0: pieces[b] = "Q"
+	elif pieces[b] == "p" and int(b / 8) == 7: pieces[b] = "q"
 	pieces[a] = ""
 	health[a] = 0
 	acted.append(b)
