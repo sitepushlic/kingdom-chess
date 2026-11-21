@@ -893,14 +893,17 @@ func set_region(region_index: int) -> void:
 	rim_light.light_energy = 1.25 if region_index == 5 else 1.6
 	_rebuild_region_scenery(region_index, palette)
 	region_scenery.visible = visual_quality > 0
-	# Existing boss geometry is region-specific: rebuild it when changing biomes.
-	# Preserve its square and avoid rebuilding ordinary pieces or chess state.
-	if piece_nodes.has(4) and str(piece_types.get(4, "")) == "k" and not moving_nodes.has(4):
-		var previous_boss: Node3D = piece_nodes[4]
-		previous_boss.queue_free()
-		var refreshed_boss: Node3D = _build_piece("k", true)
-		refreshed_boss.position = _square_position(4)
-		piece_nodes[4] = refreshed_boss
+	# All regional enemies, not only the boss, must refresh when changing
+	# biomes. Keep board indices, health state and in-flight units intact.
+	for cell in piece_nodes.keys():
+		if moving_nodes.has(cell): continue
+		var kind: String = str(piece_types.get(cell, ""))
+		if kind == "" or kind != kind.to_lower(): continue
+		var old_enemy: Node3D = piece_nodes[cell]
+		old_enemy.queue_free()
+		var new_enemy: Node3D = _build_piece(kind, cell == 4 and kind == "k", false)
+		new_enemy.position = _square_position(cell)
+		piece_nodes[cell] = new_enemy
 
 func set_hazards(cells: Array[int], modifier: String) -> void:
 	if active_hazards == cells and hazard_type == modifier: return
@@ -998,6 +1001,7 @@ func animate_move(source: int, target: int) -> void:
 	if not piece_nodes.has(source): return
 	var actor: Node3D = piece_nodes[source]
 	if piece_nodes.has(target):
+		if hero_model_cell == target: hero_model_cell = -1
 		var victim: Node3D = piece_nodes[target]
 		var vanish := create_tween()
 		vanish.tween_property(victim, "scale", Vector3.ZERO, 0.18)
