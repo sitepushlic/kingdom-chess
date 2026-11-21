@@ -981,7 +981,8 @@ def make_character(identifier, boss=False):
         mats[material_index]["pbrMetallicRoughness"]["baseColorTexture"]={"index":material_index,"texCoord":0}
     gltf={"asset":{"version":"2.0","generator":"KingdomChess deterministic blockout generator"},
           "scene":0,"scenes":[{"nodes":[0]}],"nodes":nodes,"meshes":meshes,"materials":mats,
-          "buffers":[{"byteLength":len(blob)}],"bufferViews":views,"accessors":accessors,"skins":skins,"animations":animations,\n          "images":images,"textures":textures,"samplers":[{"magFilter":9729,"minFilter":9729,"wrapS":10497,"wrapT":10497}]}
+          "buffers":[{"byteLength":len(blob)}],"bufferViews":views,"accessors":accessors,"skins":skins,"animations":animations,
+          "images":images,"textures":textures,"samplers":[{"magFilter":9729,"minFilter":9729,"wrapS":10497,"wrapT":10497}]}
     json_bytes=json.dumps(gltf,ensure_ascii=False,separators=(",",":")).encode("utf-8")
     json_bytes+=b" " * ((-len(json_bytes))%4)
     blob.extend(b"\x00"*((-len(blob))%4))
