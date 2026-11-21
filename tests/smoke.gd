@@ -1000,6 +1000,13 @@ func _run() -> void:
 		var scenery: Node3D = game.battlefield_3d.region_scenery
 		_assert_ok(scenery != null and scenery.get_child_count() > 25, "Region has distinct 3D environment meshes")
 		scenery_counts.append(scenery.get_child_count())
+		var landmark: Node3D = scenery.get_node_or_null("BiomeLandmark_%d" % region_index)
+		_assert_ok(landmark != null, "Each biome constructs its unique 3D landmark group")
+		if landmark != null:
+			_assert_ok(landmark.get_child_count() >= 10, "Each biome has substantial landmark geometry")
+			for part in landmark.get_children():
+				if part is MeshInstance3D:
+					_assert_ok((part as MeshInstance3D).mesh != null, "Biome landmark meshes are non-null")
 		var lighting: WorldEnvironment = game.battlefield_3d.world_environment
 		_assert_ok(lighting != null and lighting.environment != null, "Region has a 3D world environment")
 		region_light_colors.append(game.battlefield_3d.rim_light.light_color)
