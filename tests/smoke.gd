@@ -140,8 +140,16 @@ func _run() -> void:
 	var fallback_rig: Node3D = original_hero_visual.get_node_or_null("VisualRig")
 	var authored_hero: Node = fallback_rig.get_node_or_null("AuthoredCharacter")
 	if authored_hero != null:
-		_assert_ok(authored_hero.find_child("Arm1", true, false) != null, "Imported hero has articulated right arm")
-		_assert_ok(authored_hero.find_child("Leg1", true, false) != null, "Imported hero has articulated right leg")
+		# Godot can convert skinned glTF joint nodes into Skeleton3D bones;
+		# requiring a Node named Arm1 would incorrectly reject a valid skin.
+		var has_right_arm: bool = authored_hero.find_child("Arm1", true, false) != null
+		var has_right_leg: bool = authored_hero.find_child("Leg1", true, false) != null
+		for candidate in authored_hero.find_children("*", "Skeleton3D", true, false):
+			var skeleton: Skeleton3D = candidate as Skeleton3D
+			has_right_arm = has_right_arm or skeleton.find_bone("Arm1") >= 0
+			has_right_leg = has_right_leg or skeleton.find_bone("Leg1") >= 0
+		_assert_ok(has_right_arm, "Imported hero has animated right arm joint or bone")
+		_assert_ok(has_right_leg, "Imported hero has animated right leg joint or bone")
 		var cape_skeleton: Skeleton3D = null
 		for candidate in authored_hero.find_children("*", "Skeleton3D", true, false):
 			var skeleton: Skeleton3D = candidate as Skeleton3D
