@@ -1373,7 +1373,9 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 	var attacker: Node3D = piece_nodes[source]
 	var start: Vector3 = _square_position(source)
 	var end: Vector3 = _square_position(target)
-	var direction: Vector3 = (end - start).normalized()
+	var distance_vector: Vector3 = end - start
+	# Self-targeted spells and previews must not construct a zero-axis quaternion.
+	var direction: Vector3 = distance_vector.normalized() if distance_vector.length_squared() > 0.0001 else Vector3.FORWARD
 	var rig: Node3D = attacker.get_meta("visual_rig", null)
 	if rig != null:
 		var swing := create_tween()
@@ -1403,7 +1405,7 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 		beam.material_override = mat
 		beam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		beam.position = (start + end) * 0.5 + Vector3(0, 0.8, 0)
-		beam.quaternion = Quaternion(Vector3.UP, (end - start).normalized())
+		beam.quaternion = Quaternion(Vector3.UP, direction)
 		beam.scale = Vector3(0.01, 0.01, 0.01)
 		board_root.add_child(beam)
 		var slash := create_tween()
