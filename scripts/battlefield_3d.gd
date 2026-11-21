@@ -1023,6 +1023,32 @@ func _build_castle_skyline(region: int, palette: Array) -> void:
 			var ornament_y: float = height + 0.35 + float(ornament_index) * 0.23
 			_ring(0.33 + float(ornament_index) * 0.06, 0.027, gilding, ornament, Vector3(0, ornament_y, 0))
 			ornament.visible = false
+	# Architectural depth pass: roof ridges, lantern windows, gate portcullis
+	# and repeated masonry details. Kept beyond the 8x8 hit-test footprint.
+	for x in range(-8, 9):
+		var stone_x: float = float(x) * 0.59
+		_box(Vector3(0.055, 0.16, 0.045), roof, skyline, Vector3(stone_x, 0.32, 8.89))
+		_box(Vector3(0.055, 0.16, 0.045), roof, skyline, Vector3(stone_x, 0.74, 8.89))
+	for x in range(-3, 4):
+		var bar := _cylinder(0.028, 1.03, gilding, skyline, Vector3(float(x) * 0.22, 0.37, 8.34), 0.008)
+		bar.name = "CastleGateBar_%02d" % (x + 3)
+	for y in [0.22, 0.69]:
+		_box(Vector3(1.50, 0.045, 0.07), gilding, skyline, Vector3(0, y, 8.32))
+	for building_index in range(5):
+		var building_node: Node3D = skyline.get_node("CastleBuilding_%d" % building_index)
+		var height: float = 1.15 + float(building_index % 3) * 0.35
+		var ridge := _box(Vector3(1.35, 0.10, 0.14), gilding, building_node, Vector3(0, height + 0.06, 0))
+		ridge.name = "RoofRidge"
+		for side in [-1.0, 1.0]:
+			var window := _box(Vector3(0.17, 0.26, 0.05), glass, building_node, Vector3(side * 0.33, 0.48, -0.57))
+			window.name = "CastleWindow_%d" % int(side)
+			_box(Vector3(0.22, 0.045, 0.075), gilding, building_node, Vector3(side * 0.33, 0.64, -0.59))
+	for side in [-1.0, 1.0]:
+		var tower_node: Node3D = skyline.get_node("CastleWatchtower_%d" % int(side))
+		for level in range(2):
+			_ring(0.68, 0.035, gilding, tower_node, Vector3(0, 0.92 + float(level) * 0.80, 0))
+		for direction in [-1.0, 1.0]:
+			_box(Vector3(0.16, 0.38, 0.07), glass, tower_node, Vector3(direction * 0.44, 1.30, -0.42))
 	_update_castle_visual_levels()
 	# Region color, not building power, drives the backdrop.
 	skyline.set_meta("region", region)
