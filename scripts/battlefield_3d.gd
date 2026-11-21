@@ -1761,7 +1761,7 @@ func animate_move(source: int, target: int) -> void:
 			_animate_limbs(victim_rig, "hit")
 		# Leave enough time to read the death pose, without delaying the
 		# chess move or keeping the captured unit in the logical board.
-		var vanish := create_tween()
+		var vanish := create_tween().bind_node(victim)
 		# The authored death clip lasts 0.70s; keep its final pose visible
 		# before shrinking the defeated unit out of the scene.
 		vanish.tween_interval(0.70)
@@ -1779,13 +1779,13 @@ func animate_move(source: int, target: int) -> void:
 	var destination := _square_position(target)
 	var move_rig: Node3D = actor.get_meta("visual_rig", null)
 	if move_rig != null:
-		var lean := create_tween()
+		var lean := create_tween().bind_node(move_rig)
 		lean.tween_property(move_rig, "rotation:z", -0.16, 0.15)
 		lean.tween_property(move_rig, "rotation:z", 0.08, 0.18)
 		lean.tween_property(move_rig, "rotation:z", 0.0, 0.10)
 		_play_authored_clip(move_rig, "move")
 		_animate_limbs(move_rig, "move")
-	var tween := create_tween()
+	var tween := create_tween().bind_node(actor)
 	tween.tween_property(actor, "position", destination + Vector3(0, 0.9, 0), 0.19).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(actor, "position", destination, 0.22).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(func(): moving_nodes.erase(target))
@@ -1800,13 +1800,13 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 	var direction: Vector3 = distance_vector.normalized() if distance_vector.length_squared() > 0.0001 else Vector3.FORWARD
 	var rig: Node3D = attacker.get_meta("visual_rig", null)
 	if rig != null:
-		var swing := create_tween()
+		var swing := create_tween().bind_node(rig)
 		swing.tween_property(rig, "rotation", Vector3(-0.18, 0.24 if magical else -0.22, -0.26), 0.12).set_trans(Tween.TRANS_QUAD)
 		swing.tween_property(rig, "rotation", Vector3(0.22, -0.28 if magical else 0.32, 0.30), 0.13).set_trans(Tween.TRANS_QUART)
 		swing.tween_property(rig, "rotation", Vector3.ZERO, 0.18).set_trans(Tween.TRANS_BACK)
 		_play_authored_clip(rig, "attack")
 		_animate_limbs(rig, "attack")
-	var anticipation := create_tween()
+	var anticipation := create_tween().bind_node(attacker)
 	anticipation.tween_property(attacker, "position", start - direction * 0.16 + Vector3(0, 0.10, 0), 0.11).set_trans(Tween.TRANS_CUBIC)
 	anticipation.tween_property(attacker, "position", start + direction * 0.25 + Vector3(0, 0.19, 0), 0.12).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
 	anticipation.tween_property(attacker, "position", start, 0.17).set_trans(Tween.TRANS_BACK)
@@ -1839,12 +1839,12 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 		beam.quaternion = Quaternion(Vector3.UP, direction)
 		beam.scale = Vector3(0.01, 0.01, 0.01)
 		board_root.add_child(beam)
-		var slash := create_tween()
+		var slash := create_tween().bind_node(beam)
 		slash.tween_property(beam, "scale", Vector3.ONE, 0.10).set_trans(Tween.TRANS_CUBIC)
 		slash.tween_property(beam, "transparency", 1.0, 0.24)
 		slash.tween_callback(beam.queue_free)
 		if camera != null and visual_quality >= 2:
-			var camera_shake := create_tween()
+			var camera_shake := create_tween().bind_node(camera)
 			camera_shake.tween_property(camera, "position", base_camera_position + Vector3(0.09, -0.06, 0), 0.045)
 			camera_shake.tween_property(camera, "position", base_camera_position + Vector3(-0.07, 0.04, 0), 0.055)
 			camera_shake.tween_property(camera, "position", base_camera_position, 0.11)
