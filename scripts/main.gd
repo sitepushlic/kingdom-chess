@@ -1936,9 +1936,13 @@ func _move(a: int,b: int) -> void:
 	_animate_move(a, b)
 	# Status follows the moving unit, not the vacated board square.
 	var poison_turns: int = int(hero_poison.get(a, 0))
+	var enemy_poison_stacks: int = int(poison_marks.get(a, 0))
 	hero_poison.erase(a)
 	hero_poison.erase(b)
+	poison_marks.erase(a)
+	poison_marks.erase(b)
 	if poison_turns > 0: hero_poison[b] = poison_turns
+	if enemy_poison_stacks > 0: poison_marks[b] = enemy_poison_stacks
 	pieces[b] = pieces[a]
 	health[b] = health[a]
 	# Pawn promotion retains the chess class system: reaching the back rank
