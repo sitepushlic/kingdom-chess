@@ -298,6 +298,16 @@ func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 					var rarity_marker := Node3D.new()
 					rarity_marker.name = "Rarity_" + slot
 					socket.add_child(rarity_marker)
+					# High-rarity gear gains subtle, socket-bound magic rings.
+					# Quality level controls count; no lights or per-frame particles.
+					if tier >= 4 and fx_enabled and visual_quality > 0:
+						var glow: StandardMaterial3D = _gear_material(slot)
+						var ring_count: int = mini(tier - 3, visual_quality)
+						for effect_index in range(ring_count):
+							var halo: MeshInstance3D = _ring(0.18 + effect_index * 0.085, 0.012, glow, socket, Vector3(0, 0.19 + effect_index * 0.08, 0))
+							halo.name = "EnchantmentHalo_%d" % effect_index
+							halo.rotation.x = PI * 0.5
+							halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 					return
 				gear_model.free()
 	var mat: Material = _gear_material(slot)
