@@ -1798,15 +1798,20 @@ func hit(index: int, healing: bool = false) -> void:
 	# Keep hit reactions on low-end devices without translucent shock meshes.
 	if fx_enabled and visual_quality > 0 and board_root != null:
 		var shock := MeshInstance3D.new()
-		var shock_mesh := TorusMesh.new()
-		shock_mesh.inner_radius = 0.23
-		shock_mesh.outer_radius = 0.33
-		shock_mesh.rings = 12
-		shock_mesh.ring_segments = 20
-		shock.mesh = shock_mesh
-		var flash_material := _material(Color("#6ef7c2") if healing else Color("#ff855d"), 0.0, 0.3, Color("#4de6a8") if healing else Color("#ff431e"))
-		flash_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		shock.material_override = flash_material
+		if not primitive_mesh_cache.has("hit_shock_torus"):
+			var shock_mesh := TorusMesh.new()
+			shock_mesh.inner_radius = 0.23
+			shock_mesh.outer_radius = 0.33
+			shock_mesh.rings = 12
+			shock_mesh.ring_segments = 20
+			primitive_mesh_cache["hit_shock_torus"] = shock_mesh
+		shock.mesh = primitive_mesh_cache["hit_shock_torus"]
+		var hit_key: String = "heal" if healing else "damage"
+		if not impact_materials.has(hit_key):
+			var flash_material := _material(Color("#6ef7c2") if healing else Color("#ff855d"), 0.0, 0.3, Color("#4de6a8") if healing else Color("#ff431e"))
+			flash_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			impact_materials[hit_key] = flash_material
+		shock.material_override = impact_materials[hit_key]
 		shock.position = _square_position(index) + Vector3(0, 0.10, 0)
 		shock.scale = Vector3.ONE * 0.2
 		board_root.add_child(shock)
