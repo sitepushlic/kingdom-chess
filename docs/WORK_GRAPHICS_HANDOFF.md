@@ -42,8 +42,13 @@ Starting SHA: `b5858e4618c25f6fe1481c8aaea3d1f0cf086f69`.
 - Godot 4.3 local editor import did not finish within the local command window, leaving no import cache. The first smoke invocation therefore failed before loading the game because SVG resources were not imported; this is an environment/import prerequisite failure, not a passing test. The updated Godot workflow must verify the exact source commit. No visual screenshot, Android device QA, FPS measurement or APK work was done.
 - Updated `docs/ART_MANIFEST.md`: six authored detail modules are tracked separately from full-body authored heroes; import/visual acceptance remain unverified.
 
+### CI failure and fix — 2026-11-22
+- Source commit `2aa3918b47086bff0276f3ddeea11aae01d4c2bb`: fast art workflow passed ([run 44942007310](https://github.com/sitepushlic/kingdom-chess/actions/runs/44942007310)); Godot workflow failed at editor import after 240 s, before main-scene launch or smoke ([run 44942007382](https://github.com/sitepushlic/kingdom-chess/actions/runs/44942007382)).
+- Root cause isolated locally: Godot 4.3 treats `.blend` files under the project as Blender-importable scenes and hangs when Blender source is in the scanned resource tree. Six authored GLBs import successfully. Moving the editable `.blend` into `assets/characters/authored_details/blender_source/` with `.gdignore` allows editor import to complete (exit 0).
+- With the fix staged locally: Godot 4.3 editor import passed; main scene remained running until expected 25 s timeout (124) with no matched parser/import errors; `tests/smoke.gd` reached `KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED`, including all six new detail assertions. Headless dummy-renderer `mesh_get_surface_count(null)` warnings were emitted by existing smoke setup. Exact-commit CI is still required.
+
 ### Next action
-Check the Godot 4.3 workflow for source commit `2aa3918b47086bff0276f3ddeea11aae01d4c2bb`; fix any actual import or smoke failure, then author the first complete rigged hero body and animation set. Continue through all 30 heroes only after validating the production pipeline. APK remains untouched.
+Commit this import fix and updated source path; verify both workflows for the new exact source SHA. Then build the first full original rigged hero body and clips, not only more head accessories. APK remains untouched.
 
 ## 1. USER'S DIRECT ORDERS — HIGHEST PRIORITY
 1. Finish **priority 1: complete playable 3D graphics** for Kingdom Chess, not a demo, static concept art, or another batch of superficial procedural blockouts.

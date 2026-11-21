@@ -63,11 +63,11 @@
 | Биомы | 6 | процедурная 3D-сцена собирается в runtime | 0 authored scenes | 0/6 |
 | Миссии | 18 | 3 runtime-варианта × 6 регионов | 0 authored scenes | 0/18 |
 
-**Граница доказательств:** в `assets/characters/authored_details/` подготовлены шесть авторских модулей головы `hero_01`–`hero_06` и редактируемый `.blend`; это не полные персонажи и не заменяет процедурные тела. Runtime-подключение к анимируемой кости `Head` и smoke-проверки добавлены, но Godot import/smoke на новом коммите ещё не подтверждены. Скриншотов визуального ревью нет. На дату 2026-11-22 Android device QA и измерения FPS не выполнялись. APK остаётся запрещён к сборке.
+**Граница доказательств:** в `assets/characters/authored_details/` подготовлены шесть авторских модулей головы `hero_01`–`hero_06`; редактируемый `.blend` находится в дочерней папке `blender_source/`, помеченной `.gdignore`, чтобы Godot не пытался импортировать Blender-файл как сцену. Это не полные персонажи и не заменяет процедурные тела. После этой правки локально прошли Godot 4.3 editor import (exit 0), запуск основной сцены до ожидаемого timeout 25 s и smoke (успешный маркер); проверка GitHub Actions на коммите с исправлением ещё ожидается. Скриншотов визуального ревью нет. На дату 2026-11-22 Android device QA и измерения FPS не выполнялись. APK остаётся запрещён к сборке.
 
 ## Источники в репозитории и следующие deliverables
 
 - Канонические данные: `scripts/hero_roster.gd`; генерация: `tools/art/generate_blockouts.py`; import/runtime: `scripts/battlefield_3d.gd`.
-- Источник первого пакета деталей: `tools/art/create_hero_signatures_batch_01.py`; команда Blender 4.3+: `blender -b --python tools/art/create_hero_signatures_batch_01.py`. Экспортируются шесть GLB-модулей головы; полный rigged-body пакет `hero_01`–`hero_06` остаётся следующим крупным этапом.
+- Источник первого пакета деталей: `tools/art/create_hero_signatures_batch_01.py`; команда Blender 4.3+: `blender -b --python tools/art/create_hero_signatures_batch_01.py`. Исходник `.blend` хранится в подпапке `blender_source/` с `.gdignore`; экспортируются шесть GLB-модулей головы. Полный rigged-body пакет `hero_01`–`hero_06` остаётся следующим крупным этапом.
 - Затем — 36 региональных противников, 6 боссов, 21 предмет, 6 биомов и 18 вариантов миссий; сохранить текущие ограничения chess-логики и progression.
 - Проверка релиза графики: Godot 4.3 editor import, запуск main scene и smoke; скриншоты на портретном разрешении; реальные замеры телефона. APK не собирать без нового прямого распоряжения.

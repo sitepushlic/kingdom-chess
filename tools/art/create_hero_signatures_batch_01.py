@@ -14,7 +14,10 @@ from mathutils import Euler
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "assets" / "characters" / "authored_details"
-SOURCE = OUT / "hero_signatures_batch_01.blend"
+SOURCE_DIR = OUT / "blender_source"
+SOURCE_DIR.mkdir(parents=True, exist_ok=True)
+(SOURCE_DIR / ".gdignore").touch()
+SOURCE = SOURCE_DIR / "hero_signatures_batch_01.blend"
 OUT.mkdir(parents=True, exist_ok=True)
 
 bpy.ops.object.select_all(action="SELECT")
@@ -210,5 +213,6 @@ for hero_id, motif, colors in profiles:
     print("EXPORTED", destination.relative_to(ROOT), destination.stat().st_size, "bytes", len(added), "objects")
 
 bpy.ops.object.select_all(action="DESELECT")
+bpy.context.preferences.filepaths.save_version = 0
 bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE))
 print("SAVED_SOURCE", SOURCE.relative_to(ROOT), SOURCE.stat().st_size, "bytes")
