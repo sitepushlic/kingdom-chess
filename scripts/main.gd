@@ -189,6 +189,7 @@ func _ready() -> void:
 	battlefield_viewport.add_child(battlefield_3d)
 	battlefield_3d.set_visual_quality(graphics_quality)
 	battlefield_3d.set_board_visual_style(selected_board)
+	battlefield_3d.set_castle_visual_levels(castle)
 	battlefield_container.gui_input.connect(_on_3d_board_input)
 	var grid := GridContainer.new()
 	grid.columns = 8
@@ -656,6 +657,8 @@ func _upgrade_castle_building() -> void:
 		return
 	gold -= Progression.castle_upgrade_cost(building, level)
 	castle[building_id] = level + 1
+	if battlefield_3d != null:
+		battlefield_3d.set_castle_visual_levels(castle)
 	_save_profile()
 	_refresh_castle()
 	_draw()
