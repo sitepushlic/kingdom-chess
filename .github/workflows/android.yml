@@ -153,9 +153,9 @@ jobs:
               if [ -f "$name" ]; then
                 echo
                 echo "### $name (last 25 lines)"
-                echo '\`\`\`text'
+                echo '```text'
                 tail -n 25 "$name"
-                echo '\`\`\`'
+                echo '```'
               fi
             done
           } >> "$GITHUB_STEP_SUMMARY"
