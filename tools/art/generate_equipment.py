@@ -11,8 +11,19 @@ from pathlib import Path
 
 OUT = Path(__file__).resolve().parents[2] / "assets" / "equipment"
 OUT.mkdir(parents=True, exist_ok=True)
-VERTICES = [(-1,-1,-1),(1,-1,-1),(1,1,-1),(-1,1,-1),(-1,-1,1),(1,-1,1),(1,1,1),(-1,1,1)]
-TRIANGLES = [0,1,2,0,2,3,4,6,5,4,7,6,0,4,5,0,5,1,3,2,6,3,6,7,1,5,6,1,6,2,0,3,7,0,7,4]
+# Flat-shaded cube: 24 independent vertices (4 per face), outward-facing
+# normals, consistent winding. Unlike 8 shared corners this gives hard edges.
+FACE_CORNERS = [
+    ((0,0,-1),[(-1,-1,-1),(-1,1,-1),(1,1,-1),(1,-1,-1)]),
+    ((0,0,1),[(-1,-1,1),(1,-1,1),(1,1,1),(-1,1,1)]),
+    ((0,-1,0),[(-1,-1,-1),(1,-1,-1),(1,-1,1),(-1,-1,1)]),
+    ((0,1,0),[(-1,1,-1),(-1,1,1),(1,1,1),(1,1,-1)]),
+    ((-1,0,0),[(-1,-1,-1),(-1,-1,1),(-1,1,1),(-1,1,-1)]),
+    ((1,0,0),[(1,-1,-1),(1,1,-1),(1,1,1),(1,-1,1)]),
+]
+VERTICES = [vertex for normal,face in FACE_CORNERS for vertex in face]
+NORMALS = [normal for normal,face in FACE_CORNERS for _ in face]
+TRIANGLES = [base+offset for base in range(0,24,4) for offset in (0,1,2,0,2,3)]
 PALETTE = [
     (0.63,0.67,0.72,1),(0.24,0.70,0.61,1),(0.28,0.52,0.91,1),
     (0.65,0.39,0.88,1),(0.93,0.61,0.24,1),(0.93,0.31,0.47,1),
@@ -21,8 +32,8 @@ PALETTE = [
 
 def build(slot, tier):
     nodes=[{"name":"EquipmentRoot","children":[]}]
-    meshes=[{"name":"Metal","primitives":[{"attributes":{"POSITION":0},"indices":1,"material":0}]},
-            {"name":"Inlay","primitives":[{"attributes":{"POSITION":0},"indices":1,"material":1}]}]
+    meshes=[{"name":"Metal","primitives":[{"attributes":{"POSITION":0,"NORMAL":1},"indices":2,"material":0}]},
+            {"name":"Inlay","primitives":[{"attributes":{"POSITION":0,"NORMAL":1},"indices":2,"material":1}]}]
     shapes=[]
     def box(name, center, size, mat=0, angle=0):
         index=len(nodes)
@@ -88,7 +99,8 @@ def build(slot, tier):
         acc={"bufferView":len(views)-1,"componentType":component,"count":count,"type":kind}
         if bounds: acc["min"],acc["max"]=bounds
         accessors.append(acc)
-    append([v for xyz in VERTICES for v in xyz],"24f",5126,8,"VEC3",34962,([-1,-1,-1],[1,1,1]))
+    append([v for xyz in VERTICES for v in xyz],"72f",5126,24,"VEC3",34962,([-1,-1,-1],[1,1,1]))
+    append([v for xyz in NORMALS for v in xyz],"72f",5126,24,"VEC3",34962)
     append(TRIANGLES,"36H",5123,36,"SCALAR",34963)
     while len(blob)%4: blob.append(0)
     materials=[
