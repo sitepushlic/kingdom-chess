@@ -560,6 +560,21 @@ func _run() -> void:
 			var gear_asset: String = "res://assets/equipment/%s_tier_%d.glb" % [gear_slot, gear_tier]
 			_assert_ok(ResourceLoader.exists(gear_asset), "Modular equipment GLB exists: " + gear_asset)
 			_assert_ok(load(gear_asset) is PackedScene, "Modular equipment GLB imports: " + gear_asset)
+	# All generated characters (30 heroes, 36 enemy classes and six bosses)
+	# must be importable, and board redraws must reuse their PackedScenes.
+	var character_paths: Array[String] = []
+	for hero_id in range(1, 31):
+		character_paths.append("res://assets/characters/hero_%02d.glb" % hero_id)
+	for region_id in range(6):
+		character_paths.append("res://assets/characters/boss_region_%d.glb" % region_id)
+		for chess_role in ["p", "r", "n", "b", "q", "k"]:
+			character_paths.append("res://assets/characters/enemy_%s_region_%d.glb" % [chess_role, region_id])
+	for character_path in character_paths:
+		var imported_scene: PackedScene = game.battlefield_3d._get_character_scene(character_path)
+		_assert_ok(imported_scene != null and imported_scene == game.battlefield_3d._get_character_scene(character_path), "Character GLB import cached: " + character_path)
+	_assert_ok(game.battlefield_3d.character_scene_cache.size() == 72, "All 72 unique hero, enemy and boss GLBs cached")
+	_assert_ok(game.battlefield_3d._get_character_scene("res://assets/characters/missing_999.glb") == null, "Missing character scene handled safely")
+
 	# Imported 21-model cache avoids repeated disk/import lookups on
 	# inventory changes. Material cache distinguishes rarity and upgrades.
 	for gear_slot in ["weapon", "armor", "relic"]:
