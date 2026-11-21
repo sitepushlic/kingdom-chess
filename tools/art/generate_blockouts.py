@@ -1195,7 +1195,7 @@ def make_character(identifier, boss=False):
                                max(0,min(255,round(127.5*(1+1/norm)))),255))
         def chunk(kind,data):
             return struct.pack(">I",len(data))+kind+data+struct.pack(">I",zlib.crc32(kind+data)&0xffffffff)
-        return (b"\\x89PNG\\r\\n\\x1a\\n"+
+        return (b"\x89PNG\r\n\x1a\n"+
                 chunk(b"IHDR",struct.pack(">IIBBBBB",size,size,8,6,0,0,0))+
                 chunk(b"IDAT",zlib.compress(bytes(pixels),9))+
                 chunk(b"IEND",b""))
