@@ -128,7 +128,21 @@ def main():
     head["children"].remove(nose)
     doc["nodes"][1]["children"].append(nose)
     must_reject(pack_glb(doc,binary),"nose bridge detached from animated Head")
-    print("Validator regression tests: pristine GLB accepted; 12 corrupt GLBs rejected")
+    # Signature headgear must follow the neck, not the static body.
+    doc,binary=read_glb(original)
+    head=next(node for node in doc["nodes"] if node.get("name")=="Head")
+    crown=next(i for i,node in enumerate(doc["nodes"]) if node.get("name")=="Crown")
+    head["children"].remove(crown)
+    doc["nodes"][1]["children"].append(crown)
+    must_reject(pack_glb(doc,binary),"signature crown detached from animated Head")
+    # Royal shoulder plate must follow its upper-arm pivot.
+    doc,binary=read_glb(original)
+    pauldron=next(i for i,node in enumerate(doc["nodes"]) if node.get("name")=="RoyalShoulder1")
+    arm=next(node for node in doc["nodes"] if node.get("name")=="Arm1")
+    arm["children"].remove(pauldron)
+    doc["nodes"][1]["children"].append(pauldron)
+    must_reject(pack_glb(doc,binary),"royal shoulder plate detached from animated arm")
+    print("Validator regression tests: pristine GLB accepted; 14 corrupt GLBs rejected")
 
 if __name__=="__main__":
     main()
