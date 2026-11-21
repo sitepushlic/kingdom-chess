@@ -158,3 +158,8 @@ Implemented as one continuous batch (no user involvement):
 7. **`27304bbcbd6b0627baef201727622d12bc4c60d7`**: six enemy classes get physically different equipment silhouettes, plus six region-specific material palettes.
 **Verification:** all code and test commits saved in GitHub; generator execution, Godot import, Actions and APK have not been observed succeeding. Assets are procedural blockouts, **not final polished or skinned assets**. CI will generate 93 GLBs; generated binaries are not committed to repository.
 **Remaining priority 1:** verify Actions logs and correct failures; replace blockouts with professionally detailed/skinned models and skeletal animations; add authored material maps, detailed equipment attachment sockets to actual bones, finished 18 environments, polished VFX/lighting, Android performance profiling and on-device QA.
+
+## 17. Art-pipeline hardening — 2026-11-21
+- **`cdc5e0d81a6b95d508312562d5161132211917f5`**: CI checks Python syntax for all three art scripts before generating assets.
+- **`172b334487be29d81469af83918cabe4dea5f095`**, **`4bc9fce949512c7d17d10bd3d060fe73cd3dd5d0`**: character and equipment blockout PBR materials use double-sided rendering so cuboid faces remain visible despite minimal shared-vertex geometry.
+- The 93 GLB files are expected outputs of CI generators, **not** committed binaries or proof of successful execution. Environment lacks Godot/Blender and outbound DNS, so the GitHub Actions result and Android APK are **not verified**. Next highest priority is obtaining real CI logs and resolving any failures before claiming asset pipeline passes.
