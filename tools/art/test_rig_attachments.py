@@ -68,6 +68,12 @@ def check(path):
         assert name in by_name, f"{path}: missing facial landmark {name}"
         assert parents[by_name[name]]==head_id, f"{path}: {name} detached from animated head"
         assert abs(world_position(by_name[name])[1]-rest_y)<1e-5, f"{path}: {name} rest pose drift"
+    # Six signature headgear families must follow neck rotation, too.
+    signature_names=("Crown","Antler","HighHelm","Crest","Halo","Mask")
+    authored=[name for name in by_name if name.startswith(signature_names)]
+    assert authored, f"{path}: no authored signature headgear"
+    for name in authored:
+        assert parents[by_name[name]]==head_id, f"{path}: {name} is static headgear"
     # Every character's weapon must follow its actual wrist, rather
     # than staying under the stationary BodyRig during attacks.
     right=by_name["Arm1Lower"]
