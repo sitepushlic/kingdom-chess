@@ -47,6 +47,14 @@ func _run() -> void:
 	_assert_ok(not HeroRoster.quest_progress(HeroRoster.HEROES[29], 25, 1)["unlocked"], "Hero quest cannot bypass player level gate")
 	_assert_ok(HeroRoster.quest_progress(HeroRoster.HEROES[29], 25, 35)["unlocked"], "Endgame hero unlocks only when both gates are met")
 	_assert_ok(not HeroRoster.next_unlock(0, 1).is_empty(), "Early campaign displays a next earnable hero")
+	var next_early: Dictionary = HeroRoster.next_unlock(0, 1)
+	_assert_ok(not next_early.is_empty() and not HeroRoster.unlocked(next_early, 0, 1), "Next quest never points to an already unlocked hero")
+	var wins_unlocks: int = 0
+	for hero in HeroRoster.HEROES:
+		if HeroRoster.unlocked(hero, 6, 20) and not HeroRoster.unlocked(hero, 5, 20):
+			wins_unlocks += 1
+	_assert_ok(wins_unlocks > 0, "Winning a boss battle can unlock additional heroes")
+
 	_assert_ok(HeroRoster.next_unlock(25, 35).is_empty(), "Completed hero collection has no pending unlocks")
 
 	_assert_ok(HeroRoster.available_count(25, 35) == 30, "Every hero can be earned through quests")
