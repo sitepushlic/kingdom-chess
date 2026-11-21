@@ -1316,6 +1316,12 @@ func _run() -> void:
 		if popup_node is Label3D and popup_node.name.begins_with("CombatNumber"):
 			combat_number_count += 1
 	_assert_ok(combat_number_count <= game.battlefield_3d.combat_number_limit, "Multi-hit burst respects 18-label 3D node cap")
+	_assert_ok(game.battlefield_3d.active_combat_numbers.size() <= game.battlefield_3d.combat_number_limit, "Combat label tracking array remains bounded")
+	var last_number: Label3D = game.battlefield_3d.active_combat_numbers.back()
+	last_number.queue_free()
+	game.battlefield_3d.show_combat_number(60, 41, false)
+	_assert_ok(game.battlefield_3d.active_combat_numbers.size() <= game.battlefield_3d.combat_number_limit, "Queued-for-deletion labels are pruned before next hit")
+
 
 	# Main gameplay events must invoke the 3D label path and avoid the
 	# invisible legacy button-label animation on the hidden chess grid.
