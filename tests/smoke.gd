@@ -115,6 +115,16 @@ func _run() -> void:
 			_assert_ok(skyline.get_node_or_null("CastleBanner_-1") != null, "Castle has left gatehouse banner")
 			for building_index in range(5):
 				_assert_ok(skyline.get_node_or_null("CastleBuilding_%d" % building_index) != null, "Castle has visually distinct building %d" % building_index)
+			for bar_index in range(7):
+				_assert_ok(skyline.get_node_or_null("CastleGateBar_%02d" % bar_index) != null, "Gate portcullis bar %d exists" % bar_index)
+			for side in [-1, 1]:
+				_assert_ok(skyline.get_node_or_null("CastleWatchtower_%d" % side) != null, "Detailed castle tower exists")
+			for building_index in range(5):
+				var detail_building: Node3D = skyline.get_node_or_null("CastleBuilding_%d" % building_index)
+				if detail_building != null:
+					_assert_ok(detail_building.get_node_or_null("RoofRidge") != null, "Castle roof ridge %d exists" % building_index)
+					_assert_ok(detail_building.get_node_or_null("CastleWindow_-1") != null, "Castle west window %d exists" % building_index)
+					_assert_ok(detail_building.get_node_or_null("CastleWindow_1") != null, "Castle east window %d exists" % building_index)
 			for merlon_index in range(20):
 				_assert_ok(skyline.get_node_or_null("CastleMerlon_%02d" % merlon_index) != null, "Castle curtain has crenellation %d" % merlon_index)
 		_assert_ok(game.battlefield_3d.ambient_motes.size() <= 12, "Ambient effects remain bounded on Android")
