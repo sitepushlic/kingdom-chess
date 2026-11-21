@@ -1019,6 +1019,8 @@ func _restore_battle() -> bool:
 	var parsed = JSON.parse_string(file.get_as_text())
 	if typeof(parsed) != TYPE_DICTIONARY: return false
 	if not valid_battle_arrays(parsed.get("pieces"), parsed.get("health")): return false
+	# Reuse the same strict action/turn schema as network snapshots.
+	if not valid_raid_snapshot(parsed): return false
 	var new_mode: String = str(parsed.get("mode", "arena"))
 	if new_mode != "arena" and new_mode != "raid": return false
 	for item in parsed["pieces"]:
@@ -1042,7 +1044,7 @@ func _restore_battle() -> bool:
 	raid_mission = parsed.get("raid_mission", raid_mission).duplicate(true)
 	boss_target = clampi(int(parsed.get("boss_target", -1)), -1, 63)
 	battle_log = str(parsed.get("battle_log", "Битва продолжается."))
-	acted = parsed.get("acted", []).duplicate()
+	acted = parsed["acted"].duplicate()
 	enemy_wave = maxi(0, int(parsed.get("enemy_wave", 0)))
 	selected = -1
 	curse_mode = false
