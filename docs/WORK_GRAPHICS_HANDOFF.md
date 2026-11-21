@@ -1,6 +1,25 @@
 # KINGDOM CHESS — MASTER HANDOFF FOR CHATGPT WORK
-**Updated:** 2026-11-21. **Repository:** https://github.com/sitepushlic/kingdom-chess, branch `main`.
+**Updated:** 2026-11-22. **Repository:** https://github.com/sitepushlic/kingdom-chess, branch `main`.
 **Purpose:** authoritative execution instructions for a new Work session. This is NOT evidence of completion. Read this entire file, then inspect the current repository and CI before editing.
+
+## SESSION UPDATE — 2026-11-22
+Starting source SHA: `ae427c0eb0405d18f79348cf0e26562e1ccca87b`.
+
+### Fixed in this session
+- `tools/art/generate_blockouts.py`: both `EnemyRookTower` helmet pieces now parent to animated `Head`; `EnemyRookBulwark` remains attached to `Arm-1`. This fixes the actual geometry hierarchy; the older `HANDOFF.md` entry saying towers should follow the arms is superseded.
+- `scripts/main.gd`: fixed the indentation error in `_cycle_graphics_quality()` that stopped Godot parsing.
+- `scripts/battlefield_3d.gd`: optional tween/rig/health metadata now uses a `has_meta()` guard, preventing repeated engine errors during normal redraws and animation transitions. Self-targeted attacks still animate the actor but no longer allocate zero-length attack effects.
+- `tests/smoke.gd`: fixed a duplicate local variable that prevented the smoke suite from parsing. Made board palette setup deterministic, aligned cache checks with added VFX materials, searched heraldry under the rig hierarchy, used float tolerance for marker height, and guarded optional tween metadata reads.
+
+### Local evidence (working tree; record final commit/CI after push)
+- Art pipeline passed: `compileall`; generators reported 30 heroes + 36 enemies + 6 bosses and 21 equipment GLBs; structure validation checked 72 characters; motion validation passed; limb QA checked 288 limbs/72 torsos; rig QA checked 72 GLBs/432 armor attachments; corruption tests rejected all 16 malformed GLBs; reproducibility passed for 93 GLBs; art report: 93 GLBs, 6,693,376 bytes, 283,248 aggregate triangles.
+- Godot **4.3**: editor import exited 0; main scene ran to the expected 25-second timeout (124) without matched script/import errors; `tests/smoke.gd` exited 0 with `KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED`.
+- Godot 4.7.2 local import/smoke also passed as an additional check. Earlier 4.7.2 smoke failures exposed a test parse issue and outdated assertions; those were corrected before the passing run.
+- No rendered screenshot, mobile frame-time profile, physical device test, or APK build/export/sign/upload was performed. Generated models remain procedural blockouts; the graphics priority is not complete.
+- Previous failing Actions runs `44936307760` and `44936307793` were both on `4b027da6`; they failed at the same rook-head attachment assertion before Godot import. A new source push must trigger fresh Actions, and its exact-SHA results must be recorded below.
+
+### First next action
+Check both Actions workflows for the pushed source SHA and inspect complete logs. Fix any new failures. Then continue the graphics gates below; do not treat passing procedural QA/import as final visual acceptance. APK remains untouched.
 
 ## 1. USER'S DIRECT ORDERS — HIGHEST PRIORITY
 1. Finish **priority 1: complete playable 3D graphics** for Kingdom Chess, not a demo, static concept art, or another batch of superficial procedural blockouts.

@@ -1,3 +1,22 @@
+## 2026-11-22 — ART RIG AND GODOT SMOKE BLOCKERS FIXED (LATEST)
+**Starting SHA:** `ae427c0eb0405d18f79348cf0e26562e1ccca87b`.
+
+### Changes prepared
+- `tools/art/generate_blockouts.py`: both `EnemyRookTower` ornaments parent to animated `Head`, matching their helmet geometry and the rig validator. The old `66a3dfc7` note below says to attach them to arms; that note is superseded. The bulwark shield still follows `Arm-1`.
+- `scripts/main.gd`: corrected indentation in `_cycle_graphics_quality()`; the prior code had a GDScript parse error.
+- `scripts/battlefield_3d.gd`: guards optional tween/rig/health metadata with `has_meta()` and skips hit/trail effects for zero-length self-target attacks.
+- `tests/smoke.gd`: fixed a duplicate `character_paths` declaration and repaired stale/non-deterministic graphics assertions.
+
+### Verified locally
+- Python art QA passed: 72 character GLBs, 21 equipment GLBs, 432 rigged armor attachments, 288 subdivided limbs, 16 intentionally corrupt GLBs rejected, deterministic regeneration of 93 assets. Exported art report: 6,693,376 bytes and 283,248 aggregate triangles.
+- Godot 4.3 editor import exited 0. Main scene ran for the expected 25-second timeout (124) with no matched parser/import errors. Full `tests/smoke.gd` exited 0 and printed `KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED`.
+- Godot 4.7.2 editor import and smoke also passed.
+- Not verified: rendered screenshot, visual review, mobile performance, physical Android. No APK was built/exported/signed/uploaded.
+- Latest old CI runs `44936307760` and `44936307793` both failed on commit `4b027da6` at the rook tower attachment check. Verify fresh Actions on the new source commit and add exact run IDs/results.
+
+### Next action
+Inspect fast art and Godot Actions for this source commit; resolve any new failure. Then continue authored 3D production and rendered review. Procedural GLB generation/import passing does not complete graphics priority.
+
 ## 2026-11-21 — COMPLETE WORK GRAPHICS EXECUTION HANDOFF (LATEST)
 - Commit `da75f520` replaces `docs/WORK_GRAPHICS_HANDOFF.md` with a complete master execution contract for ChatGPT Work: user constraints, source map, 30 heroes/36 enemies/6 bosses/21 gear/6 regions/18 missions, pipeline, staged acceptance gates, test commands, regression invariants, evidence ledger and next-session prompt.
 - Latest verified fast-art run `44936307760`, job `136943562093`, fails in `tools/art/test_rig_attachments.py:166`: `EnemyRookTower-1 not attached to animated head` in `enemy_r_region_0.glb`. Earlier GLB validation, motion and limb checks in this run passed. Separate Godot workflow `44936307793` also failed; inspect its actual logs. No Godot or device success claimed.

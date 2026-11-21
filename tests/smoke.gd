@@ -585,17 +585,17 @@ func _run() -> void:
 			_assert_ok(load(gear_asset) is PackedScene, "Modular equipment GLB imports: " + gear_asset)
 	# All generated characters (30 heroes, 36 enemy classes and six bosses)
 	# must be importable, and board redraws must reuse their PackedScenes.
-	var character_paths: Array[String] = []
+	var cached_character_paths: Array[String] = []
 	for hero_id in range(1, 31):
-		character_paths.append("res://assets/characters/hero_%02d.glb" % hero_id)
+		cached_character_paths.append("res://assets/characters/hero_%02d.glb" % hero_id)
 	for region_id in range(6):
-		character_paths.append("res://assets/characters/boss_region_%d.glb" % region_id)
+		cached_character_paths.append("res://assets/characters/boss_region_%d.glb" % region_id)
 		for chess_role in ["p", "r", "n", "b", "q", "k"]:
-			character_paths.append("res://assets/characters/enemy_%s_region_%d.glb" % [chess_role, region_id])
-	for character_path in character_paths:
+			cached_character_paths.append("res://assets/characters/enemy_%s_region_%d.glb" % [chess_role, region_id])
+	for character_path in cached_character_paths:
 		var imported_scene: PackedScene = game.battlefield_3d._get_character_scene(character_path)
 		_assert_ok(imported_scene != null and imported_scene == game.battlefield_3d._get_character_scene(character_path), "Character GLB import cached: " + character_path)
-	_assert_ok(character_paths.size() == 72 and game.battlefield_3d.character_scene_cache.size() >= 72, "All 72 unique hero, enemy and boss GLBs cached alongside optional legacy class models")
+	_assert_ok(cached_character_paths.size() == 72 and game.battlefield_3d.character_scene_cache.size() >= 72, "All 72 unique hero, enemy and boss GLBs cached alongside optional legacy class models")
 	_assert_ok(game.battlefield_3d._get_character_scene("res://assets/characters/missing_999.glb") == null, "Missing character scene handled safely")
 
 	# Imported 21-model cache avoids repeated disk/import lookups on
@@ -645,6 +645,8 @@ func _run() -> void:
 			equipment.free()
 	game.battlefield_3d.hero_gear = saved_gear
 	game.battlefield_3d.set_selected_hero_visual(hero_visual)
+	game.battlefield_3d.set_board_visual_style(-1)
+	game.battlefield_3d.set_region(1)
 	_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == Color("#243e59"), "Region palette updates shared dark material")
 	_assert_ok(game.battlefield_3d.tile_materials[1].albedo_color == Color("#92b7d0"), "Region palette updates shared light material")
 	# Six regional backdrops must be actual distinct 3D geometry, not tile recolors.
@@ -713,7 +715,7 @@ func _run() -> void:
 	var high_impact_before: int = game.battlefield_3d.board_root.get_child_count()
 	game.battlefield_3d._spawn_hit_impact(40, false)
 	_assert_ok(game.battlefield_3d.board_root.get_child_count() == high_impact_before + 9, "High quality adds one shockwave and eight sparks")
-	_assert_ok(game.battlefield_3d.impact_materials.size() == 2, "Impact effects reuse exactly two cached class materials")
+	_assert_ok(game.battlefield_3d.impact_materials.has("physical") and game.battlefield_3d.impact_materials.has("magic"), "Impact effects cache both physical and magical materials")
 	var impact_material: Material = game.battlefield_3d.impact_materials["physical"]
 	game.battlefield_3d._spawn_hit_impact(41, false)
 	_assert_ok(game.battlefield_3d.impact_materials["physical"] == impact_material, "Repeated physical attacks reuse material instance")
@@ -1111,7 +1113,7 @@ func _run() -> void:
 	for role in ["P", "R", "N", "B", "Q", "K"]:
 		for team_role in [role, role.to_lower()]:
 			var plinth_test_unit: Node3D = game.battlefield_3d._build_piece(team_role, false, false)
-			var plinth: Node3D = plinth_test_unit.get_node_or_null("ClassInsignia_" + role)
+			var plinth: Node3D = plinth_test_unit.find_child("ClassInsignia_" + role, true, false) as Node3D
 			_assert_ok(plinth != null and plinth.get_child_count() >= 2, "3D class heraldry has distinct geometry: " + team_role)
 			plinth_test_unit.queue_free()
 	# Legal moves and enemy captures have distinct 3D colors without
@@ -1152,7 +1154,7 @@ func _run() -> void:
 	var selection_marker: MeshInstance3D = game.battlefield_3d.highlights[60]
 	game.battlefield_3d._process(0.24)
 	_assert_ok(selection_marker.scale != Vector3.ONE and selection_marker.position.y > 0.078, "Selection ring visibly pulses in 3D")
-	_assert_ok(destination_marker.scale == Vector3.ONE and destination_marker.position.y == 0.078, "Legal destination remains static and readable")
+	_assert_ok(destination_marker.scale == Vector3.ONE and absf(destination_marker.position.y - 0.078) < 0.001, "Legal destination remains static and readable")
 	game.battlefield_3d.sync_board(game.pieces, -1, [], -1)
 	_assert_ok(game.battlefield_3d.selected_square_visual == -1 and selection_marker.scale == Vector3.ONE, "Clearing selection resets previous ring scale")
 
@@ -1389,10 +1391,10 @@ func _run() -> void:
 	# of letting a stale enrage animation overwrite the latest state.
 	if game.battlefield_3d.piece_nodes.has(4):
 		var phase_boss: Node3D = game.battlefield_3d.piece_nodes[4]
-		var first_phase_tween: Tween = phase_boss.get_meta("phase_scale_tween", null) as Tween
+		var first_phase_tween: Tween = (phase_boss.get_meta("phase_scale_tween") as Tween) if phase_boss.has_meta("phase_scale_tween") else null
 		game.battlefield_3d.set_boss_phase(1)
 		_assert_ok(first_phase_tween == null or not first_phase_tween.is_running(), "Boss phase reset cancels pending enrage scale animation")
-		var second_phase_tween: Tween = phase_boss.get_meta("phase_scale_tween", null) as Tween
+		var second_phase_tween: Tween = (phase_boss.get_meta("phase_scale_tween") as Tween) if phase_boss.has_meta("phase_scale_tween") else null
 		game.battlefield_3d.set_boss_phase(2)
 		_assert_ok(second_phase_tween == null or not second_phase_tween.is_running(), "Re-enrage cancels previous recovery animation")
 		game.battlefield_3d.set_boss_phase(1)
@@ -1414,10 +1416,10 @@ func _run() -> void:
 		var leap_target_a: int = 40
 		var leap_target_b: int = 32
 		game.battlefield_3d.animate_move(leap_source, leap_target_a)
-		var first_leap: Tween = leap_actor.get_meta("move_tween", null) as Tween
+		var first_leap: Tween = (leap_actor.get_meta("move_tween") as Tween) if leap_actor.has_meta("move_tween") else null
 		_assert_ok(first_leap != null and game.battlefield_3d.moving_nodes.has(leap_target_a), "First 3D leap tracks actor and locks destination")
 		game.battlefield_3d.animate_move(leap_target_a, leap_target_b)
-		var second_leap: Tween = leap_actor.get_meta("move_tween", null) as Tween
+		var second_leap: Tween = (leap_actor.get_meta("move_tween") as Tween) if leap_actor.has_meta("move_tween") else null
 		_assert_ok(first_leap != null and not first_leap.is_running() and second_leap != first_leap, "Chained leap cancels old actor position tween")
 		_assert_ok(not game.battlefield_3d.moving_nodes.has(leap_target_a) and game.battlefield_3d.moving_nodes.has(leap_target_b), "Chained leap transfers moving-square lock")
 		if second_leap != null:

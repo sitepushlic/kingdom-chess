@@ -128,7 +128,7 @@ func set_visual_quality(tier: int) -> void:
 		for enchantment in actor.find_children("EnchantmentHalo_*", "MeshInstance3D", true, false):
 			var halo_mesh: MeshInstance3D = enchantment as MeshInstance3D
 			halo_mesh.visible = visual_quality >= int(halo_mesh.get_meta("enchantment_level", 1))
-		var warning: MeshInstance3D = actor.get_meta("critical_health_ring", null) as MeshInstance3D
+		var warning: MeshInstance3D = _meta_or_null(actor, "critical_health_ring") as MeshInstance3D
 		if warning != null:
 			var health_ratio: float = float(last_health[cell]) / float(maxi(1, int(last_max_health[cell]))) if last_health.size() == 64 and last_max_health.size() == 64 else 1.0
 			warning.visible = health_ratio > 0.0 and health_ratio <= 0.25 and visual_quality > 0
@@ -148,6 +148,13 @@ func _material(color: Color, metallic: float = 0.0, roughness: float = 0.42, emi
 		mat.emission = emission
 		mat.emission_energy_multiplier = 0.6
 	return mat
+
+func _meta_or_null(object: Object, key: StringName) -> Variant:
+	# Object.get_meta(key, null) still logs an error for absent metadata on
+	# supported Godot versions. Optional animation and UI metadata is normal.
+	if object != null and object.has_meta(key):
+		return object.get_meta(key)
+	return null
 
 func _box(size: Vector3, material: Material, parent: Node3D, at: Vector3) -> MeshInstance3D:
 	var instance := MeshInstance3D.new()
@@ -1162,7 +1169,7 @@ func set_boss_phase(phase: int) -> void:
 		var target_scale: Vector3 = Vector3.ONE * (1.42 if enraged else 1.12)
 		# A second phase transition may arrive before the first scale
 		# animation ends. Cancel the old tween before changing target.
-		var old_phase_tween: Tween = boss.get_meta("phase_scale_tween", null) as Tween
+		var old_phase_tween: Tween = _meta_or_null(boss, "phase_scale_tween") as Tween
 		if old_phase_tween != null and old_phase_tween.is_running():
 			old_phase_tween.kill()
 		if phase_changed:
@@ -1652,13 +1659,13 @@ func set_checked_king(index: int) -> void:
 func _apply_health_fill(actor: Node3D, cell: int, health: Array, max_health: Array) -> void:
 	if actor == null or health.size() != 64 or max_health.size() != 64:
 		return
-	var fill: MeshInstance3D = actor.get_meta("health_fill", null) as MeshInstance3D
+	var fill: MeshInstance3D = _meta_or_null(actor, "health_fill") as MeshInstance3D
 	if fill == null:
 		return
 	var ratio: float = clampf(float(health[cell]) / float(maxi(1, int(max_health[cell]))), 0.0, 1.0)
 	fill.scale.x = maxf(0.001, ratio)
 	fill.position.x = -0.345 * (1.0 - ratio)
-	var warning: MeshInstance3D = actor.get_meta("critical_health_ring", null) as MeshInstance3D
+	var warning: MeshInstance3D = _meta_or_null(actor, "critical_health_ring") as MeshInstance3D
 	if warning != null:
 		warning.visible = ratio > 0.0 and ratio <= 0.25 and visual_quality > 0
 
@@ -1761,7 +1768,7 @@ func animate_move(source: int, target: int) -> void:
 	# A lethal attack calls attack() and animate_move() in the same frame.
 	# Cancel its stationary anticipation tween before starting the move
 	# to prevent two tweens fighting over the actor's position.
-	var attack_motion: Tween = actor.get_meta("attack_motion_tween", null) as Tween
+	var attack_motion: Tween = _meta_or_null(actor, "attack_motion_tween") as Tween
 	if attack_motion != null and attack_motion.is_running():
 		attack_motion.kill()
 	if actor.has_meta("attack_motion_tween"):
@@ -1770,7 +1777,7 @@ func animate_move(source: int, target: int) -> void:
 	if piece_nodes.has(target):
 		if hero_model_cell == target: hero_model_cell = -1
 		var victim: Node3D = piece_nodes[target]
-		var victim_rig: Node3D = victim.get_meta("visual_rig", null)
+		var victim_rig: Node3D = _meta_or_null(victim, "visual_rig") as Node3D
 		if victim_rig != null:
 			_play_authored_clip(victim_rig, "death")
 			_animate_limbs(victim_rig, "hit")
@@ -1792,7 +1799,7 @@ func animate_move(source: int, target: int) -> void:
 	if hero_model_cell == source: hero_model_cell = target
 	# A rapid follow-up move can happen before the previous leap ends.
 	# Kill the earlier tween, then let only the newest move own the actor.
-	var previous_move: Tween = actor.get_meta("move_tween", null) as Tween
+	var previous_move: Tween = _meta_or_null(actor, "move_tween") as Tween
 	if previous_move != null and previous_move.is_running():
 		previous_move.kill()
 	# Previous destination is now the new source; do not leave a stale
@@ -1800,7 +1807,7 @@ func animate_move(source: int, target: int) -> void:
 	moving_nodes.erase(source)
 	moving_nodes[target] = true
 	var destination := _square_position(target)
-	var move_rig: Node3D = actor.get_meta("visual_rig", null)
+	var move_rig: Node3D = _meta_or_null(actor, "visual_rig") as Node3D
 	if move_rig != null:
 		var lean := create_tween().bind_node(move_rig)
 		lean.tween_property(move_rig, "rotation:z", -0.16, 0.15)
@@ -1813,7 +1820,7 @@ func animate_move(source: int, target: int) -> void:
 	tween.tween_property(actor, "position", destination + Vector3(0, 0.9, 0), 0.19).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(actor, "position", destination, 0.22).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(func():
-		if is_instance_valid(actor) and actor.get_meta("move_tween", null) == tween:
+		if is_instance_valid(actor) and _meta_or_null(actor, "move_tween") == tween:
 			moving_nodes.erase(target)
 			actor.remove_meta("move_tween")
 	)
@@ -1826,7 +1833,7 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 	var distance_vector: Vector3 = end - start
 	# Self-targeted spells and previews must not construct a zero-axis quaternion.
 	var direction: Vector3 = distance_vector.normalized() if distance_vector.length_squared() > 0.0001 else Vector3.FORWARD
-	var rig: Node3D = attacker.get_meta("visual_rig", null)
+	var rig: Node3D = _meta_or_null(attacker, "visual_rig") as Node3D
 	if rig != null:
 		var swing := create_tween().bind_node(rig)
 		swing.tween_property(rig, "rotation", Vector3(-0.18, 0.24 if magical else -0.22, -0.26), 0.12).set_trans(Tween.TRANS_QUAD)
@@ -1834,7 +1841,7 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 		swing.tween_property(rig, "rotation", Vector3.ZERO, 0.18).set_trans(Tween.TRANS_BACK)
 		_play_authored_clip(rig, "attack")
 		_animate_limbs(rig, "attack")
-	var previous_motion: Tween = attacker.get_meta("attack_motion_tween", null) as Tween
+	var previous_motion: Tween = _meta_or_null(attacker, "attack_motion_tween") as Tween
 	if previous_motion != null and previous_motion.is_running():
 		previous_motion.kill()
 	attacker.position = start
@@ -1843,8 +1850,9 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 	anticipation.tween_property(attacker, "position", start - direction * 0.16 + Vector3(0, 0.10, 0), 0.11).set_trans(Tween.TRANS_CUBIC)
 	anticipation.tween_property(attacker, "position", start + direction * 0.25 + Vector3(0, 0.19, 0), 0.12).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
 	anticipation.tween_property(attacker, "position", start, 0.17).set_trans(Tween.TRANS_BACK)
-	_spawn_attack_trail(source, target, magical)
-	_spawn_hit_impact(target, magical)
+	if distance_vector.length_squared() > 0.0001:
+		_spawn_attack_trail(source, target, magical)
+		_spawn_hit_impact(target, magical)
 	# Low graphics tier intentionally omits translucent attack geometry and
 	# camera shake; it still plays the complete actor animation.
 	if fx_enabled and visual_quality > 0 and board_root != null and distance_vector.length_squared() > 0.0001:
@@ -2066,7 +2074,7 @@ func hit(index: int, healing: bool = false) -> void:
 		shock_tween.tween_property(shock, "transparency", 1.0, 0.42)
 		shock_tween.chain().tween_callback(shock.queue_free)
 	var actor: Node3D = piece_nodes[index]
-	var hit_rig: Node3D = actor.get_meta("visual_rig", null)
+	var hit_rig: Node3D = _meta_or_null(actor, "visual_rig") as Node3D
 	if hit_rig != null:
 		if not healing: _play_authored_clip(hit_rig, "hit")
 		else: _play_authored_clip(hit_rig, "cast")
@@ -2230,7 +2238,7 @@ func _process(delta: float) -> void:
 		var actor: Node3D = piece_nodes[index]
 		if is_instance_valid(actor):
 			if visual_quality > 0:
-				var critical_ring: MeshInstance3D = actor.get_meta("critical_health_ring", null) as MeshInstance3D
+				var critical_ring: MeshInstance3D = _meta_or_null(actor, "critical_health_ring") as MeshInstance3D
 				if critical_ring != null and critical_ring.visible:
 					var pulse: float = 1.0 + 0.12 * sin(clock * 5.2 + float(index) * 0.35)
 					critical_ring.scale = Vector3(pulse, 1.0, pulse)

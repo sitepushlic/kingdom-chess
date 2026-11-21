@@ -265,10 +265,14 @@ def make_character(identifier, boss=False):
             attachment="Arm1"
         elif name.startswith("EnemyRookBulwark"):
             attachment="Arm-1"
-        elif name.startswith(("BossWingArmor_","EnemyBishopCharm","EnemyRookTower")):
+        elif name.startswith(("BossWingArmor_","EnemyBishopCharm")):
             side=name[-2:] if name.endswith("-1") else name[-1:]
             if side in ("-1","1"):
                 attachment="Arm"+side
+        elif name.startswith("EnemyRookTower"):
+            # Rook towers are helmet ornaments; both mirrored pieces must
+            # follow the animated head rather than the swinging shoulders.
+            attachment="Head"
         elif name.startswith(("IdentityAscendantWing","IdentityMoonBlade")):
             # Helmet decorations must track the head, not swinging arms.
             attachment="Head"

@@ -753,8 +753,8 @@ func _update_graphics_label() -> void:
 func _cycle_graphics_quality() -> void:
 	graphics_quality = (graphics_quality + 1) % 3
 	if battlefield_3d != null:
-	battlefield_3d.set_visual_quality(graphics_quality)
-	battlefield_3d.set_coordinate_labels_enabled(coordinates_visible)
+		battlefield_3d.set_visual_quality(graphics_quality)
+		battlefield_3d.set_coordinate_labels_enabled(coordinates_visible)
 	_save_graphics_preferences()
 	_update_graphics_label()
 
