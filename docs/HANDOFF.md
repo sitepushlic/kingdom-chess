@@ -202,3 +202,9 @@ For EVERY future implementation session:
 - Commit `50c3b79`: smoke tests verify all six classes expose populated `VisualRig` nodes.
 - Commit `cb63985`: `assets/characters/README.md` documents original GLB requirements, six class paths, orientation, dimensions, animation names, licensing and Android QA. **No authored character GLB files are in this commit**.
 - CI after edits is pending; verify newest non-cancelled run, inspect failures, and fix before claiming it passes. Continue with original GLB character asset production and mobile visual QA.
+
+## Automated 3D region lighting pass — 2026-11-21
+- Commit `9dba514` (`scripts/battlefield_3d.gd`): each of six regions now updates actual WorldEnvironment background/ambient colors, directional key light, and rim light color/energy on region switches, alongside existing scenery and tile palettes. Cached references avoid creating lights on each switch. This is a concrete visual distinction, **not** authored commercial-quality scenery.
+- Commit `aa83fea` (`tests/smoke.gd`): regression checks that region WorldEnvironment and key light exist and that rim-light palettes differ across regions.
+- CI for these changes: **not verified at handoff time**; GitHub connector exposes no repository-wide run listing and direct GitHub API access failed DNS resolution in the execution container. Check https://github.com/sitepushlic/kingdom-chess/actions and repair any Godot parser or smoke failure before claiming success.
+- Remaining highest-priority visual gaps: actual six original rigged GLB class models and skeletal clips, differentiated enemy models, seven-rarity equipment geometry and materials, authored six-region environment art, combat VFX, device screenshots and Android frame-time profiling. Do not equate procedural lighting with production-ready 3D.
