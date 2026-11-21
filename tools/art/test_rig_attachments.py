@@ -160,10 +160,10 @@ def check(path):
                             "EnemyKnightCrest","EnemyBishopMitre",
                             "EnemyQueenCrown","EnemyKingCrown",
                             "BossCrownShard")):
+            # EnemyRookTower is helmet geometry, not a shield. Its
+            # attachment is Head; EnemyRookBulwark is the arm shield.
             expected=by_name["Head"]
-            if name.startswith("EnemyRookTower"):
-                expected=by_name["Arm"+("-1" if name.endswith("-1") else "1")]
-            assert parents[by_name[name]]==expected, f"{path}: {name} not attached to its animated head/arm"
+            assert parents[by_name[name]]==expected, f"{path}: {name} not attached to animated head"
             assert all(math.isfinite(v) for v in world_position(by_name[name]))
     for name,expected_joint in (
         ("EnemyPawnDagger","Arm1"),
