@@ -128,7 +128,13 @@ jobs:
             grep -En -B 3 -A 5 "TEST FAILED:|SMOKE ASSERTIONS FAILED|SCRIPT ERROR:|Parse Error:" smoke.log | tail -n 120
             exit 1
           fi
-          grep -q "KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED" smoke.log
+          if ! grep -q "KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED" smoke.log; then
+            echo "=== Smoke test did not reach success marker: first 120 diagnostic lines ==="
+            sed -n "1,120p" smoke.log
+            echo "=== Last 100 lines ==="
+            tail -n 100 smoke.log
+            exit 1
+          fi
           if grep -Eq "SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:" smoke.log; then
             echo "Godot emitted script or parser errors; failing verification"
             exit 1
