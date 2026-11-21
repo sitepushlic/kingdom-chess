@@ -159,26 +159,34 @@ def validate(path, require_animation=True):
             triangles += index["count"] // 3
     # Verify triangle winding agrees with supplied outward normals; otherwise
     # backface culling can make entire faces disappear in Godot.
-    first_primitive=gltf["meshes"][0]["primitives"][0]
     def read_accessor(index):
         accessor=gltf["accessors"][index]
         view=gltf["bufferViews"][accessor["bufferView"]]
         offset=json_end+8+view.get("byteOffset",0)+accessor.get("byteOffset",0)
         component=accessor["componentType"]
         width=COMPONENTS[accessor["type"]]
-        code={5126:"f",5123:"H",5125:"I"}[component]
+        code={5121:"B",5126:"f",5123:"H",5125:"I"}[component]
         values=struct.unpack_from("<"+code*(accessor["count"]*width),data,offset)
         return [values[i:i+width] for i in range(0,len(values),width)]
-    verts=read_accessor(first_primitive["attributes"]["POSITION"])
-    normals=read_accessor(first_primitive["attributes"]["NORMAL"])
-    indices=[value[0] for value in read_accessor(first_primitive["indices"])]
-    for i in range(0,len(indices),3):
-        a,b,c=(verts[indices[i+j]] for j in range(3))
-        u=[b[j]-a[j] for j in range(3)]
-        v=[c[j]-a[j] for j in range(3)]
-        cross=(u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])
-        normal=normals[indices[i]]
-        assert sum(cross[j]*normal[j] for j in range(3))>0.1, f"{path}: triangle winding opposes face normal"
+    # Inspect every unique geometry primitive, including the new tapered
+    # skinned cloth. Tiny bevel/cloth faces have a much smaller area than
+    # the unit cube, so compare orientation rather than arbitrary area.
+    checked=set()
+    for mesh in gltf["meshes"]:
+        for primitive in mesh["primitives"]:
+            key=(primitive["attributes"]["POSITION"],primitive["attributes"]["NORMAL"],primitive["indices"])
+            if key in checked: continue
+            checked.add(key)
+            verts=read_accessor(key[0])
+            normals=read_accessor(key[1])
+            indices=[value[0] for value in read_accessor(key[2])]
+            for i in range(0,len(indices),3):
+                a,b,c=(verts[indices[i+j]] for j in range(3))
+                u=[b[j]-a[j] for j in range(3)]
+                v=[c[j]-a[j] for j in range(3)]
+                cross=(u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])
+                normal=normals[indices[i]]
+                assert sum(cross[j]*normal[j] for j in range(3))>1e-6, f"{path}: triangle winding opposes face normal"
     # Each mesh is instanced by nodes; estimate actual rendered triangle load.
     estimated_triangles=sum(sum(gltf["accessors"][p["indices"]]["count"]//3 for p in gltf["meshes"][node["mesh"]]["primitives"]) for node in gltf["nodes"] if "mesh" in node)
     assert estimated_triangles <= 2000, f"{path}: excessive mobile triangle count {estimated_triangles}"
