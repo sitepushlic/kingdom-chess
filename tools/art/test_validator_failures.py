@@ -151,7 +151,14 @@ def main():
     shin["children"].remove(knee)
     doc["nodes"][1]["children"].append(knee)
     must_reject(pack_glb(doc,binary),"forge knee plate detached from shin")
-    print("Validator regression tests: pristine GLB accepted; 15 corrupt GLBs rejected")
+    # A tapered torso has 40 vertices/60 indices, unlike a 24/36
+    # cube. Regressions to the old topology must be rejected.
+    doc,binary=read_glb(original)
+    torso=next(node for node in doc["nodes"] if node.get("name")=="SkinnedTorso")
+    mesh=doc["meshes"][torso["mesh"]]
+    doc["accessors"][mesh["primitives"][0]["indices"]]["count"]=36
+    must_reject(pack_glb(doc,binary),"tapered torso index count reverted to cube topology")
+    print("Validator regression tests: pristine GLB accepted; 16 corrupt GLBs rejected")
 
 if __name__=="__main__":
     main()
