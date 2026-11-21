@@ -1399,7 +1399,7 @@ func _deal_damage(target: int, raw_damage: int, attacker_is_hero: bool) -> int:
 			var crit_chance: int = _item_stat("crit") + int(HeroRoster.get_hero(selected_hero)["crit"])
 			if randi_range(1, 100) <= crit_chance:
 				amount = int(ceil(amount * 1.5))
-				battle_log = "КРИТИЧЕСКИЙ УДАР!"
+				battle_log += "\nКРИТИЧЕСКИЙ УДАР!"
 				if _has_trait(2):
 					for other in range(64):
 						if other != target and _team(pieces[other]) == -1:
@@ -1417,7 +1417,7 @@ func _deal_damage(target: int, raw_damage: int, attacker_is_hero: bool) -> int:
 			amount = Progression.damage_after_armor(amount, _armor_bonus())
 			if randi_range(1, 100) <= mini(60, _item_stat("block")):
 				amount = maxi(1, int(ceil(amount * 0.5)))
-				battle_log = "БЛОК! Урон снижен вдвое."
+				battle_log += "\nБЛОК! Урон снижен вдвое."
 			if _has_trait(3) and not phoenix_used and amount >= health[target] and _team(pieces[target]) == 1:
 				phoenix_used = true
 				health[target] = maxi(1, int(ceil(float(_max_hp(pieces[target], true)) * 0.25)))
@@ -1431,7 +1431,7 @@ func _deal_damage(target: int, raw_damage: int, attacker_is_hero: bool) -> int:
 			var bleed_damage: int = maxi(1, int(ceil(amount * 0.22)))
 			health[target] = maxi(0, health[target] - bleed_damage)
 			_damage_popup(target, bleed_damage)
-			battle_log += "\\nКРОВОТЕЧЕНИЕ: +%d урона" % bleed_damage
+			battle_log += "\nКРОВОТЕЧЕНИЕ: +%d урона" % bleed_damage
 		var lifesteal: int = _item_stat("lifesteal")
 		if lifesteal > 0 and selected >= 0 and selected < 64 and pieces[selected] != "":
 			var restored: int = mini(int(ceil(amount * lifesteal / 100.0)), maxi(0, _max_hp(pieces[selected], _team(pieces[selected]) == 1) - health[selected]))
