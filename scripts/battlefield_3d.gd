@@ -76,6 +76,7 @@ var biome_material_cache: Dictionary = {}
 var gear_material_cache: Dictionary = {}
 var equipment_scene_cache: Dictionary = {}
 var character_scene_cache: Dictionary = {}
+var health_bar_materials: Dictionary = {}
 var castle_material_cache: Dictionary = {}
 # Smooth biome lighting transitions without allocating materials or extra lights.
 var region_light_target: Color = Color("#7c92b1")
@@ -1002,7 +1003,10 @@ func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bo
 		unit.scale = Vector3.ONE * 1.17
 	var bar_back := _box(Vector3(0.73, 0.085, 0.085), dark_material, unit, Vector3(0, 1.76, 0))
 	bar_back.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var bar_fill := _box(Vector3(0.69, 0.055, 0.10), _material(Color("#4edca4") if white else Color("#f26a76"), 0.15, 0.28, Color("#194735") if white else Color("#48121c")), unit, Vector3(0, 1.76, 0.02))
+	var health_key: String = "hero" if white else "enemy"
+	if not health_bar_materials.has(health_key):
+		health_bar_materials[health_key] = _material(Color("#4edca4") if white else Color("#f26a76"), 0.15, 0.28, Color("#194735") if white else Color("#48121c"))
+	var bar_fill := _box(Vector3(0.69, 0.055, 0.10), health_bar_materials[health_key], unit, Vector3(0, 1.76, 0.02))
 	bar_fill.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	unit.set_meta("health_fill", bar_fill)
 	if white and selected_hero_piece and not hero_gear.is_empty():
