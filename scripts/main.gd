@@ -2369,7 +2369,7 @@ func _draw() -> void:
 		var warning_type: String = str(raid_mission.get("modifier", "none"))
 		if forecast.size() > 0 and boss_forecast.size() > 0: warning_type = "boss"
 		battlefield_3d.set_hazards(forecast, warning_type)
-		battlefield_3d.set_poison_indicators(hero_poison if mode == "raid" and winner == "" else {})
+		battlefield_3d.set_poison_indicators(hero_poison if mode == "raid" and winner == "" else {}, poison_marks if mode == "raid" and winner == "" else {})
 		var checked_square: int = pieces.find("K" if turn == 1 else "k") if mode == "arena" and winner == "" and _king_threatened(pieces, turn) else -1
 		battlefield_3d.set_checked_king(checked_square)
 		battlefield_3d.sync_board(pieces, selected, legal_targets, boss_target if mode == "raid" and winner == "" else -1, health, max_health)
