@@ -340,6 +340,24 @@ func _load_authored_character(kind: String, parent: Node3D) -> bool:
 			if model is Node3D:
 				model.name = "AuthoredCharacter"
 				parent.add_child(model)
+				# Start a looping idle clip when the imported asset supplies one.
+				# Use the model itself as the rig's direct authored child.
+				var player: AnimationPlayer = model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+				if player != null:
+					var idle_name := ""
+					if player.has_animation("idle"):
+						idle_name = "idle"
+					else:
+						for library_name in player.get_animation_library_list():
+							var library: AnimationLibrary = player.get_animation_library(library_name)
+							if library != null and library.has_animation("idle"):
+								idle_name = "idle" if library_name == "" else library_name + "/idle"
+								break
+					if idle_name != "":
+						var idle_animation: Animation = player.get_animation(idle_name)
+						if idle_animation != null:
+							idle_animation.loop_mode = Animation.LOOP_LINEAR
+						player.play(idle_name)
 				return true
 			model.free()
 	# An original static OBJ remains the art fallback if no GLB is available.
