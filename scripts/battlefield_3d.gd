@@ -71,6 +71,8 @@ var primitive_mesh_cache: Dictionary = {}
 var impact_materials: Dictionary = {}
 var attack_trail_materials: Dictionary = {}
 var biome_material_cache: Dictionary = {}
+var gear_material_cache: Dictionary = {}
+var equipment_scene_cache: Dictionary = {}
 var castle_material_cache: Dictionary = {}
 # Smooth biome lighting transitions without allocating materials or extra lights.
 var region_light_target: Color = Color("#7c92b1")
@@ -417,9 +419,24 @@ func set_hero_gear(items: Array, slots: Dictionary) -> void:
 func _gear_material(slot: String) -> Material:
 	if not hero_gear.has(slot): return gold_material
 	var item: Dictionary = hero_gear[slot]
-	var rarity := clampi(int(item.get("rarity", 0)), 0, 6)
-	var palette := [Color("#b9c6d5"), Color("#62c7b6"), Color("#548dea"), Color("#aa78f5"), Color("#efac57"), Color("#e96d86"), Color("#fff0a4")]
-	return _material(palette[rarity], 0.82, 0.23, palette[rarity] * (0.18 + float(int(item.get("upgrade", 0))) * 0.04))
+	var rarity: int = clampi(int(item.get("rarity", 0)), 0, 6)
+	var upgrade: int = maxi(0, int(item.get("upgrade", 0)))
+	var key: String = "%s:%d:%d" % [slot, rarity, upgrade]
+	if not gear_material_cache.has(key):
+		var palette: Array = [Color("#b9c6d5"), Color("#62c7b6"), Color("#548dea"), Color("#aa78f5"), Color("#efac57"), Color("#e96d86"), Color("#fff0a4")]
+		gear_material_cache[key] = _material(palette[rarity], 0.82, 0.23, palette[rarity] * (0.18 + float(upgrade) * 0.04))
+	return gear_material_cache[key]
+
+func _get_equipment_scene(path: String) -> PackedScene:
+	if equipment_scene_cache.has(path):
+		return equipment_scene_cache[path] as PackedScene
+	if not ResourceLoader.exists(path):
+		return null
+	var scene: Resource = load(path)
+	if scene is PackedScene:
+		equipment_scene_cache[path] = scene
+		return scene as PackedScene
+	return null
 
 # Physical rarity marks are deliberately countable at mobile scale; the seven tiers
 # have distinct silhouettes, not only different shader colors.
@@ -438,10 +455,9 @@ func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 	var slot_key: String = str({"Оружие":"weapon", "Тело":"armor", "Реликвия":"relic"}.get(slot, ""))
 	if slot_key != "":
 		var gear_path: String = "res://assets/equipment/%s_tier_%d.glb" % [slot_key, tier]
-		if ResourceLoader.exists(gear_path):
-			var gear_scene: Resource = load(gear_path)
-			if gear_scene is PackedScene:
-				var gear_model: Node = (gear_scene as PackedScene).instantiate()
+		var gear_scene: PackedScene = _get_equipment_scene(gear_path)
+		if gear_scene != null:
+			var gear_model: Node = gear_scene.instantiate()
 				if gear_model is Node3D:
 					var socket := Node3D.new()
 					socket.name = "GearSocket_" + slot_key
