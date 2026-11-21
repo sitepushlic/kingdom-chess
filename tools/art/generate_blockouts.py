@@ -258,6 +258,20 @@ def make_character(identifier, boss=False):
         elif name.startswith(leg_prefixes):
             suffix=name[-2:] if name.endswith("-1") else name[-1:]
             attachment="Leg"+suffix
+        # Keep class-specific weapons and boss shoulder wings physically
+        # attached to animated shoulder joints instead of the static root.
+        # Otherwise swords and lances visibly float through attack clips.
+        if name.startswith(("EnemyPawnDagger","EnemyKnightLance","EnemyQueenScepter")):
+            attachment="Arm1"
+        elif name.startswith("EnemyRookBulwark"):
+            attachment="Arm-1"
+        elif name.startswith(("BossWingArmor_","EnemyBishopCharm","EnemyRookTower")):
+            side=name[-2:] if name.endswith("-1") else name[-1:]
+            if side in ("-1","1"):
+                attachment="Arm"+side
+        elif name.startswith(("IdentityAscendantWing","IdentityMoonBlade")):
+            # Helmet decorations must track the head, not swinging arms.
+            attachment="Head"
         if attachment is not None:
             pivot=next((n for n in nodes if n.get("name")==attachment),None)
             if pivot is not None:
