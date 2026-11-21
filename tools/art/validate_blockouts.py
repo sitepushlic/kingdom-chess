@@ -30,6 +30,15 @@ def validate(path, require_animation=True):
         assert view["buffer"] == 0
         assert view.get("byteOffset",0) % 4 == 0, f"{path}: glTF buffer view is not 4-byte aligned"
         assert view.get("byteOffset",0) + view["byteLength"] <= bin_size, f"{path}: buffer view overflow"
+    # Rigid parts must use genuine chamfered topology, not the previous
+    # flat six-face cube blockout. Skin meshes are validated separately.
+    for material_index in range(5):
+        rigid_mesh=gltf["meshes"][material_index]
+        assert rigid_mesh["name"].startswith("Beveled"), f"{path}: missing beveled armor"
+        rigid_primitive=rigid_mesh["primitives"][0]
+        vertex_count=gltf["accessors"][rigid_primitive["attributes"]["POSITION"]]["count"]
+        triangle_count=gltf["accessors"][rigid_primitive["indices"]]["count"]//3
+        assert vertex_count>=100 and triangle_count>=40, f"{path}: rigid geometry still cube blockout"
     for acc in gltf["accessors"]:
         view = gltf["bufferViews"][acc["bufferView"]]
         byte_len = acc["count"] * COMPONENT_SIZE[acc["componentType"]] * COMPONENTS[acc["type"]]
