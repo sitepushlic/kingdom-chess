@@ -146,6 +146,14 @@ def validate(path, require_animation=True):
             assert len(limb_skin["joints"])==2 and limb_skin["joints"][0]==joint_index, f"{path}: invalid limb skeleton"
             limb_primitive=gltf["meshes"][limb_mesh["mesh"]]["primitives"][0]
             assert {"POSITION","NORMAL","JOINTS_0","WEIGHTS_0"}.issubset(limb_primitive["attributes"]), f"{path}: missing weighted limb geometry"
+            limb_weights=decode_attribute(limb_primitive["attributes"]["WEIGHTS_0"])
+            limb_joints=decode_attribute(limb_primitive["attributes"]["JOINTS_0"])
+            assert len(limb_weights)==len(limb_joints)==24, f"{path}: invalid limb vertex count"
+            assert all(abs(sum(weights)-1)<1e-5 for weights in limb_weights), f"{path}: nonnormalized limb skin weights"
+            assert all(all(0<=joint<2 for joint in joints) for joints in limb_joints), f"{path}: invalid limb skin joint index"
+            assert any(.05<weights[1]<.95 for weights in limb_weights), f"{path}: missing blended elbow/knee vertices"
+            limb_inverse=gltf["accessors"][limb_skin["inverseBindMatrices"]]
+            assert limb_inverse["type"]=="MAT4" and limb_inverse["count"]==2, f"{path}: missing limb bind matrices"
             expected_gear = ("Gauntlet" if joint_name.startswith("Arm") else "ShinPlate") + joint_name.replace("Arm","").replace("Leg","")
             attached = [gltf["nodes"][i].get("name") for i in joint["children"]]
             assert expected_gear in attached, f"{path}: {expected_gear} must follow animated limb"
