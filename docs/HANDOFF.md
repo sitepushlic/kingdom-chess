@@ -1,3 +1,18 @@
+## 2026-11-21 — BOSS RIG FIX + MULTI-HIT COMBAT READABILITY (LATEST)
+**Permanent user requirements:** Work in large substantive batches; update HANDOFF every turn; finish game and graphics; **do not build/export/sign APK** unless explicitly requested. Never claim a passing test run without evidence.
+
+### Implemented and committed to main
+- `c5d4e2ba` **Critical nested rig bug fixed:** `_build_piece()` moves `BossEnrageAura` under `VisualRig` during assembly. Three systems mistakenly looked for it as a direct child of actor, so boss phase 2 could have no visible aura and its animation/graphics-tier toggles did nothing. Replaced all three lookups (phase transitions, graphics quality, per-frame animation) with recursive `find_child`.
+- `42744f1f` **Boss regression repair:** tests now find the aura inside the rig, check its parent is `VisualRig`, and assert phase-two visual behavior. Prior tests used the same incorrect direct-child lookup and silently skipped some assertions.
+- `e9839f35` **Quality regression:** asserts boss phase-two aura is hidden on low graphics, restored on high graphics, and respects medium setting.
+- `0822b464` **3D combat HUD burst handling:** consecutive hit/heal labels on one tile now stagger horizontally and vertically; world-space damage popups are bounded at 18 simultaneous nodes. Oldest is detached and queued for freeing when budget is reached, preventing unbounded multi-hit UI clutter. Each popup still rises/fades and cleans itself up.
+- `619e320e` **HUD regression:** 40-hit burst checks the cap; two consecutive hits check different 3D positions.
+
+### Verification / known risks
+- GitHub main contains these source edits. **No Godot 4.3 runtime or CI green result verified in this session**; tests have been added, not observed passing. Need full smoke and rendered inspection, plus rigged 72-character GLB art and 21 equipment quality verification.
+- Previous pass fixed regional HP bar restoration and reused two shared HP bar materials (`4b6f0644`, `741d8554`). Existing 3D combat numbers and 72-model cache from prior passes.
+- APK remains explicitly paused. Next priority: actual CI error diagnostics, fixing any parser failures, gameplay balance/UX, production-grade character and biome art.
+
 ## 2026-11-21 — REGIONAL COMBAT STATE AND HEALTH BAR MEMORY PASS (LATEST)
 **User instruction:** Maximize substantive implementation in each turn, update HANDOFF each time, finish game and graphics. **Do NOT build/export/sign APK.** Keep concise factual updates. Do not claim verified Godot tests without actual run.
 
