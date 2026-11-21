@@ -669,8 +669,8 @@ func _inventory_equip() -> void:
 	if lan_connected and not lan_host:
 		inventory_details.text = "В сетевом рейде экипировку меняет создатель комнаты."
 		return
-	if player_level < int(item.get("level", 1)):
-		inventory_details.text = "Нужен уровень %d для экипировки." % int(item.get("level", 1))
+	if not Progression.can_equip(item, raid_wins, player_level):
+		inventory_details.text = "Предмет пока заблокирован. Повышай уровень и побеждай боссов для открытия редкости и усилений."
 		return
 	var slot: String = str(item.get("slot", "Оружие"))
 	if not Progression.ITEM_SLOTS.has(slot): slot = "Оружие"
@@ -686,8 +686,8 @@ func _inventory_upgrade() -> void:
 		return
 	if inventory_selected < 0 or inventory_selected >= equipment.size(): return
 	var item: Dictionary = equipment[inventory_selected]
-	if int(item.get("upgrade", 0)) >= 12:
-		inventory_details.text = "Максимальное усиление +12 достигнуто."
+	if int(item.get("upgrade", 0)) >= Progression.upgrade_cap(raid_wins, player_level):
+		inventory_details.text = "Лимит усиления текущей главы: +%d. Побеждай боссов и повышай уровень." % Progression.upgrade_cap(raid_wins, player_level)
 		return
 	var cost: int = Progression.upgrade_cost(item)
 	if gold < cost:
@@ -1028,7 +1028,7 @@ func _load_profile() -> void:
 		equipped = -1
 	for slot in Progression.ITEM_SLOTS:
 		var index: int = int(equipped_slots.get(slot, -1))
-		if index < 0 or index >= equipment.size(): equipped_slots[slot] = -1
+		if index < 0 or index >= equipment.size() or not Progression.can_equip(equipment[index], raid_wins, player_level): equipped_slots[slot] = -1
 
 func _create_hero_roster_popup() -> void:
 	hero_roster_dialog = AcceptDialog.new()
@@ -1104,7 +1104,7 @@ func _item_stat(stat: String) -> int:
 	var total := 0
 	for slot in Progression.ITEM_SLOTS:
 		var index: int = int(equipped_slots.get(slot, -1))
-		if index >= 0 and index < equipment.size():
+		if index >= 0 and index < equipment.size() and Progression.can_equip(equipment[index], raid_wins, player_level):
 			total += maxi(0, int(equipment[index].get(stat, 0)))
 	var set_stats: Dictionary = Progression.set_bonus(equipment, equipped_slots)
 	total += int(set_stats.get(stat, 0))
@@ -1113,7 +1113,7 @@ func _item_stat(stat: String) -> int:
 func _has_trait(trait_id: int) -> bool:
 	for slot in Progression.ITEM_SLOTS:
 		var index: int = int(equipped_slots.get(slot, -1))
-		if index >= 0 and index < equipment.size() and int(equipment[index].get("trait_id", -1)) == trait_id:
+		if index >= 0 and index < equipment.size() and Progression.can_equip(equipment[index], raid_wins, player_level) and int(equipment[index].get("trait_id", -1)) == trait_id:
 			return true
 	return false
 
@@ -1203,7 +1203,7 @@ func _equip_best() -> void:
 		for i in range(equipment.size()):
 			var item: Dictionary = equipment[i]
 			if str(item.get("slot", "")) != slot: continue
-			if player_level < int(item.get("level", 1)): continue
+			if not Progression.can_equip(item, raid_wins, player_level): continue
 			var score: int = Progression.item_score(item)
 			if score > best_score:
 				best_score = score
@@ -1235,7 +1235,7 @@ func _minion_loot() -> void:
 		dry_loot_streak += 1
 		_save_profile()
 		return
-	var item: Dictionary = Progression.roll_item(player_level, false, mini(2, int(dry_loot_streak / 5)))
+	var item: Dictionary = Progression.roll_item_for_progress(player_level, raid_wins, false, mini(2, int(dry_loot_streak / 5)))
 	dry_loot_streak = 0
 	equipment.append(item)
 	battle_log += "\nТРОФЕЙ: %s [%s]" % [item["name"], Progression.RARITIES[int(item["rarity"])]]
@@ -1247,8 +1247,10 @@ func _raid_victory() -> void:
 	raid_wins += 1
 	_reward(100)
 	var item: Dictionary = Progression.first_clear_reward(raid_wins)
+	if not item.is_empty():
+		item = Progression.limit_reward_to_progress(item, raid_wins, player_level)
 	if item.is_empty():
-		item = Progression.roll_item(player_level, true, mini(2, int(raid_wins / 10)))
+		item = Progression.roll_item_for_progress(player_level, raid_wins, true, mini(2, int(raid_wins / 10)))
 	if equipment.size() >= 100:
 		gold += 100
 		battle_log = "Сумка полна! Вместо реликвии получено 100 золота."
