@@ -1456,10 +1456,25 @@ func _king_destination_safe(source: int, destination: int) -> bool:
 	var simulated: Array = pieces.duplicate()
 	simulated[destination] = simulated[source]
 	simulated[source] = ""
+	return not _king_threatened(simulated, moving_team)
+
+func _king_threatened(board: Array, team: int) -> bool:
+	var king_square: int = board.find("K" if team == 1 else "k")
+	if king_square < 0: return true
 	for enemy in range(64):
-		if _team(simulated[enemy]) != -moving_team: continue
-		if _chess_attacks_square(simulated, enemy, destination): return false
-	return true
+		if _team(str(board[enemy])) == -team and _chess_attacks_square(board, enemy, king_square):
+			return true
+	return false
+
+# Nonlethal attacks do not relocate their attacker. Simulate only actual
+# movement or lethal captures when testing whether a pinned unit may move.
+func _move_preserves_king(source: int, destination: int) -> bool:
+	if mode == "raid": return true
+	if pieces[destination] != "":
+		# The damage system resolves this attack without moving until the target dies.
+		# Allow the strike but do not incorrectly model it as a capture.
+		return true
+	return _king_destination_safe(source, destination)
 
 # Pure attack geometry: pawns threaten diagonals even when a square is empty.
 func _chess_attacks_square(board: Array, source: int, target: int) -> bool:
@@ -1497,16 +1512,16 @@ func _legal(a: int, b: int) -> bool:
 	var c1: int = b % 8
 	var dr: int = r1 - r0
 	var dc: int = c1 - c0
-	if p == "N": return (abs(dr) == 2 and abs(dc) == 1) or (abs(dr) == 1 and abs(dc) == 2)
+	if p == "N": return ((abs(dr) == 2 and abs(dc) == 1) or (abs(dr) == 1 and abs(dc) == 2)) and _move_preserves_king(a, b)
 	if p == "K":
 		if maxi(absi(dr), absi(dc)) != 1: return false
-		return mode == "raid" or _king_destination_safe(a, b)
+		return _move_preserves_king(a, b)
 	if p == "P":
 		var f := -1 if _team(pieces[a]) == 1 else 1
 		if dc == 0 and pieces[b] == "":
-			if dr == f: return true
-			return dr == 2*f and r0 == (6 if _team(pieces[a]) == 1 else 1) and pieces[a+8*f] == ""
-		return abs(dc) == 1 and dr == f and pieces[b] != ""
+			if dr == f: return _move_preserves_king(a, b)
+			return dr == 2*f and r0 == (6 if _team(pieces[a]) == 1 else 1) and pieces[a+8*f] == "" and _move_preserves_king(a, b)
+		return abs(dc) == 1 and dr == f and pieces[b] != "" and _move_preserves_king(a, b)
 	if p == "R" and dr != 0 and dc != 0: return false
 	if p == "B" and abs(dr) != abs(dc): return false
 	if p == "Q" and not (dr == 0 or dc == 0 or abs(dr) == abs(dc)): return false
@@ -1518,7 +1533,7 @@ func _legal(a: int, b: int) -> bool:
 		if pieces[r*8+c] != "": return false
 		r += sr
 		c += sc
-	return true
+	return _move_preserves_king(a, b)
 
 func _attack_trail(source: int, target: int) -> void:
 	if source < 0 or source >= buttons.size() or target < 0 or target >= buttons.size(): return
