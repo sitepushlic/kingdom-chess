@@ -326,6 +326,14 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 			var aura_mat := _gear_material("Оружие") if hero_gear.has("Оружие") else gold_material
 			var ring := _cylinder(0.39, 0.025, aura_mat, unit, Vector3(0, 0.12, 0))
 			ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# Separate visible character rig from the health UI so action animation never tilts the bar.
+	var visual_rig := Node3D.new()
+	visual_rig.name = "VisualRig"
+	unit.add_child(visual_rig)
+	for child in unit.get_children():
+		if child == visual_rig or child == bar_back or child == bar_fill: continue
+		(child as Node3D).reparent(visual_rig, false)
+	unit.set_meta("visual_rig", visual_rig)
 	unit.scale = Vector3.ONE * (1.12 if is_boss else 0.84)
 	board_root.add_child(unit)
 	return unit
@@ -479,6 +487,17 @@ func animate_move(source: int, target: int) -> void:
 	piece_nodes[target] = actor
 	moving_nodes[target] = true
 	var destination := _square_position(target)
+	var move_rig: Node3D = actor.get_meta("visual_rig", null)
+	if move_rig != null:
+		var lean := create_tween()
+		lean.tween_property(move_rig, "rotation:z", -0.16, 0.15)
+		lean.tween_property(move_rig, "rotation:z", 0.08, 0.18)
+		lean.tween_property(move_rig, "rotation:z", 0.0, 0.10)
+		var authored: Node = move_rig.get_node_or_null("AuthoredCharacter")
+		if authored != null:
+			var move_player: AnimationPlayer = authored.find_child("AnimationPlayer", true, false) as AnimationPlayer
+			if move_player != null and move_player.has_animation("move"):
+				move_player.play("move")
 	var tween := create_tween()
 	tween.tween_property(actor, "position", destination + Vector3(0, 0.9, 0), 0.19).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(actor, "position", destination, 0.22).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
@@ -490,6 +509,17 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 	var start: Vector3 = _square_position(source)
 	var end: Vector3 = _square_position(target)
 	var direction: Vector3 = (end - start).normalized()
+	var rig: Node3D = attacker.get_meta("visual_rig", null)
+	if rig != null:
+		var swing := create_tween()
+		swing.tween_property(rig, "rotation", Vector3(-0.18, 0.24 if magical else -0.22, -0.26), 0.12).set_trans(Tween.TRANS_QUAD)
+		swing.tween_property(rig, "rotation", Vector3(0.22, -0.28 if magical else 0.32, 0.30), 0.13).set_trans(Tween.TRANS_QUART)
+		swing.tween_property(rig, "rotation", Vector3.ZERO, 0.18).set_trans(Tween.TRANS_BACK)
+		var model: Node = rig.get_node_or_null("AuthoredCharacter")
+		if model != null:
+			var player: AnimationPlayer = model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+			if player != null and player.has_animation("attack"):
+				player.play("attack")
 	var anticipation := create_tween()
 	anticipation.tween_property(attacker, "position", start - direction * 0.16 + Vector3(0, 0.10, 0), 0.11).set_trans(Tween.TRANS_CUBIC)
 	anticipation.tween_property(attacker, "position", start + direction * 0.25 + Vector3(0, 0.19, 0), 0.12).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
