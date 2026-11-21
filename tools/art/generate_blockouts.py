@@ -202,6 +202,32 @@ def make_character(identifier, boss=False):
             angle=i*math.pi/2
             box("BossSpine"+str(i),(math.cos(angle)*.32,1.62,math.sin(angle)*.30),(.10,.54,.12),3,math.cos(angle)*.28)
         box("BossChest",(0,.93,-.18),(.64,.44,.17),3)
+        # Six region bosses have distinct, readable body landmarks, not
+        # merely different color and oversized generic spines.
+        if num == 1:
+            for side in (-1,1):
+                box("EmberHorn"+str(side),(side*.29,1.76,0),(.15,.61,.15),4,side*.35)
+            box("LavaHeart",(0,.92,-.28),(.22,.28,.09),4)
+        elif num == 2:
+            for i in range(5):
+                box("GlacierSpire"+str(i),(-.40+i*.20,1.67+(i%2)*.14,.18),(.12,.48+(i%2)*.18,.14),4,(i-2)*.15)
+        elif num == 3:
+            for side in (-1,1):
+                box("ThornBranch"+str(side),(side*.41,1.42,.10),(.12,.78,.16),0,side*.45)
+                box("ThornLeaf"+str(side),(side*.63,1.72,.12),(.23,.27,.12),4,side*.24)
+        elif num == 4:
+            box("RunicTablet",(0,1.0,.26),(.62,.70,.13),1)
+            for i in range(4):
+                box("RuneSeal"+str(i),(-.19+i*.13,1.10,.34),(.07,.22,.04),4)
+        elif num == 5:
+            for side in (-1,1):
+                box("AstralWing"+str(side),(side*.54,1.15,.20),(.24,.91,.11),4,side*.33)
+            box("AstralCrown",(0,1.96,0),(.45,.11,.30),4)
+        else:
+            for side in (-1,1):
+                box("CrimsonWing"+str(side),(side*.62,1.11,.22),(.39,.85,.12),0,side*.43)
+                box("CrimsonFang"+str(side),(side*.20,1.65,-.15),(.11,.39,.13),4,side*.18)
+            box("CrimsonCore",(0,.93,-.27),(.30,.33,.10),4)
     # Six named glTF clips animate the full character pivot. These are
     # rigid transform clips, NOT skeletal animations.
     clips = {
