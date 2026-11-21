@@ -99,7 +99,22 @@ def main():
     binary=bytearray(binary)
     binary[view.get("byteOffset",0)+acc.get("byteOffset",0)]=7
     must_reject(pack_glb(doc,bytes(binary)),"out-of-range torso joint index")
-    print("Validator regression tests: pristine GLB accepted; 8 corrupt GLBs rejected")
+    # A NaN in a root translation animation must be rejected before import.
+    doc,binary=read_glb(original)
+    clip=doc["animations"][0]
+    channel=next(c for c in clip["channels"] if c["target"]["path"]=="translation")
+    acc=doc["accessors"][clip["samplers"][channel["sampler"]]["output"]]
+    view=doc["bufferViews"][acc["bufferView"]]
+    binary=bytearray(binary)
+    struct.pack_into("<f",binary,view.get("byteOffset",0)+acc.get("byteOffset",0),float("nan"))
+    must_reject(pack_glb(doc,bytes(binary)),"nonfinite animated translation")
+    # Translation output must not be silently accepted as integer data.
+    doc,binary=read_glb(original)
+    clip=doc["animations"][0]
+    channel=next(c for c in clip["channels"] if c["target"]["path"]=="translation")
+    doc["accessors"][clip["samplers"][channel["sampler"]]["output"]]["componentType"]=5125
+    must_reject(pack_glb(doc,binary),"integer animation translation")
+    print("Validator regression tests: pristine GLB accepted; 10 corrupt GLBs rejected")
 
 if __name__=="__main__":
     main()
