@@ -536,6 +536,18 @@ def main():
             chunk_size=struct.unpack_from("<I",data,12)[0]
             gltf=json.loads(data[20:20+chunk_size])
             names=tuple(node["name"] for node in gltf["nodes"])
+            # Verify layered geometry on all 21 equipment variants,
+            # including non-enchanted early items and premium silhouettes.
+            expected_base = {
+                "weapon": ("WeaponPommel", "WeaponCrossguard"),
+                "armor": ("ArmorGorget", "ArmorCenterSeal", "ArmorRibPlate-1", "ArmorRibPlate1"),
+                "relic": ("RelicSocket", "RelicWing-1", "RelicWing1"),
+            }[slot]
+            assert all(part in names for part in expected_base), f"{path}: missing sculpted equipment details"
+            if tier>=4:
+                assert (slot.capitalize()+"PowerCrystal") in names, f"{path}: missing premium core"
+            if tier==6:
+                assert any("Ascendant" in name for name in names), f"{path}: final rarity missing ascendant silhouette"
             crystals=[name for name in names if "Crystal" in name]
             assert bool(crystals)==(tier>=4), f"{path}: enchanted crystal progression incorrect"
             assert len(gltf["materials"])>=3 and "emissiveFactor" in gltf["materials"][2], f"{path}: missing enchantment shader"
