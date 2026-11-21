@@ -1488,10 +1488,17 @@ func _update_poison_marker_group(markers: Dictionary, statuses: Dictionary, mate
 			markers.erase(cell)
 	for cell in statuses.keys():
 		if typeof(cell) != TYPE_INT or cell < 0 or cell >= 64: continue
-		if int(statuses[cell]) <= 0 or markers.has(cell): continue
-		var marker: MeshInstance3D = _sphere(0.13, material, board_root, _square_position(cell) + Vector3(0, height, 0))
-		marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		markers[cell] = marker
+		var stacks: int = clampi(int(statuses[cell]), 0, 5)
+		if stacks <= 0: continue
+		if not markers.has(cell):
+			var marker: MeshInstance3D = _sphere(0.13, material, board_root, _square_position(cell) + Vector3(0, height, 0))
+			marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			markers[cell] = marker
+		var active_marker: MeshInstance3D = markers[cell]
+		active_marker.set_meta("stacks", stacks)
+		# A stronger poison effect is visibly larger, without allocating
+		# extra geometry or materials for every stack.
+		active_marker.scale = Vector3.ONE * (0.85 + float(stacks) * 0.13)
 
 func set_checked_king(index: int) -> void:
 	checked_king_square = index if index >= 0 and index < 64 else -1
