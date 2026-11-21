@@ -239,6 +239,12 @@ func _run() -> void:
 	_assert_ok(game.hero_poison.is_empty(), "Poison clears for removed unit")
 	game._reset()
 	_assert_ok(game.hero_poison.is_empty(), "Poison clears on new encounter")
+	game.health[60] = 1
+	game.hero_poison[60] = 2
+	game._tick_hero_poison()
+	_assert_ok(game.winner == "ПОРАЖЕНИЕ" and game.pieces[60] == "", "Lethal persistent poison defeats allied king and removes unit")
+	_assert_ok(game.hero_poison.is_empty(), "Lethal poison clears remaining status effects")
+	game._reset()
 	game.mode = "raid"
 	game._reset()
 	game.pieces[48] = "P"
