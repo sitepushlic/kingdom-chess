@@ -1019,6 +1019,20 @@ func _restore_battle() -> bool:
 	var parsed = JSON.parse_string(file.get_as_text())
 	if typeof(parsed) != TYPE_DICTIONARY: return false
 	if not valid_battle_arrays(parsed.get("pieces"), parsed.get("health")): return false
+	# JSON.parse_string() returns floating-point numbers for saved JSON integers.
+	# Normalize only exact, bounded integral values from disk; keep network
+	# snapshot validation strict so fractional/forged network fields stay rejected.
+	for key in ["ap", "turn", "boss_hp", "boss_phase", "raid_round", "raid_stage", "boss_target", "enemy_wave"]:
+		var value: Variant = parsed.get(key)
+		if typeof(value) == TYPE_FLOAT:
+			if not is_finite(value) or absf(value) > 1000000.0 or value != float(int(value)): return false
+			parsed[key] = int(value)
+	if typeof(parsed.get("acted")) != TYPE_ARRAY: return false
+	for index in range(parsed["acted"].size()):
+		var action: Variant = parsed["acted"][index]
+		if typeof(action) == TYPE_FLOAT:
+			if not is_finite(action) or action != float(int(action)): return false
+			parsed["acted"][index] = int(action)
 	# Reuse the same strict action/turn schema as network snapshots.
 	if not valid_raid_snapshot(parsed): return false
 	var new_mode: String = str(parsed.get("mode", "arena"))
