@@ -1,3 +1,18 @@
+## 2026-11-21 — BOARD PALETTE RESET AND TACTICAL COORDINATES (LATEST)
+**User's standing instructions:** Work in substantial batches, update HANDOFF every turn, continue completing Kingdom Chess, prioritize graphics. **No APK export/build/signing until explicitly requested.** Report unverified tests honestly.
+
+### Changes committed to main this turn
+- `1c2c83d7` **Board cosmetic reset:** `set_board_visual_style(-1)` now restores all three shared frame materials (carved wooden edge, gold inlays, corner gemstones), not just tile colors. Fixes stale obsidian/ice frame after returning to the regional default. The user-selected skins still persist across biome changes.
+- `27e89e95` **Reset regression:** gameplay smoke asserts exact frame, inlay and gemstone colors after skin reset.
+- `1f653b36` **Coordinate inventory:** tracks 32 3D chess file/rank labels in `coordinate_labels`, independent of decorative region scenery and visual quality settings.
+- `34c7a684` **Accessibility control:** `set_coordinate_labels_enabled(bool)` toggles all 32 tactical coordinate labels without reconstructing board geometry. Existing coordinate markers remain enabled by default.
+- `be727a5b` **Accessibility regression:** verifies count and complete hide/restore of coordinate labels.
+
+### Verification and priorities
+- Changes committed to GitHub main. **No verified Godot runtime, CI green run or rendered gameplay test in this turn.** Newly authored smoke assertions remain unexecuted here.
+- The coordinate visibility API is implemented but not yet exposed as a menu setting. Need real CI smoke diagnostics, production-quality 72 character and 21 equipment models, animations, mobile performance and progression verification.
+- Do not build APK. Continue with larger development batches.
+
 ## 2026-11-21 — LIVE LEGENDARY VFX, BOSS STATE, ATTACK RESOURCE REUSE (LATEST)
 **Standing requirements:** Do maximum meaningful work per turn, always update HANDOFF, finish game graphics/gameplay. **APK build/export/signing explicitly paused until user reverses it.** No claims of successful Godot tests without actual logs.
 
