@@ -237,27 +237,27 @@ const CHARACTER_SCENE_PATHS := {
 }
 
 func _load_authored_character(kind: String, parent: Node3D) -> bool:
-	# Prefer original authored OBJ mesh if supplied; imported rigged GLB remains supported.
-	var obj_path := "res://assets/characters/%s.obj" % str({"P":"pawn","R":"rook","N":"knight","B":"bishop","Q":"queen","K":"king"}.get(kind, ""))
-	if ResourceLoader.exists(obj_path):
-		var mesh_resource: Resource = load(obj_path)
-		if mesh_resource is Mesh:
-			var instance := MeshInstance3D.new()
-			instance.name = "AuthoredCharacter"
-			instance.mesh = mesh_resource as Mesh
-			instance.material_override = hero_material if parent.get_meta("hero", true) else enemy_material
-			parent.add_child(instance)
-			return true
+	# Production-quality animated GLB must take priority over the low-poly OBJ placeholder.
 	var path: String = str(CHARACTER_SCENE_PATHS.get(kind, ""))
-	if path == "" or not ResourceLoader.exists(path): return false
-	var scene: Resource = load(path)
-	if not (scene is PackedScene): return false
-	var model: Node = (scene as PackedScene).instantiate()
-	if not (model is Node3D):
-		model.free()
-		return false
-	model.name = "AuthoredCharacter"
-	parent.add_child(model)
+	if path != "" and ResourceLoader.exists(path):
+		var scene: Resource = load(path)
+		if scene is PackedScene:
+			var model: Node = (scene as PackedScene).instantiate()
+			if model is Node3D:
+				model.name = "AuthoredCharacter"
+				parent.add_child(model)
+				return true
+			model.free()
+	# An original static OBJ remains the art fallback if no GLB is available.
+	var obj_path: String = "res://assets/characters/%s.obj" % str({"P":"pawn","R":"rook","N":"knight","B":"bishop","Q":"queen","K":"king"}.get(kind, ""))
+	if not ResourceLoader.exists(obj_path): return false
+	var mesh_resource: Resource = load(obj_path)
+	if not (mesh_resource is Mesh): return false
+	var instance := MeshInstance3D.new()
+	instance.name = "AuthoredCharacter"
+	instance.mesh = mesh_resource as Mesh
+	instance.material_override = hero_material if bool(parent.get_meta("hero", true)) else enemy_material
+	parent.add_child(instance)
 	return true
 
 func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
