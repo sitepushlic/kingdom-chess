@@ -57,6 +57,23 @@ def check(path):
                 expected_center={("Gauntlet"+side):.66,("ShinPlate"+side):.30,("Boot"+side):.12}[name]
                 assert abs(position[1]-expected_center)<1e-5, f"{path}: {name} rest Y drifted: {position[1]} vs {expected_center}"
                 assert all(math.isfinite(x) for x in position), f"{path}: {name} nonfinite bind position"
+    # Every character's weapon must follow its actual wrist, rather
+    # than staying under the stationary BodyRig during attacks.
+    right=by_name["Arm1Lower"]
+    left=by_name["Arm-1Lower"]
+    assert parents[by_name["WeaponGrip"]]==right, f"{path}: grip detached from right wrist"
+    weapon_names=("BossRelicBlade","EnemyBasicBlade","RoyalLongsword",
+                  "RaiderAxeHead","RangerBowStave","ForgeHammerHead",
+                  "MageCrystal","KnightLance","KingGreatblade")
+    equipped=[name for name in weapon_names if name in by_name]
+    assert equipped, f"{path}: missing authored weapon geometry"
+    for name in equipped:
+        assert parents[by_name[name]]==right, f"{path}: {name} detached from right wrist"
+    for name in ("PawnBuckler","RookTowerShield","BishopFocus","QueenTwinBlade-1"):
+        if name in by_name:
+            assert parents[by_name[name]]==left, f"{path}: {name} detached from left wrist"
+    # World-space bind centers of authored weapons are unchanged.
+    assert abs(world_position(by_name["WeaponGrip"])[1]-.75)<1e-5, f"{path}: grip rest pose drift"
     return True
 
 def main():
