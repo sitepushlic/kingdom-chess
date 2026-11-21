@@ -327,8 +327,11 @@ func _load_authored_character(kind: String, parent: Node3D) -> bool:
 	# Original generated GLB blockouts are available when the art pipeline ran.
 	# Authored hero-ID meshes supersede the six class-only legacy placeholders.
 	var path: String = str(CHARACTER_SCENE_PATHS.get(kind, ""))
-	if not bool(parent.get_meta("hero", true)) and bool(parent.get_meta("boss", false)):
-		path = "res://assets/characters/boss_region_%d.glb" % clampi(current_region, 0, 5)
+	if not bool(parent.get_meta("hero", true)):
+		if bool(parent.get_meta("boss", false)):
+			path = "res://assets/characters/boss_region_%d.glb" % clampi(current_region, 0, 5)
+		else:
+			path = "res://assets/characters/enemy_%s_region_%d.glb" % [kind.to_lower(), clampi(current_region, 0, 5)]
 	elif bool(parent.get_meta("hero", false)) and bool(parent.get_meta("selected_hero_piece", false)) and not selected_hero_visual.is_empty() and str(selected_hero_visual.get("piece", "")) == kind:
 		var hero_id: String = str(selected_hero_visual.get("id", ""))
 		if hero_id.is_valid_filename() and hero_id.begins_with("hero_"):
