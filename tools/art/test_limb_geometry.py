@@ -37,6 +37,16 @@ def inspect(path):
             assert max(xs)>.22 and min(xs)<-.22, f"{path}: missing tapered shoulders"
             waist=[abs(p[0]) for p in vertices if abs(p[1]-.61)<1e-4]
             assert waist and max(waist)<.17, f"{path}: missing tapered waist"
+        else:
+            # Width/depth of the actual GLB mesh must shrink from the
+            # upper ring toward the lower ring, not just its skin weights.
+            rings=sorted({round(p[1],5) for p in vertices})
+            assert len(rings)==3, f"{path}: {limb} has no geometric midpoint"
+            widths=[]
+            for ring in rings:
+                points=[p for p in vertices if abs(p[1]-ring)<1e-4]
+                widths.append(max(p[0] for p in points)-min(p[0] for p in points))
+            assert widths[0]<widths[1]<widths[2], f"{path}: {limb} missing tapered silhouette"
         for t in range(0,len(indices),3):
             a,b,c=(vertices[indices[t+i]] for i in range(3))
             u=[b[i]-a[i] for i in range(3)]
