@@ -1810,7 +1810,9 @@ func show_combat_number(index: int, amount: int, healing: bool = false) -> void:
 	number.position = _square_position(index) + Vector3(0.22 * float(same_square % 3 - 1), 1.9 + 0.20 * float(same_square % 4), 0.0)
 	board_root.add_child(number)
 	active_combat_numbers.append(number)
-	var float_tween := create_tween()
+	# Bound tweens terminate when an older label is evicted by the budget.
+	# Without binding, the pending property tween targets a freed Node3D.
+	var float_tween := create_tween().bind_node(number)
 	float_tween.set_parallel(true)
 	float_tween.tween_property(number, "position:y", number.position.y + 0.78, 0.85).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	float_tween.tween_property(number, "modulate:a", 0.0, 0.85).set_delay(0.22)
