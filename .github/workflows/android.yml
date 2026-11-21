@@ -174,7 +174,10 @@ jobs:
       - name: Run gameplay smoke tests
         run: |
           set -o pipefail
-          timeout 240s ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script res://tests/smoke.gd 2>&1 | tee smoke.log
+          # Headless dummy rendering can emit mesh_get_surface_count(null) warnings.
+          # Use the compatibility renderer for a real GL backend when supported;
+          # keep assertions authoritative and preserve full diagnostics.
+          timeout 240s ./Godot_v4.3-stable_linux.x86_64 --headless --rendering-method gl_compatibility --path . --script res://tests/smoke.gd 2>&1 | tee smoke.log
           if grep -Eq "TEST FAILED:|SMOKE ASSERTIONS FAILED|SCRIPT ERROR:|Parse Error:" smoke.log; then
             echo "=== Actionable Godot smoke failures ==="
             grep -En -B 3 -A 5 "TEST FAILED:|SMOKE ASSERTIONS FAILED|SCRIPT ERROR:|Parse Error:" smoke.log | tail -n 120
