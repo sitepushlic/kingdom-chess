@@ -175,6 +175,8 @@ func _ready() -> void:
 			_cylinder(0.17, 1.25, _material(Color("#56515c"), 0.3), board_root, Vector3(x, 0.50, z))
 			_cylinder(0.29, 0.13, gold_material, board_root, Vector3(x, 1.13, z))
 			var flame := _sphere(0.17, _material(Color("#ffb448"), 0.0, 0.2, Color("#ff681c")), board_root, Vector3(x, 1.40, z))
+			# Emissive decorative fire does not need to cast four dynamic shadows.
+			flame.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			torch_flames.append(flame)
 			var firelight := OmniLight3D.new()
 			firelight.position = Vector3(x, 1.5, z)
