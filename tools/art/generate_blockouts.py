@@ -82,8 +82,77 @@ def make_character(identifier, boss=False):
     pos=accessor(positions,"72f",24,5126,"VEC3",34962,([-1,-1,-1],[1,1,1]))
     normals=accessor([v for normal in CUBE_NORMALS for v in normal],"72f",24,5126,"VEC3",34962)
     indices=accessor(CUBE_TRI,"36H",36,5123,"SCALAR",34963)
+    # Beveled hard-surface geometry for every rigid armor/weapon part.
+    # The deforming torso/limbs keep the original cube topology and skin
+    # attributes. A single shared beveled mesh is instanced by all rigid
+    # pieces, so 72 characters do not duplicate vertex data per plate.
+    bevel_positions=[]
+    bevel_normals=[]
+    bevel_indices=[]
+    bevel=.16
+    def add_flat_face(vertices):
+        # Fix winding from the face centroid, so both mirrored sides face out.
+        v0,v1,v2=vertices[:3]
+        u=[v1[i]-v0[i] for i in range(3)]
+        v=[v2[i]-v0[i] for i in range(3)]
+        cross=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]]
+        center=[sum(vertex[i] for vertex in vertices)/len(vertices) for i in range(3)]
+        if sum(cross[i]*center[i] for i in range(3)) < 0:
+            vertices=list(reversed(vertices))
+            cross=[-n for n in cross]
+        magnitude=math.sqrt(sum(n*n for n in cross))
+        assert magnitude>1e-8, "Degenerate bevel polygon"
+        start=len(bevel_positions)//3
+        for vertex in vertices:
+            bevel_positions.extend(vertex)
+            bevel_normals.extend(n/magnitude for n in cross)
+        for k in range(1,len(vertices)-1):
+            bevel_indices.extend((start,start+k,start+k+1))
+    for axis in range(3):
+        others=[i for i in range(3) if i!=axis]
+        for sign in (-1,1):
+            quad=[]
+            for x,y in ((-1,-1),(1,-1),(1,1),(-1,1)):
+                point=[0.0]*3
+                point[axis]=float(sign)
+                point[others[0]]=x*(1-bevel)
+                point[others[1]]=y*(1-bevel)
+                quad.append(point)
+            add_flat_face(quad)
+    # Twelve chamfer strips bridge adjacent inset faces.
+    for axis in range(3):
+        others=[i for i in range(3) if i!=axis]
+        for sign_a in (-1,1):
+            for sign_b in (-1,1):
+                strip=[]
+                for extent,first in ((-1,True),(1,True),(1,False),(-1,False)):
+                    point=[0.0]*3
+                    point[axis]=extent*(1-bevel)
+                    point[others[0]]=sign_a*(1 if first else 1-bevel)
+                    point[others[1]]=sign_b*(1-bevel if first else 1)
+                    strip.append(point)
+                add_flat_face(strip)
+    # Eight triangular bevel corners close the mesh without cracks.
+    for sx in (-1,1):
+        for sy in (-1,1):
+            for sz in (-1,1):
+                add_flat_face([[sx*(1-bevel),sy,sz*(1-bevel)],
+                               [sx,sy*(1-bevel),sz*(1-bevel)],
+                               [sx*(1-bevel),sy*(1-bevel),sz]])
+    assert len(bevel_positions)//3<65536
+    bevel_pos=accessor(bevel_positions,str(len(bevel_positions))+"f",
+                       len(bevel_positions)//3,5126,"VEC3",34962,
+                       ([-1,-1,-1],[1,1,1]))
+    bevel_normal=accessor(bevel_normals,str(len(bevel_normals))+"f",
+                          len(bevel_normals)//3,5126,"VEC3",34962)
+    bevel_index=accessor(bevel_indices,str(len(bevel_indices))+"H",
+                         len(bevel_indices),5123,"SCALAR",34963)
     for m in range(5):
-        meshes.append({"name":["ArmorBox","SteelBox","SkinBox","GoldBox","ArcaneGlowBox"][m],"primitives":[{"attributes":{"POSITION":pos,"NORMAL":normals},"indices":indices,"material":m}]})
+        meshes.append({"name":["BeveledArmor","BeveledSteel","BeveledSkin",
+                               "BeveledGold","BeveledArcaneGlow"][m],
+                       "primitives":[{"attributes":{"POSITION":bevel_pos,
+                                                    "NORMAL":bevel_normal},
+                                      "indices":bevel_index,"material":m}]})
     def box(name, center, size, material=0, angle=0):
         # Put articulated limbs under an actual shoulder/hip pivot so
         # rotation tracks swing around joints rather than around box centers.
