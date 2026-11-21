@@ -1,3 +1,17 @@
+## 2026-11-21 — REGIONAL COMBAT STATE AND HEALTH BAR MEMORY PASS (LATEST)
+**User instruction:** Maximize substantive implementation in each turn, update HANDOFF each time, finish game and graphics. **Do NOT build/export/sign APK.** Keep concise factual updates. Do not claim verified Godot tests without actual run.
+
+### Commits to main this pass
+- `4b6f0644` **Biome transition combat-state fix:** `Battlefield3D.sync_board()` retains latest 64-square health/max-health snapshots; new shared `_apply_health_fill` updates HP bars. `set_region()` restores actual HP bar fill on every replaced regional enemy actor instead of falsely showing 100% HP, and reapplies boss enrage visuals if already enraged.
+- `6e40f68d` **Regression:** smoke tests simulate 50%-HP units, switch biome, assert replacement enemy has a different mesh but still displays 50% HP.
+- `7a3235a5` **Test correction:** original restore used nonexistent `game.hp`/`game.max_hp`; now uses real `game.health` and derived `game._max_hp`.
+- `741d8554` **Performance:** cache two PBR health-bar materials, friendly/enemy, instead of creating a separate StandardMaterial3D for each actor and each region rebuild.
+- `5a1dff9b` **Material QA:** smoke asserts exactly two health-bar materials and correct sharing by hero/enemy pieces.
+
+### Verification and next work
+- Changes committed on GitHub main. **No actual successful Godot import, smoke run, screenshot or CI verification observed this turn.** Assertions were authored but not executed here.
+- Need real Godot 4.3 CI logs to fix first parser/runtime failure; validate imported GLBs and authored clips; visually inspect 72 character +21 equipment models, improve quality and animation; finish balance/UX. APK remains paused.
+
 ## 2026-11-21 — VISIBLE 3D COMBAT HUD AND CHARACTER IMPORT CACHE (LATEST)
 **Permanent instructions:** Do the largest practical amount of work in one turn, update this handoff every turn, prioritize finishing graphics and gameplay. **APK build/export/signing remains explicitly forbidden until user reverses instruction.** Do not claim Godot or CI success without actual logs.
 
