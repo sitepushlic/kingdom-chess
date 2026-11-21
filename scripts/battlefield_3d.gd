@@ -26,6 +26,7 @@ const BOARD_STYLES: Array[Dictionary] = [
 	{"name":"Изумрудный сад", "dark":"#2b5545", "light":"#c4d9b0", "edge":"#304535", "metal":"#d9bf70", "gem":"#84f0ac"}
 ]
 var board_style_index := 0
+var castle_levels: Dictionary = {"forge":0,"barracks":0,"treasury":0,"academy":0,"infirmary":0}
 var board_edge_material: StandardMaterial3D
 var board_inlay_material: StandardMaterial3D
 var board_gem_material: StandardMaterial3D
@@ -919,6 +920,36 @@ func set_boss_phase(phase: int) -> void:
 		boss_crown.albedo_color = Color("#ff2c5f") if enraged else Color("#e56587")
 		boss_crown.emission_energy_multiplier = 2.8 if enraged else 0.6
 
+func set_castle_visual_levels(levels: Dictionary) -> void:
+	# Persistent base progression affects only decorative geometry.
+	var keys := ["forge", "barracks", "treasury", "academy", "infirmary"]
+	for key in keys:
+		castle_levels[key] = clampi(int(levels.get(key, 0)), 0, 100)
+	_update_castle_visual_levels()
+
+func _update_castle_visual_levels() -> void:
+	if region_scenery == null:
+		return
+	var skyline: Node3D = region_scenery.get_node_or_null("CastleSkyline")
+	if skyline == null:
+		return
+	var keys := ["forge", "barracks", "treasury", "academy", "infirmary"]
+	for i in range(keys.size()):
+		var building: Node3D = skyline.get_node_or_null("CastleBuilding_%d" % i)
+		if building == null:
+			continue
+		var level: int = int(castle_levels.get(keys[i], 0))
+		var stage: int = mini(4, int(level / 5))
+		# A low-level structure remains visible; every fifth upgrade
+		# visibly expands its silhouette up to the fifth construction tier.
+		building.scale = Vector3(1.0 + stage * 0.13, 1.0 + stage * 0.19, 1.0 + stage * 0.13)
+		building.set_meta("upgrade_stage", stage)
+		building.set_meta("building_level", level)
+		for n in range(4):
+			var ornament: Node3D = building.get_node_or_null("UpgradeOrnament_%d" % n)
+			if ornament != null:
+				ornament.visible = n < stage
+
 func _build_castle_skyline(region: int, palette: Array) -> void:
 	# Five distinct architectural landmarks beyond the tactical board.
 	# Purely visual: never intersect squares, hit tests or combat rules.
@@ -982,6 +1013,17 @@ func _build_castle_skyline(region: int, palette: Array) -> void:
 			4: # Infirmary healing cross and roof lantern.
 				_box(Vector3(0.15, 0.56, 0.12), gilding, building, Vector3(0, height + 0.28, -0.03))
 				_box(Vector3(0.43, 0.14, 0.12), gilding, building, Vector3(0, height + 0.30, -0.03))
+		# Physical gilded battlements unlock at building levels 5/10/15/20.
+		# Each ornament is built once per region and toggled without rebuilding
+		# the chess pieces or the entire environment after an upgrade.
+		for ornament_index in range(4):
+			var ornament := Node3D.new()
+			ornament.name = "UpgradeOrnament_%d" % ornament_index
+			building.add_child(ornament)
+			var ornament_y: float = height + 0.35 + float(ornament_index) * 0.23
+			_ring(0.33 + float(ornament_index) * 0.06, 0.027, gilding, ornament, Vector3(0, ornament_y, 0))
+			ornament.visible = false
+	_update_castle_visual_levels()
 	# Region color, not building power, drives the backdrop.
 	skyline.set_meta("region", region)
 
