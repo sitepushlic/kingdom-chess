@@ -1102,6 +1102,21 @@ func _run() -> void:
 			var plinth: Node3D = plinth_test_unit.get_node_or_null("ClassInsignia_" + role)
 			_assert_ok(plinth != null and plinth.get_child_count() >= 2, "3D class heraldry has distinct geometry: " + team_role)
 			plinth_test_unit.queue_free()
+	# Legal moves and enemy captures have distinct 3D colors without
+	# modifying chess rules. Occupied friendly cells are not a capture.
+	var capture_board: Array = []
+	capture_board.resize(64)
+	capture_board.fill("")
+	capture_board[60] = "P"
+	capture_board[52] = "p"
+	capture_board[51] = "N"
+	game.battlefield_3d.sync_board(capture_board, 60, [52, 51, 44], -1)
+	_assert_ok(game.battlefield_3d.highlights[52].material_override == game.battlefield_3d.capture_material, "Enemy capture is highlighted amber")
+	_assert_ok(game.battlefield_3d.highlights[44].material_override == game.battlefield_3d.move_material, "Empty legal move is highlighted green")
+	_assert_ok(game.battlefield_3d.highlights[51].material_override == game.battlefield_3d.move_material, "Friendly occupied cell cannot receive capture color")
+	_assert_ok(game.battlefield_3d.highlights[60].material_override == game.battlefield_3d.selection_material, "Selected piece retains priority highlight")
+	game.battlefield_3d.sync_board(game.pieces, -1, [], -1)
+
 	# The currently selected 3D square must pulse, while legal move
 	# indicators remain static and selection state resets on deselection.
 	game.battlefield_3d.sync_board(game.pieces, 60, [52], -1)
