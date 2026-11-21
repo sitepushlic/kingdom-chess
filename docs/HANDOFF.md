@@ -223,3 +223,11 @@ For EVERY future implementation session:
 - Commit `320bb1d`: tests assert all six OBJ meshes are present and load as Godot Mesh resources.
 - Commit `c468f3c`: asset README documents real shipped OBJ art and limits.
 - Check newest CI after these commits for OBJ importer/parser errors and Android APK. Next: textured and rigged GLBs, animation clips, unique enemy art, Android performance and visual screenshots.
+
+## Original character surface detail and asset precedence (2026-11-21)
+- Verified **CI #234 SUCCESS**: https://github.com/sitepushlic/kingdom-chess/actions/runs/44874156688 ; this confirms the six original OBJ meshes import, smoke tests and Android debug export passed.
+- Commit `450d74d`: corrected asset selection order: **rigged animated GLB first**, original static OBJ second, procedural fallback third. This prevents future production models being masked by the newly shipped low-poly OBJ meshes.
+- Commit `635e5c6`: added per-class 3D costume accents, metallic trim and emissive gems for six chess classes. These are actual 3D geometry and render within the animated VisualRig; still procedural additions, not commercial-quality textured or rigged models.
+- Commit `58653fe`: smoke tests assert each class has layered geometry within its VisualRig.
+- Commit `1f12e05`: updated character art README with asset selection order and limitations.
+- Latest post-edit CI was queued during handoff; verify its actual result and fix any failures. Highest-priority missing: original production rigged GLBs with authored animation clips, high-quality PBR textures, unique enemy meshes, device visual QA and frame-time profiling.
