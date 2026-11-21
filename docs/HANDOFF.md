@@ -402,3 +402,31 @@ For EVERY future implementation session:
 3. Verify graphics tier controls and shared tile materials in Android debug APK; profile FPS, draw calls, memory and thermal stability on low-end and mid-range devices.
 4. Improve checkmate/HP-aware captures and test cases, campaign variety and balancing. Commit actual code/tests, not only plans.
 5. At the end, update this **full handoff**, retaining architecture, verified status, known blockers, exact commits and concrete next steps. Never claim production-ready until real device/playtest evidence exists.
+
+## FULL HANDOFF — 2026-11-21, HP-aware chess check response
+
+### Product requirements and architecture
+- **Target**: portrait Godot 4.3 Android chess/RPG with chess-legal movement and king victory conditions, AP, HP, skills, fair PvP, 30 heroes with quest-gated progression, 7 gear rarity tiers, 18 story missions over 6 regions, authored high-quality 3D art, animations/VFX, audio, and two-phone LAN co-op.
+- `scripts/main.gd`: chess/RPG combat, HP, turn handling, arena/raid, UI, save, networking; `scripts/battlefield_3d.gd`: 3D board, procedural models, effects, region lighting and graphics tiers; `scripts/progression.gd`: items and campaign; `scripts/hero_roster.gd`: hero records; `tests/smoke.gd`: headless assertions. Existing history and earlier implementation sessions are retained above.
+
+### Changes in this run
+- `e213ca784ecea5cc73bcc65d051fea192d5216a0`: corrected `_move_preserves_king` for occupied destinations in arena. A lethal RPG capture simulates the attacker occupying the target and removing the enemy; a nonlethal strike checks the unchanged board. Previously `current_safe and capture_safe` rejected legal lethal captures of a checking unit. This fixes that specific class of check responses without changing raid combat.
+- `acc10c233ceb8e397541c27b524cfd3d7787a3e5`: regression tests for lethal capture of the checking rook versus nonlethal damage that leaves check unresolved.
+- This documentation update records exact work, unresolved issues and next execution instructions.
+
+### Validation status
+- **Verified**: GitHub accepted source and regression test commits.
+- **Not verified**: headless Godot smoke test, latest CI workflow run, Android APK export, real-device playtest or measured FPS for this new code. Do not claim tests passed merely because assertions were committed.
+
+### Known bugs, risks and incomplete work
+- HP-aware arena checkmate evaluation is still approximate; `_has_legal_action` does not fully simulate AP, abilities and all post-damage effects. Arena can grant repeated defensive AP while in check. King death via HP and chess check/checkmate may need explicit rules to prevent stalemates or endless turns.
+- `_move_preserves_king` assumes base arena DAMAGE and 64 health entries. This matches current normalized arena damage, but future modifiers and skills require separate safety simulation. King capture semantics and castling/en-passant/stalemate/threefold repetition are not fully covered by the current chess/RPG hybrid.
+- 3D renderer still relies heavily on procedural meshes; authored rigged characters, animation clips, bespoke gear, environments and VFX are incomplete. Graphics quality tiers and material sharing are not proof of acceptable mobile performance.
+- Campaign missions have distinct records and modifiers but not all unique objectives/cinematics. LAN sync/reconnect requires two-phone QA. Save, UX, onboarding, audio, balancing, and Android device matrix need verification.
+
+### Next execution instructions
+1. Read latest HANDOFF and source; check newest Actions run and logs. If tests fail, repair and re-run before expanding features.
+2. Add precise arena checkmate/defensive AP and king capture rules, with tests for pinned strikes, legal lethal captures, nonlethal attacks, king escape and no-legal-action states.
+3. Continue authored GLB/rigged 3D asset pipeline with verified licenses and imported animation clips; verify appearance in Android build.
+4. Test on real low-end/midrange Android devices; measure FPS, memory, touch readability and thermals for graphics tiers.
+5. Update this full handoff after each development run with actual commit SHAs, confirmed CI status and concrete blockers.
