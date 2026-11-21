@@ -57,6 +57,13 @@ def check(path):
                 expected_center={("Gauntlet"+side):.66,("ShinPlate"+side):.30,("Boot"+side):.12}[name]
                 assert abs(position[1]-expected_center)<1e-5, f"{path}: {name} rest Y drifted: {position[1]} vs {expected_center}"
                 assert all(math.isfinite(x) for x in position), f"{path}: {name} nonfinite bind position"
+    # Forged archetype has extra knee plates; both must inherit shin
+    # rotation and keep the original authored world-space Y.
+    for side in ("1","-1"):
+        name="ForgeKnee"+side
+        if name in by_name:
+            assert parents[by_name[name]]==by_name["Leg"+side+"Lower"], f"{path}: {name} floats during knee bend"
+            assert abs(world_position(by_name[name])[1]-.36)<1e-5, f"{path}: {name} rest pose drift"
     # New facial landmarks must move with the animated neck pivot.
     head_id=by_name["Head"]
     for name,rest_y in (
