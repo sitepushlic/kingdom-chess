@@ -490,6 +490,41 @@ def main():
         json_size=struct.unpack_from("<I",data,12)[0]
         boss_gltf=json.loads(data[20:20+json_size])
         assert any(node.get("name","").startswith(landmark) for node in boss_gltf["nodes"]), f"boss {region}: missing {landmark} silhouette"
+    # Production readability contracts: each of the 72 rigged figures must
+    # have recognizable physical geometry, not only differently tinted PBR.
+    identity_signatures = set()
+    for hero_id in range(1,31):
+        path = ART / f"hero_{hero_id:02d}.glb"
+        data = path.read_bytes()
+        length = struct.unpack_from("<I",data,12)[0]
+        gltf = json.loads(data[20:20+length])
+        names = {node.get("name","") for node in gltf["nodes"]}
+        signature_names = tuple(sorted(name for name in names if name.startswith("Identity")))
+        assert any(name.startswith("IdentityBadge_") for name in signature_names), f"{path}: missing personal badge"
+        assert "IdentityBeltBuckle" in names and "IdentityBackBanner" in names, f"{path}: missing layered outfit"
+        assert any(name.startswith(("IdentitySun","IdentityScout","IdentityOracle","IdentityVeteran","IdentityMoon","IdentityAscendant")) for name in names), f"{path}: missing head signature"
+        assert signature_names not in identity_signatures, f"{path}: duplicate hero identity geometry"
+        identity_signatures.add(signature_names)
+    role_markers_new = {
+        "p":"EnemyPawnHood", "r":"EnemyRookTower",
+        "n":"EnemyKnightLance", "b":"EnemyBishopMitre",
+        "q":"EnemyQueenScepter", "k":"EnemyKingCrown"
+    }
+    for region in range(6):
+        for role, marker in role_markers_new.items():
+            path = ART / f"enemy_{role}_region_{region}.glb"
+            data = path.read_bytes()
+            length = struct.unpack_from("<I",data,12)[0]
+            gltf = json.loads(data[20:20+length])
+            assert any(node.get("name","").startswith(marker) for node in gltf["nodes"]), f"{path}: missing chess role silhouette {marker}"
+        path = ART / f"boss_region_{region}.glb"
+        data = path.read_bytes()
+        length = struct.unpack_from("<I",data,12)[0]
+        gltf = json.loads(data[20:20+length])
+        names = {node.get("name","") for node in gltf["nodes"]}
+        assert f"BossHeartCore_{region+1}" in names, f"{path}: missing biome boss heart core"
+        assert sum(name.startswith("BossCrownShard_") for name in names) == 4+region, f"{path}: missing boss crown shards"
+    print("KINGDOM CHESS: 30 UNIQUE HERO SIGNATURES, 36 ENEMY CLASS SILHOUETTES AND 6 BOSS CROWNS VALIDATED")
     equipment_dir = ROOT / "assets" / "equipment"
     for slot in ("weapon","armor","relic"):
         shapes = set()
