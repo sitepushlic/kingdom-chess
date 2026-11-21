@@ -33,7 +33,8 @@ PALETTE = [
 def build(slot, tier):
     nodes=[{"name":"EquipmentRoot","children":[]}]
     meshes=[{"name":"Metal","primitives":[{"attributes":{"POSITION":0,"NORMAL":1},"indices":2,"material":0}]},
-            {"name":"Inlay","primitives":[{"attributes":{"POSITION":0,"NORMAL":1},"indices":2,"material":1}]}]
+            {"name":"Inlay","primitives":[{"attributes":{"POSITION":0,"NORMAL":1},"indices":2,"material":1}]},
+            {"name":"EnchantedCrystal","primitives":[{"attributes":{"POSITION":0,"NORMAL":1},"indices":2,"material":2}]}]
     shapes=[]
     def box(name, center, size, mat=0, angle=0):
         index=len(nodes)
@@ -88,6 +89,21 @@ def build(slot, tier):
             box("Orbit"+str(i),(math.cos(a)*.23,math.sin(a)*.23,0),(.08,.09,.07),0,a)
         if tier>=4:
             box("RelicSpire",(0,.31,0),(.09,.25,.09),1)
+    # High-tier artifacts gain physically visible enchanted crystal clusters.
+    # Low-tier equipment stays unlit for a readable progression silhouette.
+    if tier >= 4:
+        if slot=="weapon":
+            for i in range(tier-3):
+                box("WeaponCrystal"+str(i),(.12+i*.10,.42+i*.15,-.12),(.10,.15,.10),2)
+        elif slot=="armor":
+            box("ArmorHeartCrystal",(0,.05,-.15),(.16+tier*.012,.20+tier*.014,.08),2)
+            if tier>=6:
+                for side in (-1,1):
+                    box("ArmorShoulderCrystal"+str(side),(side*.35,.26,-.16),(.11,.14,.09),2)
+        else:
+            for i in range(tier-3):
+                a=i*math.tau/(tier-3)
+                box("RelicCrystal"+str(i),(math.cos(a)*.15,math.sin(a)*.15,-.09),(.10,.14,.09),2,a)
     blob=bytearray()
     views=[]
     accessors=[]
@@ -106,6 +122,7 @@ def build(slot, tier):
     materials=[
         {"name":"TierMetal","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":PALETTE[tier],"metallicFactor":.75,"roughnessFactor":.34}},
         {"name":"TierInlay","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":[.93,.79,.46,1],"metallicFactor":.8,"roughnessFactor":.25}},
+        {"name":"TierEnchantment","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":PALETTE[tier],"metallicFactor":.15,"roughnessFactor":.22},"emissiveFactor":[round(PALETTE[tier][i]*.8,3) for i in range(3)]},
     ]
     document={"asset":{"version":"2.0","generator":"Kingdom Chess modular equipment"},
               "scene":0,"scenes":[{"nodes":[0]}],"nodes":nodes,"meshes":meshes,
