@@ -241,7 +241,8 @@ def validate(path, require_animation=True):
         torso_node=next(node for node in skinned if node["skin"]==1)
         torso_primitive=gltf["meshes"][torso_node["mesh"]]["primitives"][0]
         assert {"POSITION","NORMAL","JOINTS_0","WEIGHTS_0"}.issubset(torso_primitive["attributes"]), f"{path}: missing torso skin vertex streams"
-        cape=gltf["meshes"][skinned[0]["mesh"]]["primitives"][0]
+        cape_node=next(node for node in skinned if node["skin"]==0 and node.get("name")=="SkinnedCape")
+        cape=gltf["meshes"][cape_node["mesh"]]["primitives"][0]
         assert {"JOINTS_0","WEIGHTS_0","NORMAL","POSITION"}.issubset(cape["attributes"]), f"{path}: missing skinning vertex streams"
         joints_acc=gltf["accessors"][cape["attributes"]["JOINTS_0"]]
         weights_acc=gltf["accessors"][cape["attributes"]["WEIGHTS_0"]]
