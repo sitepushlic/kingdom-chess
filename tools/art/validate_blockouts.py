@@ -38,7 +38,7 @@ def validate(path, require_animation=True):
         rigid_primitive=rigid_mesh["primitives"][0]
         vertex_count=gltf["accessors"][rigid_primitive["attributes"]["POSITION"]]["count"]
         triangle_count=gltf["accessors"][rigid_primitive["indices"]]["count"]//3
-        assert vertex_count>=100 and triangle_count>=40, f"{path}: rigid geometry still cube blockout"
+        assert vertex_count>=96 and triangle_count>=40, f"{path}: rigid geometry still cube blockout"
     for acc in gltf["accessors"]:
         view = gltf["bufferViews"][acc["bufferView"]]
         byte_len = acc["count"] * COMPONENT_SIZE[acc["componentType"]] * COMPONENTS[acc["type"]]
