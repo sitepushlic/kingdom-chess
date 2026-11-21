@@ -1037,6 +1037,18 @@ func _run() -> void:
 			var plinth: Node3D = plinth_test_unit.get_node_or_null("ClassInsignia_" + role)
 			_assert_ok(plinth != null and plinth.get_child_count() >= 2, "3D class heraldry has distinct geometry: " + team_role)
 			plinth_test_unit.queue_free()
+	# Board cosmetics must survive region changes and must never alter
+	# gameplay board indices or biome lighting.
+	game.battlefield_3d.set_board_visual_style(2)
+	var obsidian_dark: Color = game.battlefield_3d.tile_materials[0].albedo_color
+	var obsidian_light: Color = game.battlefield_3d.tile_materials[1].albedo_color
+	game.battlefield_3d.set_region(3)
+	game.battlefield_3d.set_region(4)
+	_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == obsidian_dark and game.battlefield_3d.tile_materials[1].albedo_color == obsidian_light, "Selected board skin survives biome changes")
+	game.battlefield_3d.set_board_visual_style(-1)
+	_assert_ok(not game.battlefield_3d.board_style_customized, "Resetting board skin returns to biome palette")
+	_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == Color("#28395e"), "Biome reset restores active region colors")
+	game.battlefield_3d.set_region(0)
 	var scenery_counts: Array[int] = []
 	var region_light_colors: Array[Color] = []
 	for region_index in range(6):
