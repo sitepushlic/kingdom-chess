@@ -242,6 +242,18 @@ func _run() -> void:
 						if library != null and library.has_animation(clip_name):
 							found = true
 					_assert_ok(found, "GLB clip %s exists: %s" % [clip_name, asset_name])
+					if found:
+						var animation: Animation = player.get_animation(clip_name)
+						if animation == null:
+							for library_name in player.get_animation_library_list():
+								var library: AnimationLibrary = player.get_animation_library(library_name)
+								if library != null and library.has_animation(clip_name):
+									animation = library.get_animation(clip_name)
+									break
+						_assert_ok(animation != null, "Imported animation resource exists: %s/%s" % [asset_name, clip_name])
+						if animation != null:
+							_assert_ok(animation.get_track_count() >= 8, "Imported 3D clip retains bone and body tracks: %s/%s" % [asset_name, clip_name])
+							_assert_ok(animation.length >= 0.27, "Imported 3D clip has nontrivial duration: %s/%s" % [asset_name, clip_name])
 			model.free()
 	# Only the chosen hero bearer gets its ID-specific imported model,
 	# not every allied piece of the same chess class.
