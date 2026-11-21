@@ -126,7 +126,7 @@ def make_character(identifier, boss=False):
                 return
         nodes[1]["children"].append(idx)
     # Pivot at feet; rig node animation moves all geometry.
-    box("Torso",(0,0.88,0),(.39,.54,.26))
+    # Torso is generated below as a weighted, two-joint deformable mesh.
     box("Waist",(0,.56,0),(.34,.17,.28),1)
     box("Head",(0,1.31,0),(.29,.30,.27),2)
     # Readable face and layered armor details at mobile portrait scale.
@@ -347,6 +347,39 @@ def make_character(identifier, boss=False):
     ibm=accessor(inverse_bind,"32f",2,5126,"MAT4")
     skins=[{"name":"MantleSkin","joints":[cape_root_index,cape_root_index+1],
             "skeleton":cape_root_index,"inverseBindMatrices":ibm}]
+    # Actual two-bone skinned torso, replacing the former rigid Torso box.
+    # Hip and chest bones share weighted vertices; the chest can bend
+    # independently during attacks and spellcasting.
+    hip_index=len(nodes)
+    nodes.append({"name":"SpineHip","translation":[0,.70,0],
+                  "children":[hip_index+1]})
+    nodes.append({"name":"SpineChest","translation":[0,.33,0]})
+    nodes[1]["children"].append(hip_index)
+    torso_mesh_node=len(nodes)
+    nodes.append({"name":"SkinnedTorso","mesh":len(meshes),"skin":1})
+    nodes[1]["children"].append(torso_mesh_node)
+    torso_positions=[]
+    torso_weights=[]
+    torso_joints=[]
+    for x,y,z in CUBE_VERTS:
+        torso_positions.extend((x*.195,.88+y*.27,z*.13))
+        chest_influence=.82 if y>0 else .18
+        torso_weights.extend((1.0-chest_influence,chest_influence,0.0,0.0))
+        torso_joints.extend((0,1,0,0))
+    torso_pos=accessor(torso_positions,"72f",24,5126,"VEC3",34962,
+                       ([-.195,.61,-.13],[.195,1.15,.13]))
+    torso_joint=accessor(torso_joints,"96B",24,5121,"VEC4",34962)
+    torso_weight=accessor(torso_weights,"96f",24,5126,"VEC4",34962)
+    meshes.append({"name":"DeformingTorso","primitives":[{
+        "attributes":{"POSITION":torso_pos,"NORMAL":normals,
+                      "JOINTS_0":torso_joint,"WEIGHTS_0":torso_weight},
+        "indices":indices,"material":0}]})
+    torso_inverse=[]
+    for y in (.70,1.03):
+        torso_inverse.extend((1,0,0,0, 0,1,0,0, 0,0,1,0, 0,-y,0,1))
+    torso_ibm=accessor(torso_inverse,"32f",2,5126,"MAT4")
+    skins.append({"name":"TorsoSkin","joints":[hip_index,hip_index+1],
+                  "skeleton":hip_index,"inverseBindMatrices":torso_ibm})
     # Six named glTF clips animate the full character pivot. These are
     # rigid transform clips, NOT skeletal animations.
     clips = {
@@ -451,6 +484,18 @@ def make_character(identifier, boss=False):
         samplers.append({"input":t,"output":head_output,"interpolation":"LINEAR"})
         channels.append({"sampler":len(samplers)-1,
                          "target":{"node":node_ids["Head"],"path":"rotation"}})
+        spine_angles={
+            "idle":[0,.012,0], "move":[0,-.065,.055],
+            "attack":[0,-.25,.20,0], "hit":[0,.24,0],
+            "death":[0,.28,.46], "cast":[0,-.22,0],
+        }[name]
+        spine_quats=[value for angle in spine_angles
+                     for value in (math.sin(angle/2),0,0,math.cos(angle/2))]
+        spine_output=accessor(spine_quats,str(len(spine_quats))+"f",
+                              len(spine_angles),5126,"VEC4")
+        samplers.append({"input":t,"output":spine_output,"interpolation":"LINEAR"})
+        channels.append({"sampler":len(samplers)-1,
+                         "target":{"node":hip_index+1,"path":"rotation"}})
         for limb, angles in limb_poses[name].items():
             if limb not in node_ids:
                 continue
