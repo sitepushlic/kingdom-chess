@@ -143,7 +143,7 @@ def check(path):
             for prefix in prefixes:
                 name=prefix+side
                 if name in by_name:
-                    expected=by_name[limb_type+side]
+                    expected=by_name[limb_type+side+("Lower" if prefix=="ForgeKneeRivet" else "")]
                     assert parents[by_name[name]]==expected, f"{path}: {name} detached from {limb_type}{side}"
                     assert all(math.isfinite(v) for v in world_position(by_name[name]))
     for shield_name in ("RoyalShieldRim","RoyalShieldCore"):
