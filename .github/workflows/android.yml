@@ -7,10 +7,10 @@ on:
       - '**/*.md'
   workflow_dispatch:
 concurrency:
-  group: kingdom-android-${{ github.ref }}
+  group: kingdom-godot-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  android:
+  godot:
     runs-on: ubuntu-24.04
     timeout-minutes: 55
     steps:
@@ -130,7 +130,7 @@ jobs:
           fi
           grep -q "KINGDOM CHESS: GAMEPLAY LOGIC SMOKE TESTS PASSED" smoke.log
           if grep -Eq "SCRIPT ERROR:|ERROR: Failed to load script|Parse Error:" smoke.log; then
-            echo "Godot emitted script or parser errors; refusing APK export"
+            echo "Godot emitted script or parser errors; failing verification"
             exit 1
           fi
       - name: Publish Godot verification summary
@@ -161,11 +161,4 @@ jobs:
             import.log
             game-launch.log
             smoke.log
-            export.log
           if-no-files-found: ignore
-      - uses: actions/upload-artifact@v4
-        if: false # APK intentionally paused
-        with:
-          name: kingdom-chess-android
-          path: build/kingdom-chess-debug.apk
-          if-no-files-found: error
