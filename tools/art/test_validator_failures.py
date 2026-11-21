@@ -114,7 +114,21 @@ def main():
     channel=next(c for c in clip["channels"] if c["target"]["path"]=="translation")
     doc["accessors"][clip["samplers"][channel["sampler"]]["output"]]["componentType"]=5125
     must_reject(pack_glb(doc,binary),"integer animation translation")
-    print("Validator regression tests: pristine GLB accepted; 10 corrupt GLBs rejected")
+    # Detaching the grip from the wrist must fail structural validation.
+    doc,binary=read_glb(original)
+    wrist=next(node for node in doc["nodes"] if node.get("name")=="Arm1Lower")
+    grip=next(i for i,node in enumerate(doc["nodes"]) if node.get("name")=="WeaponGrip")
+    wrist["children"].remove(grip)
+    doc["nodes"][1]["children"].append(grip)
+    must_reject(pack_glb(doc,binary),"weapon grip left on stationary BodyRig")
+    # Facial parts left behind during head rotation are also invalid.
+    doc,binary=read_glb(original)
+    head=next(node for node in doc["nodes"] if node.get("name")=="Head")
+    nose=next(i for i,node in enumerate(doc["nodes"]) if node.get("name")=="NoseBridge")
+    head["children"].remove(nose)
+    doc["nodes"][1]["children"].append(nose)
+    must_reject(pack_glb(doc,binary),"nose bridge detached from animated Head")
+    print("Validator regression tests: pristine GLB accepted; 12 corrupt GLBs rejected")
 
 if __name__=="__main__":
     main()
