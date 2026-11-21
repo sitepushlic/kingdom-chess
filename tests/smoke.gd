@@ -122,6 +122,17 @@ func _run() -> void:
 	_assert_ok(game.inventory_popup != null, "Inventory dialog exists")
 	_assert_ok(game.shop_popup != null, "Alchemist shop exists")
 	_assert_ok(game.main_menu != null and game.main_menu.visible, "Cinematic start menu visible at launch")
+	_assert_ok(game.graphics_button != null and game.graphics_button.text.contains("ГРАФИКА"), "Graphics quality selector is visible in main menu")
+	var quality_before: int = game.graphics_quality
+	game._cycle_graphics_quality()
+	_assert_ok(game.graphics_quality == (quality_before + 1) % 3, "Graphics quality cycles on button press")
+	_assert_ok(game.battlefield_3d.visual_quality == game.graphics_quality, "Quality selector updates 3D renderer immediately")
+	var graphics_config := ConfigFile.new()
+	_assert_ok(graphics_config.load(game.GRAPHICS_SETTINGS_PATH) == OK, "Graphics quality persists in user configuration")
+	_assert_ok(int(graphics_config.get_value("graphics", "quality", -1)) == game.graphics_quality, "Saved graphics quality matches selected tier")
+	game._cycle_graphics_quality()
+	game._cycle_graphics_quality()
+
 	_assert_ok(game.tutorial_popup != null, "First-run combat tutorial exists")
 	_assert_ok(game.get_node_or_null("NetworkLobby") != null, "Co-op lobby is a dedicated dialog")
 	_assert_ok(game.lan_address != null, "LAN address field exists")
