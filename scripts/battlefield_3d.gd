@@ -919,6 +919,72 @@ func set_boss_phase(phase: int) -> void:
 		boss_crown.albedo_color = Color("#ff2c5f") if enraged else Color("#e56587")
 		boss_crown.emission_energy_multiplier = 2.8 if enraged else 0.6
 
+func _build_castle_skyline(region: int, palette: Array) -> void:
+	# Five distinct architectural landmarks beyond the tactical board.
+	# Purely visual: never intersect squares, hit tests or combat rules.
+	# Named anchors let smoke tests assert real geometry, not placeholders.
+	var masonry: StandardMaterial3D = _material(palette[0].lightened(0.11), 0.18, 0.75)
+	var roof: StandardMaterial3D = _material(palette[1].darkened(0.13), 0.35, 0.38)
+	var gilding: StandardMaterial3D = _material(palette[2].lightened(0.17), 0.76, 0.24)
+	var glass: StandardMaterial3D = _material(palette[2], 0.24, 0.18, palette[2] * 0.38)
+	var skyline := Node3D.new()
+	skyline.name = "CastleSkyline"
+	region_scenery.add_child(skyline)
+	# Elevated outer curtain, parapet and four corner towers.
+	var wall: MeshInstance3D = _box(Vector3(10.8, 1.30, 0.55), masonry, skyline, Vector3(0, 0.34, 9.20))
+	wall.name = "CastleCurtainWall"
+	_box(Vector3(11.2, 0.14, 0.75), roof, skyline, Vector3(0, 1.05, 9.20))
+	for side in [-1.0, 1.0]:
+		var tower := Node3D.new()
+		tower.name = "CastleWatchtower_%d" % int(side)
+		tower.position = Vector3(side * 5.30, 0, 9.20)
+		skyline.add_child(tower)
+		_cylinder(0.66, 2.60, masonry, tower, Vector3(0, 0.78, 0))
+		_cylinder(0.78, 0.19, roof, tower, Vector3(0, 2.13, 0))
+		_cylinder(0.64, 0.62, roof, tower, Vector3(0, 2.48, 0), 0.05)
+		_sphere(0.11, glass, tower, Vector3(0, 2.86, 0))
+		for n in range(6):
+			var angle: float = TAU * float(n) / 6.0
+			_box(Vector3(0.22, 0.30, 0.22), masonry, tower, Vector3(cos(angle) * 0.61, 2.37, sin(angle) * 0.61))
+	for i in range(20):
+		var battlement: MeshInstance3D = _box(Vector3(0.30, 0.28, 0.57), masonry, skyline, Vector3(-4.8 + float(i) * 0.51, 1.25, 9.20))
+		battlement.name = "CastleMerlon_%02d" % i
+	# Gatehouse with open central arch silhouette, lintel and banners.
+	for side in [-1.0, 1.0]:
+		_box(Vector3(0.40, 1.28, 0.72), roof, skyline, Vector3(side * 0.92, 0.30, 8.78))
+		var banner: MeshInstance3D = _box(Vector3(0.29, 0.68, 0.045), glass, skyline, Vector3(side * 1.23, 0.45, 8.36))
+		banner.name = "CastleBanner_%d" % int(side)
+	_box(Vector3(2.20, 0.35, 0.82), roof, skyline, Vector3(0, 1.08, 8.80))
+	_ring(0.30, 0.045, gilding, skyline, Vector3(0, 1.27, 8.36))
+	# Five recognizable workshop silhouettes: forge, barracks, treasury,
+	# academy and infirmary. All sit behind the gate on the skyline.
+	for building_index in range(5):
+		var building := Node3D.new()
+		building.name = "CastleBuilding_%d" % building_index
+		building.position = Vector3((float(building_index) - 2.0) * 1.70, 0, 10.85)
+		skyline.add_child(building)
+		var height: float = 1.15 + float(building_index % 3) * 0.35
+		_box(Vector3(1.16, height, 1.08), masonry, building, Vector3(0, height * 0.5 - 0.18, 0))
+		_box(Vector3(1.32, 0.15, 1.25), roof, building, Vector3(0, height - 0.08, 0))
+		match building_index:
+			0: # Forge chimney and glowing furnace mouth.
+				_box(Vector3(0.30, 0.80, 0.32), roof, building, Vector3(0.35, height + 0.30, 0))
+				_box(Vector3(0.38, 0.31, 0.05), glass, building, Vector3(-0.20, 0.34, -0.57))
+			1: # Barracks spear rack and guard standards.
+				for side in [-1.0, 1.0]:
+					_cylinder(0.035, 0.95, gilding, building, Vector3(side * 0.40, height + 0.40, 0), 0.01)
+			2: # Treasury vault dome and gold finial.
+				_cylinder(0.48, 0.54, gilding, building, Vector3(0, height + 0.20, 0), 0.03)
+				_sphere(0.12, glass, building, Vector3(0, height + 0.55, 0))
+			3: # Academy observatory and arcane ring.
+				_cylinder(0.32, 0.95, roof, building, Vector3(0, height + 0.40, 0), 0.10)
+				_ring(0.37, 0.045, glass, building, Vector3(0, height + 0.95, 0))
+			4: # Infirmary healing cross and roof lantern.
+				_box(Vector3(0.15, 0.56, 0.12), gilding, building, Vector3(0, height + 0.28, -0.03))
+				_box(Vector3(0.43, 0.14, 0.12), gilding, building, Vector3(0, height + 0.30, -0.03))
+	# Region color, not building power, drives the backdrop.
+	skyline.set_meta("region", region)
+
 func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
 	# All scenery remains outside the playable 8x8 grid; animate only four landmark accents.
 	animated_scenery.clear()
@@ -1006,6 +1072,7 @@ func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
 				spike.rotation.z = side * 0.22
 			var eclipse := _ring(0.95, 0.10, magic, region_scenery, Vector3(0, 2.70, 7.30))
 			eclipse.rotation.x = PI * 0.5
+	_build_castle_skyline(region, palette)
 	# A bounded halo of 12 drifting particles around the arena.
 	# Geometry only, no particle emitter or extra light source. Hidden
 	# completely in low and medium visual-quality presets.
