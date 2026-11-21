@@ -57,6 +57,15 @@ def check(path):
                 expected_center={("Gauntlet"+side):.66,("ShinPlate"+side):.30,("Boot"+side):.12}[name]
                 assert abs(position[1]-expected_center)<1e-5, f"{path}: {name} rest Y drifted: {position[1]} vs {expected_center}"
                 assert all(math.isfinite(x) for x in position), f"{path}: {name} nonfinite bind position"
+    # Rigid pauldrons must follow upper-arm rotation.
+    for side in ("1","-1"):
+        name="RoyalShoulder"+side
+        if name in by_name:
+            assert parents[by_name[name]]==by_name["Arm"+side], f"{path}: {name} detached from shoulder"
+            assert abs(world_position(by_name[name])[1]-1.04)<1e-5, f"{path}: {name} rest pose drift"
+    if "RaiderShoulder" in by_name:
+        assert parents[by_name["RaiderShoulder"]]==by_name["Arm-1"], f"{path}: raider pauldron detached"
+        assert abs(world_position(by_name["RaiderShoulder"])[1]-1.06)<1e-5
     # Forged archetype has extra knee plates; both must inherit shin
     # rotation and keep the original authored world-space Y.
     for side in ("1","-1"):
