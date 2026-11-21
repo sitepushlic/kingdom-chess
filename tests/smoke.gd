@@ -15,6 +15,17 @@ func _assert_ok(condition: bool, description: String) -> void:
 		push_error("TEST FAILED: " + description)
 
 func _run() -> void:
+	_assert_ok(Progression.sanitize_board_collection([3, 3, -1, 2, 4, "1", 1.5, 1]) == [0, 1, 2, 3], "Board ownership sanitizes duplicates, forged indices and fractions")
+	_assert_ok(Progression.sanitize_board_collection("malformed") == [0], "Invalid collection restores starter board")
+	var forged_board_profile: Dictionary = Progression.default_profile()
+	forged_board_profile["owned_boards"] = [1, 3, 3, 900]
+	forged_board_profile["selected_board"] = 2
+	var cleaned_board_profile: Dictionary = Progression.sanitize_profile(forged_board_profile)
+	_assert_ok(cleaned_board_profile["owned_boards"] == [0, 1, 3], "Saved collection is normalized")
+	_assert_ok(cleaned_board_profile["selected_board"] == 0, "Cannot select unowned board from save")
+	_assert_ok(Progression.board_unlock_reason(2, [0], 0, 900).contains("побед"), "Board unlock requires campaign progress")
+	_assert_ok(Progression.board_unlock_reason(2, [0], 6, 0).contains("золота"), "Board unlock requires enough gold")
+	_assert_ok(Progression.board_unlock_reason(2, [0], 6, 900).contains("Доступно"), "Board unlock becomes available after both gates")
 	_assert_ok(Progression.rarity_cap(0, 1) == 0, "New players can only obtain common gear")
 	_assert_ok(Progression.upgrade_cap(0, 1) == 2, "New players cannot upgrade beyond +2")
 	_assert_ok(Progression.rarity_cap(18, 1) == 0, "Campaign wins alone cannot bypass level requirement")
@@ -88,6 +99,35 @@ func _run() -> void:
 			_assert_ok(game.battlefield_3d.ambient_motes[0].visible, "High quality enables ambient motes")
 			game.battlefield_3d.set_visual_quality(1)
 			_assert_ok(not game.battlefield_3d.ambient_motes[0].visible, "Medium quality disables ambient motes")
+		_assert_ok(game.owned_boards.has(0), "Starter cosmetic board always owned")
+		game._open_board_gallery()
+		_assert_ok(game.board_gallery_list.item_count == 4, "Board collection dialog lists four skins")
+		var old_gold: int = game.gold
+		var old_wins: int = game.raid_wins
+		var old_owned: Array = game.owned_boards.duplicate()
+		var old_board: int = game.selected_board
+		game.owned_boards = [0]
+		game.raid_wins = 0
+		game.gold = 100000
+		game.board_gallery_list.select(3)
+		game._choose_board()
+		_assert_ok(game.selected_board == 0 and game.gold == 100000, "Cannot purchase locked board with gold alone")
+		game.raid_wins = 12
+		game.board_gallery_list.select(3)
+		game._choose_board()
+		_assert_ok(game.selected_board == 3 and game.owned_boards.has(3), "Eligible board unlocks and equips")
+		_assert_ok(game.gold == 100000 - Progression.BOARD_COSTS[3], "Board purchase deducts exact price")
+		game.board_gallery_list.select(3)
+		game._choose_board()
+		_assert_ok(game.gold == 100000 - Progression.BOARD_COSTS[3], "Owned board never charges twice")
+		_assert_ok(game.battlefield_3d.board_style_index == 3, "Selected owned board updates 3D appearance")
+		game.gold = old_gold
+		game.raid_wins = old_wins
+		game.owned_boards = old_owned
+		game.selected_board = old_board
+		game.battlefield_3d.set_board_visual_style(old_board)
+		game._save_profile()
+		game.board_gallery_dialog.hide()
 		_assert_ok(game.battlefield_3d.BOARD_STYLES.size() == 4, "Four visual-only chessboard styles are available")
 		var original_dark: Color = game.battlefield_3d.tile_materials[0].albedo_color
 		var original_piece_count: int = game.battlefield_3d.piece_nodes.size()
