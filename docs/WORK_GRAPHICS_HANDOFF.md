@@ -139,3 +139,10 @@ Every development step saved to `main`:
 - **`634c35bd80d5090b8d092bfdffe36cb50ae75adc`**: Godot smoke includes representative regional enemy GLB import and six animation checks.
 - **Verification:** GitHub code commits confirmed. 72 generated binaries, Python validation, Godot imports and Android APK have **not been observed successfully running**. All generated models remain stylized blockouts with independently animated rigid mesh nodes, not final skinned characters.
 - **Remaining:** actual CI run inspection and fixes; 30 fully skinned hero assets, enemy and boss art polish, skinned animation, 21 gear meshes with sockets, six polished regions and 18 mission variants, VFX, device performance, Android QA. Priority 1 not complete.
+
+## 15. Three distinct mission layouts per region — 2026-11-21
+- **`1f4b78d4b1361a13286e2886c9b15437c97b89dc`**: `battlefield_3d.gd` adds `mission_visual_variant` and `set_mission_visual_variant(0..2)`; the three layouts use flags/standards, runic obelisks, or ward circles. All decorations sit beyond the 8×8 chess board. Six region themes × three layout styles = 18 procedural visual variants; these are **not 18 final authored level environments**.
+- **`fd7855c26e9a8d3ce57d8ab8b2be0abf87196c00`**: `main.gd` selects the layout via `raid_wins % 3` while in raid mode; arena mode uses layout 0.
+- **`d87fb82a77a549a1587074ee5e2706c9a544dfce`**, **`7f85ae85e4ccc707abdf76375fdeb0ea9f70a85b`**: smoke regression checks three variants have different numbers of generated geometry nodes.
+- **Verification:** code committed. No successful Godot smoke, GLB import, Android build, or visual device test confirmed. Visual layouts are procedural low-poly dressing only.
+- **Remaining:** verify CI, fix import/parser/runtime issues, 30 rigged heroes + 36 enemies + six bosses with proper skinning, 21 authored gear assets, polish all 18 environments, VFX, lighting, performance and Android QA.
