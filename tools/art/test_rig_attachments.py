@@ -149,6 +149,34 @@ def check(path):
     for shield_name in ("RoyalShieldRim","RoyalShieldCore"):
         if shield_name in by_name:
             assert parents[by_name[shield_name]]==by_name["Arm-1"], f"{path}: {shield_name} does not follow shield arm"
+    # New 2026-11 silhouette accessories must follow the corresponding
+    # animated head or arm rather than remaining static under BodyRig.
+    for name in by_name:
+        if name.startswith(("IdentitySun","IdentityScoutVisor",
+                            "IdentityFeather","IdentityOracle",
+                            "IdentityVeteran","IdentityMoon",
+                            "IdentityAscendantSpire","IdentityAscendantWing",
+                            "EnemyPawnHood","EnemyRookTower",
+                            "EnemyKnightCrest","EnemyBishopMitre",
+                            "EnemyQueenCrown","EnemyKingCrown",
+                            "BossCrownShard")):
+            expected=by_name["Head"]
+            if name.startswith("EnemyRookTower"):
+                expected=by_name["Arm"+("-1" if name.endswith("-1") else "1")]
+            assert parents[by_name[name]]==expected, f"{path}: {name} not attached to its animated head/arm"
+            assert all(math.isfinite(v) for v in world_position(by_name[name]))
+    for name,expected_joint in (
+        ("EnemyPawnDagger","Arm1"),
+        ("EnemyKnightLance","Arm1"),
+        ("EnemyQueenScepter","Arm1"),
+        ("EnemyRookBulwark","Arm-1"),
+    ):
+        if name in by_name:
+            assert parents[by_name[name]]==by_name[expected_joint], f"{path}: {name} floats during arm animation"
+    for name in by_name:
+        if name.startswith("BossWingArmor_"):
+            side="-1" if name.endswith("-1") else "1"
+            assert parents[by_name[name]]==by_name["Arm"+side], f"{path}: boss wing armor detached"
     # Every character's weapon must follow its actual wrist, rather
     # than staying under the stationary BodyRig during attacks.
     right=by_name["Arm1Lower"]
