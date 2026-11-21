@@ -309,6 +309,18 @@ def make_character(identifier, boss=False):
         v=accessor(vals,str(len(vals))+"f",len(positions),5126,"VEC3")
         samplers=[{"input":t,"output":v,"interpolation":"LINEAR"}]
         channels=[{"sampler":0,"target":{"node":1,"path":"translation"}}]
+        # Body-wide squash/lean is independent from locomotion bob.
+        # Animated torso rotation also carries helmets, shields and capes.
+        body_lean={
+            "idle":[0,.018,0], "move":[0,-.045,.045],
+            "attack":[0,-.15,.20,0], "hit":[0,.13,0],
+            "death":[0,.32,.55], "cast":[0,-.11,0],
+        }[name]
+        body_quats=[(math.sin(angle/2),0,0,math.cos(angle/2)) for angle in body_lean]
+        body_values=[value for pose in body_quats for value in pose]
+        body_output=accessor(body_values,str(len(body_values))+"f",len(body_quats),5126,"VEC4")
+        samplers.append({"input":t,"output":body_output,"interpolation":"LINEAR"})
+        channels.append({"sampler":len(samplers)-1,"target":{"node":1,"path":"rotation"}})
         for limb, angles in limb_poses[name].items():
             if limb not in node_ids:
                 continue
