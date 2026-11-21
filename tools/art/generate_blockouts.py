@@ -295,6 +295,41 @@ def make_character(identifier, boss=False):
     else:
         box("MageCirclet",(0,1.48,0),(.38,.075,.32),3)
         box("MageForeheadGem",(0,1.48,-.18),(.105,.12,.06),4)
+    # Original class-specific facial and helmet silhouette pass. These
+    # are real beveled 3D meshes parented to the animated head pivot.
+    # Keep the forward-facing -Z facial plane unobstructed for eyes.
+    if family == 0:  # Crowned herald: cheek plates and crown jewels.
+        for side in (-1,1):
+            box("RoyalFacePlate"+str(side),(side*.165,1.30,-.095),(.060,.22,.10),1)
+            box("RoyalTempleGem"+str(side),(side*.19,1.48,-.12),(.065,.065,.045),4)
+        box("RoyalDiadem",(0,1.55,-.15),(.30,.065,.07),3)
+    elif family == 1:  # Raider: tusks, broken jaw guard, asymmetry.
+        for side in (-1,1):
+            box("RaiderTusk"+str(side),(side*.115,1.205,-.20),(.055,.15,.055),3,side*.22)
+        box("RaiderJawGuard",(0,1.19,-.145),(.31,.065,.09),1)
+        box("RaiderWarPaint",(0,1.32,-.187),(.060,.16,.022),0,.30)
+    elif family == 2:  # Ranger: leather brow, side straps and hood seams.
+        for side in (-1,1):
+            box("RangerHoodSeam"+str(side),(side*.21,1.40,-.115),(.045,.28,.07),3)
+            box("RangerMaskStrap"+str(side),(side*.18,1.255,-.15),(.05,.075,.07),1)
+        box("RangerNoseGuard",(0,1.33,-.20),(.055,.17,.06),1)
+    elif family == 3:  # Sentinel: layered metal faceplate and visor slots.
+        box("ForgeFaceplate",(0,1.29,-.205),(.28,.23,.06),1)
+        for side in (-1,1):
+            box("ForgeVisorSlot"+str(side),(side*.08,1.35,-.242),(.10,.035,.018),4)
+            box("ForgeJawBolt"+str(side),(side*.13,1.215,-.242),(.052,.052,.025),3)
+        box("ForgeNoseRidge",(0,1.31,-.252),(.055,.18,.035),3)
+    else:  # Sage: decorated forehead, pendant and temple lenses.
+        for side in (-1,1):
+            box("MageTempleLens"+str(side),(side*.16,1.39,-.135),(.085,.095,.045),4)
+            box("MageArcaneEtch"+str(side),(side*.12,1.49,-.14),(.05,.09,.03),3)
+        box("MageChinSigil",(0,1.205,-.172),(.075,.055,.025),4)
+    # Rank/biome geometry is not just a tint: veterans and bosses receive
+    # extra carved helmet trim, without adding new materials or textures.
+    if boss or (identifier.startswith("enemy_") and signature >= 3):
+        for side in (-1,1):
+            box("VeteranTempleSpike"+str(side),(side*.225,1.53,.03),(.085,.22,.09),3,side*.28)
+        box("VeteranBrowEmblem",(0,1.53,-.18),(.12,.13,.04),4)
     # Distinct armor silhouettes: 5 body archetypes.
     if family==0:
         box("Mantle",(0,.87,.17),(.58,.62,.11))
