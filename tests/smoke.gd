@@ -145,6 +145,15 @@ func _run() -> void:
 	invalid_crit_item["crit"] = 101
 	_assert_ok(not Progression.is_valid_equipment_item(invalid_crit_item), "Chance stats cannot exceed 100 percent")
 	_assert_ok(Progression.is_valid_equipment_item(weak_weapon), "Normal generated equipment remains valid")
+	var compacted_profile: Dictionary = Progression.sanitize_profile({
+		"level":1, "items":["broken", weak_weapon, corrupt_item, usable_armor],
+		"slots":{"Оружие":1, "Тело":3, "Реликвия":2}
+	})
+	_assert_ok(compacted_profile["items"].size() == 2, "Invalid saved inventory entries are removed")
+	_assert_ok(int(compacted_profile["slots"]["Оружие"]) == 0, "Weapon index remaps after inventory compaction")
+	_assert_ok(int(compacted_profile["slots"]["Тело"]) == 1, "Armor index remaps after invalid item removal")
+	_assert_ok(int(compacted_profile["slots"]["Реликвия"]) == -1, "Invalid equipped relic is unequipped")
+	_assert_ok(int(compacted_profile["equipped"]) == 0, "Legacy weapon index follows compacted inventory")
 	var validated_slots: Dictionary = Progression.sanitize_equipment_slots(
 		[corrupt_item, malformed_item, impossible_item, weak_weapon],
 		{"Оружие":0, "Тело":1, "Реликвия":2}, 1)
