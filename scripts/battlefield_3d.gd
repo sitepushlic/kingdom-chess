@@ -276,11 +276,18 @@ func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 					# Follow imported shoulder pivots so held items actually
 					# animate with the arms, not remain floating beside them.
 					var character: Node = parent.get_node_or_null("AuthoredCharacter")
-					if character != null and slot_key != "armor":
-						var joint_name: String = "Arm1" if slot_key == "weapon" else "Arm-1"
-						var joint: Node = character.find_child(joint_name, true, false)
-						if joint is Node3D:
-							attachment_parent = joint as Node3D
+					if character != null:
+						if slot_key == "armor":
+							# The imported torso leans and bobs. Chest armor must
+							# follow BodyRig, not the static board piece root.
+							var torso: Node = character.find_child("BodyRig", true, false)
+							if torso is Node3D:
+								attachment_parent = torso as Node3D
+						else:
+							var joint_name: String = "Arm1" if slot_key == "weapon" else "Arm-1"
+							var joint: Node = character.find_child(joint_name, true, false)
+							if joint is Node3D:
+								attachment_parent = joint as Node3D
 					match slot_key:
 						"weapon":
 							socket.position = Vector3(0.13, -0.19, -0.08) if attachment_parent != parent else Vector3(0.43, 0.87, -0.08)
