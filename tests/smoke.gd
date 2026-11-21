@@ -1242,6 +1242,11 @@ func _run() -> void:
 		var active_aura: Node3D = active_boss.find_child("BossEnrageAura", true, false) as Node3D
 		if active_aura != null:
 			_assert_ok(active_aura.visible, "Boss enrage reveals animated crown aura")
+			game.battlefield_3d.set_visual_quality(0)
+			_assert_ok(not active_aura.visible, "Low graphics disables nested boss enrage aura")
+			game.battlefield_3d.set_visual_quality(2)
+			_assert_ok(active_aura.visible, "High graphics restores nested boss enrage aura")
+			game.battlefield_3d.set_visual_quality(1)
 			active_aura.visible = false
 			active_boss.scale = Vector3.ONE
 			game.battlefield_3d.set_boss_phase(2)
