@@ -843,9 +843,28 @@ func _on_lan_disconnected() -> void:
 	_leave_lan()
 	lan_status.text = "Соединение с хозяином потеряно."
 
+static func sanitize_hero_poison(raw: Variant, board: Array) -> Dictionary:
+	var clean: Dictionary = {}
+	if typeof(raw) != TYPE_DICTIONARY or board.size() != 64: return clean
+	for key in raw.keys():
+		var cell: int = -1
+		if typeof(key) == TYPE_INT:
+			cell = key
+		elif typeof(key) == TYPE_STRING and str(key).is_valid_int():
+			cell = int(key)
+		if cell < 0 or cell >= 64: continue
+		if typeof(raw[key]) != TYPE_INT and typeof(raw[key]) != TYPE_FLOAT: continue
+		var ticks: int = int(raw[key])
+		if ticks < 1 or ticks > 2 or float(raw[key]) != float(ticks): continue
+		if typeof(board[cell]) != TYPE_STRING: continue
+		if str(board[cell]) == "" or str(board[cell]) != str(board[cell]).to_upper(): continue
+		clean[cell] = ticks
+	return clean
+
 func _snapshot() -> Dictionary:
 	return {
 		"pieces": pieces.duplicate(), "health": health.duplicate(),
+		"hero_poison": hero_poison.duplicate(),
 		"ap": ap, "turn": turn, "winner": winner,
 		"boss_hp": boss_hp, "boss_phase": boss_phase,
 		"raid_round": raid_round, "raid_stage": raid_stage, "raid_encounter": raid_encounter, "raid_mission": raid_mission.duplicate(true),
@@ -873,6 +892,7 @@ func _send_snapshot(data: Dictionary) -> void:
 	if typeof(data.get("health")) != TYPE_ARRAY or data["health"].size() != 64: return
 	pieces = data["pieces"].duplicate()
 	health = data["health"].duplicate()
+	hero_poison = sanitize_hero_poison(data.get("hero_poison", {}), pieces)
 	ap = int(data["ap"])
 	turn = int(data["turn"])
 	winner = str(data["winner"])
@@ -943,6 +963,7 @@ func _restore_battle() -> bool:
 		if typeof(value) != TYPE_FLOAT and typeof(value) != TYPE_INT: return false
 	pieces = parsed["pieces"].duplicate()
 	health = parsed["health"].duplicate()
+	hero_poison = sanitize_hero_poison(parsed.get("hero_poison", {}), pieces)
 	mode = new_mode
 	ap = clampi(int(parsed.get("ap", 2)), 0, 2)
 	turn = 1 if int(parsed.get("turn", 1)) == 1 else -1
