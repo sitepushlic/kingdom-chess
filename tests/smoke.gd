@@ -14,6 +14,17 @@ func _assert_ok(condition: bool, description: String) -> void:
 		_failure_count += 1
 		push_error("TEST FAILED: " + description)
 
+func _check_mesh_integrity(node: Node) -> void:
+	# Pinpoint missing imported GLB meshes instead of reporting only the
+	# renderer backend warning: mesh_get_surface_count(null).
+	if node is MeshInstance3D:
+		var mesh_node: MeshInstance3D = node as MeshInstance3D
+		_assert_ok(mesh_node.mesh != null, "3D mesh resource exists: " + str(mesh_node.get_path()))
+		if mesh_node.mesh != null:
+			_assert_ok(mesh_node.mesh.get_surface_count() > 0, "3D mesh has geometry: " + str(mesh_node.get_path()))
+	for child in node.get_children():
+		_check_mesh_integrity(child)
+
 func _run() -> void:
 	_assert_ok(Progression.CASTLE_BUILDINGS.size() == 5, "Castle has five functional buildings")
 	_assert_ok(Progression.sanitize_castle({"forge":4,"academy":-3,"barracks":"99","treasury":100000,"infirmary":1.5}) == {"forge":4,"barracks":0,"treasury":0,"academy":0,"infirmary":0}, "Castle save rejects forged, negative and malformed upgrades")
@@ -119,6 +130,8 @@ func _run() -> void:
 	root.add_child(game)
 	# SceneTree._initialize runs before the first frame; defer checks until the 3D viewport and HUD finish _ready.
 	await process_frame
+	if game.battlefield_3d != null:
+		_check_mesh_integrity(game.battlefield_3d)
 	_assert_ok(game.battlefield_3d != null, "3D battlefield initialized before chess warning assertions")
 	if game.battlefield_3d != null:
 		var board_root: Node3D = game.battlefield_3d.board_root
