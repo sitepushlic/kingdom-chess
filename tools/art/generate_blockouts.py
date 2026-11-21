@@ -934,35 +934,60 @@ def make_character(identifier, boss=False):
             samplers.append({"input":t,"output":output,"interpolation":"LINEAR"})
             channels.append({"sampler":len(samplers)-1,"target":{"node":node_ids[limb],"path":"rotation"}})
         animations.append({"name":name,"samplers":samplers,"channels":channels})
-    # Five small original deterministic PBR albedo textures. They are
-    # embedded as PNG bufferViews in the GLB itself: no missing external
-    # files, no third-party dependencies and no random nondeterminism.
-    # UV charts are available on all rigid pieces and weighted torso/limbs.
+    # Five original 128px PBR albedo atlases. Procedural woven fabric,
+    # etched steel, organic skin, gold filigree and glowing arcane glyphs
+    # provide more visual structure than the previous 32px flat grain.
+    # Keep this deterministic and embedded; no third-party art licenses.
     def material_png(material_index):
-        size=32
+        size=128
         rows=bytearray()
+        def line_distance(v, period):
+            r=v%period
+            return min(r,period-r)
         for y in range(size):
-            rows.append(0)  # PNG filter: none
+            rows.append(0)
             for x in range(size):
-                # Neutral variation multiplies existing character-specific
-                # baseColorFactor without replacing hero rarity/biome colors.
-                grain=((x*17+y*29+material_index*13) % 17)-8
-                seam=(x%8==0 or y%8==0)
-                if material_index==0: # engraved cloth / enamel armor
-                    tone=236+grain-(13 if seam else 0)
-                elif material_index==1: # brushed steel
-                    tone=226+grain+(13 if x%6==0 else 0)
-                elif material_index==2: # organic skin, restrained freckles
-                    tone=240+grain-(17 if (x*3+y*7)%41==0 else 0)
-                elif material_index==3: # chased gold lattice
-                    tone=232+grain+(15 if (x+y)%8==0 else 0)
-                else: # arcane etched circuit
-                    tone=228+grain+(22 if x%8==0 or y%8==0 else 0)
+                # Multi-scale, bounded value noise; no RNG or per-character
+                # unstable seeds. Coordinates wrap seamlessly for UV repeat.
+                coarse=((x//16*37+y//16*19+material_index*23)%29)-14
+                fine=((x*17+y*29+material_index*13)%19)-9
+                diagonal=((x+y+material_index*7)%32)
+                if material_index==0:  # woven cloth, engraved enamel
+                    weave=(7 if x%4==0 else -4 if y%4==0 else 0)
+                    brocade=(17 if line_distance(x+y,32)<2 else 0)
+                    tone=221+coarse//3+fine//2+weave+brocade
+                elif material_index==1:  # brushed steel and rivet rows
+                    scratches=(16 if x%13==0 else -7 if x%13==1 else 0)
+                    rivet=(23 if line_distance(x,32)<3 and line_distance(y,32)<3 else 0)
+                    tone=224+coarse//4+fine//2+scratches+rivet
+                elif material_index==2:  # skin pores and restrained freckles
+                    pore=(7 if (x*11+y*7)%17==0 else 0)
+                    freckles=(-24 if (x*3+y*7)%97==0 else 0)
+                    tone=237+coarse//3+fine//3+pore+freckles
+                elif material_index==3:  # chased gold with filigree
+                    filigree=(19 if line_distance(x-y,24)<2 else 0)
+                    cross=(14 if line_distance(x+y,24)<2 else 0)
+                    studs=(14 if x%24 in (0,1) and y%24 in (0,1) else 0)
+                    tone=220+coarse//3+fine//2+filigree+cross+studs
+                else:  # intersecting magical circuits and glowing nodes
+                    circuit=(23 if line_distance(x,32)<2 or line_distance(y,32)<2 else 0)
+                    rune=(19 if diagonal in (0,1,16,17) and x%16<9 else 0)
+                    node=(23 if line_distance(x,32)<4 and line_distance(y,32)<4 else 0)
+                    tone=211+coarse//4+fine//2+circuit+rune+node
                 tone=max(0,min(255,tone))
-                rows.extend((tone,tone,tone,255))
+                # Subtle material-specific RGB modulation, preserving the
+                # character palette through glTF baseColorFactor.
+                if material_index==1:
+                    rows.extend((max(0,tone-5),tone,min(255,tone+7),255))
+                elif material_index==3:
+                    rows.extend((tone,max(0,tone-9),max(0,tone-24),255))
+                elif material_index==4:
+                    rows.extend((max(0,tone-13),tone,min(255,tone+9),255))
+                else:
+                    rows.extend((tone,tone,tone,255))
         def chunk(kind,data):
             return struct.pack(">I",len(data))+kind+data+struct.pack(">I",zlib.crc32(kind+data)&0xffffffff)
-        return (b"\x89PNG\r\n\x1a\n"+
+        return (b"\\x89PNG\\r\\n\\x1a\\n"+
                 chunk(b"IHDR",struct.pack(">IIBBBBB",size,size,8,6,0,0,0))+
                 chunk(b"IDAT",zlib.compress(bytes(rows),9))+
                 chunk(b"IEND",b""))
