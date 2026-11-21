@@ -14,8 +14,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "assets" / "characters"
 OUT.mkdir(parents=True, exist_ok=True)
-CUBE_VERTS = [(-1,-1,-1),(1,-1,-1),(1,1,-1),(-1,1,-1),(-1,-1,1),(1,-1,1),(1,1,1),(-1,1,1)]
-CUBE_TRI = [0,1,2,0,2,3,4,6,5,4,7,6,0,4,5,0,5,1,3,2,6,3,6,7,1,5,6,1,6,2,0,3,7,0,7,4]
+# Flat-shaded cube: 24 independent vertices (4 per face), outward-facing
+# normals, consistent winding. Unlike 8 shared corners this gives hard edges.
+FACE_CORNERS = [
+    ((0,0,-1),[(-1,-1,-1),(-1,1,-1),(1,1,-1),(1,-1,-1)]),
+    ((0,0,1),[(-1,-1,1),(1,-1,1),(1,1,1),(-1,1,1)]),
+    ((0,-1,0),[(-1,-1,-1),(1,-1,-1),(1,-1,1),(-1,-1,1)]),
+    ((0,1,0),[(-1,1,-1),(-1,1,1),(1,1,1),(1,1,-1)]),
+    ((-1,0,0),[(-1,-1,-1),(-1,-1,1),(-1,1,1),(-1,1,-1)]),
+    ((1,0,0),[(1,-1,-1),(1,1,-1),(1,1,1),(1,-1,1)]),
+]
+CUBE_VERTS = [vertex for normal,face in FACE_CORNERS for vertex in face]
+CUBE_NORMALS = [normal for normal,face in FACE_CORNERS for _ in face]
+CUBE_TRI = [base+offset for base in range(0,24,4) for offset in (0,1,2,0,2,3)]
 
 def make_character(identifier, boss=False):
     num = int(identifier.split("_")[-1])
@@ -67,10 +78,11 @@ def make_character(identifier, boss=False):
         accessors.append(a)
         return len(accessors)-1
     positions=[v for xyz in CUBE_VERTS for v in xyz]
-    pos=accessor(positions,"24f",8,5126,"VEC3",34962,([-1,-1,-1],[1,1,1]))
+    pos=accessor(positions,"72f",24,5126,"VEC3",34962,([-1,-1,-1],[1,1,1]))
+    normals=accessor([v for normal in CUBE_NORMALS for v in normal],"72f",24,5126,"VEC3",34962)
     indices=accessor(CUBE_TRI,"36H",36,5123,"SCALAR",34963)
     for m in range(4):
-        meshes.append({"name":["ArmorBox","SteelBox","SkinBox","GoldBox"][m],"primitives":[{"attributes":{"POSITION":pos},"indices":indices,"material":m}]})
+        meshes.append({"name":["ArmorBox","SteelBox","SkinBox","GoldBox"][m],"primitives":[{"attributes":{"POSITION":pos,"NORMAL":normals},"indices":indices,"material":m}]})
     def box(name, center, size, material=0, angle=0):
         # Put articulated limbs under an actual shoulder/hip pivot so
         # rotation tracks swing around joints rather than around box centers.
