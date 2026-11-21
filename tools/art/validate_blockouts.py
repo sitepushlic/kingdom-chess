@@ -47,12 +47,17 @@ def validate(path, require_animation=True):
             assert vertex_count>=96 and triangle_count>=40, f"{path}: rigid geometry still cube blockout"
     if require_animation:
         # All five PBR materials must have self-contained valid PNG images.
-        assert len(gltf.get("images",[]))==5, f"{path}: missing five embedded albedo images"
-        assert len(gltf.get("textures",[]))==5, f"{path}: missing PBR texture bindings"
+        assert len(gltf.get("images",[]))==10, f"{path}: missing five embedded albedo and five normal images"
+        assert len(gltf.get("textures",[]))==10, f"{path}: missing PBR albedo/normal texture bindings"
         assert len(gltf.get("samplers",[]))==1, f"{path}: textures should share a sampler"
         for material_index,material in enumerate(gltf["materials"]):
             texture_ref=material["pbrMetallicRoughness"].get("baseColorTexture",{})
             assert texture_ref.get("index")==material_index and texture_ref.get("texCoord")==0, f"{path}: invalid material texture binding"
+            normal_ref=material.get("normalTexture",{})
+            assert normal_ref.get("index")==5+material_index and normal_ref.get("texCoord")==0, f"{path}: invalid normal map binding"
+            assert 0.0 < normal_ref.get("scale",0) <= 1.0, f"{path}: unsafe normal map strength"
+            normal_texture=gltf["textures"][5+material_index]
+            assert normal_texture["source"]==5+material_index and normal_texture["sampler"]==0, f"{path}: normal texture source mismatch"
             texture=gltf["textures"][material_index]
             assert texture["source"]==material_index and texture["sampler"]==0, f"{path}: invalid texture source"
             img=gltf["images"][material_index]
@@ -62,6 +67,14 @@ def validate(path, require_animation=True):
             png=data[start:start+view["byteLength"]]
             assert png.startswith(b"\x89PNG\r\n\x1a\n"), f"{path}: invalid embedded PNG header {png[:16]!r}, offset={view['byteOffset']}"
             assert len(png)>80 and png[-12:]==b"\x00\x00\x00\x00IEND\xaeB\x60\x82", f"{path}: truncated PNG"
+            normal_img=gltf["images"][5+material_index]
+            assert normal_img["mimeType"]=="image/png" and "uri" not in normal_img, f"{path}: normal map must be embedded"
+            normal_view=gltf["bufferViews"][normal_img["bufferView"]]
+            normal_start=json_end+8+normal_view["byteOffset"]
+            normal_png=data[normal_start:normal_start+normal_view["byteLength"]]
+            assert normal_png.startswith(b"\\x89PNG\\r\\n\\x1a\\n"), f"{path}: invalid normal PNG signature"
+            assert len(normal_png)>80 and normal_png[-12:]==b"\\x00\\x00\\x00\\x00IEND\\xaeB\\x60\\x82", f"{path}: truncated normal PNG"
+            assert struct.unpack_from(">IIBB",normal_png,16)==(128,128,8,6), f"{path}: normal PNG dimensions mismatch"
             width,height,depth,color=struct.unpack_from(">IIBB",png,16)
             assert (width,height,depth,color)==(128,128,8,6), f"{path}: expected 128px RGBA material atlas"
         for mesh in gltf["meshes"]:
