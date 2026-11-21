@@ -267,11 +267,17 @@ func _run() -> void:
 	invalid_poison_board[48] = "P"
 	_assert_ok(int(game.sanitize_hero_poison({48: 2}, invalid_poison_board).get(48, 0)) == 2, "Valid hero pawn retains poison")
 	var scenery_counts: Array[int] = []
+	var region_light_colors: Array[Color] = []
 	for region_index in range(6):
 		game.battlefield_3d.set_region(region_index)
 		var scenery: Node3D = game.battlefield_3d.region_scenery
 		_assert_ok(scenery != null and scenery.get_child_count() > 25, "Region has distinct 3D environment meshes")
 		scenery_counts.append(scenery.get_child_count())
+		var lighting: WorldEnvironment = game.battlefield_3d.world_environment
+		_assert_ok(lighting != null and lighting.environment != null, "Region has a 3D world environment")
+		region_light_colors.append(game.battlefield_3d.rim_light.light_color)
+		_assert_ok(game.battlefield_3d.key_light.light_energy > 0.0, "Region key lighting stays active")
+	_assert_ok(region_light_colors[0] != region_light_colors[1] and region_light_colors[4] != region_light_colors[5], "Regions have distinct 3D rim-light palettes")
 	_assert_ok(scenery_counts[0] != scenery_counts[1], "Fortress and frostland environments use different geometry")
 	game.battlefield_3d.set_region(0)
 	_assert_ok(game.battlefield_3d.region_scenery.get_child_count() == scenery_counts[0], "Switching regions rebuilds scenery without accumulation")
