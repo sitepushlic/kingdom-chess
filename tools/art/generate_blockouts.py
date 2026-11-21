@@ -177,7 +177,14 @@ def main():
         (OUT/("hero_%02d.glb"%i)).write_bytes(make_character("hero_%02d"%i))
     for i in range(6):
         (OUT/("boss_region_%d.glb"%i)).write_bytes(make_character("boss_%02d"%(i+1),True))
-    print("Generated 30 hero and 6 boss GLB blockouts with six rigid clips each")
+    # Six enemy chess classes per region. Distinct silhouettes are generated
+    # by varying family, crest, material palette and armor details.
+    for region in range(6):
+        for class_index, chess_class in enumerate("PRNBQK"):
+            enemy_number = 31 + region*6 + class_index
+            (OUT/("enemy_%s_region_%d.glb"%(chess_class.lower(),region))).write_bytes(
+                make_character("enemy_%02d"%enemy_number))
+    print("Generated 30 hero, 6 boss and 36 regional enemy GLB blockouts")
 
 if __name__=="__main__":
     main()
