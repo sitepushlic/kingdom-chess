@@ -1091,6 +1091,18 @@ func _run() -> void:
 	_assert_ok(not game.battlefield_3d.board_style_customized, "Resetting board skin returns to biome palette")
 	_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == Color("#28395e"), "Biome reset restores active region colors")
 	game.battlefield_3d.set_region(0)
+	# All health bars on a side should reuse a single material, even
+	# after actor rebuilding and region changes.
+	var sample_hero: Node3D = game.battlefield_3d._build_piece("P", false, false)
+	var sample_enemy: Node3D = game.battlefield_3d._build_piece("p", false, false)
+	_assert_ok(game.battlefield_3d.health_bar_materials.size() == 2, "Health bars share exactly two team materials")
+	var hero_bar: MeshInstance3D = sample_hero.get_meta("health_fill")
+	var enemy_bar: MeshInstance3D = sample_enemy.get_meta("health_fill")
+	_assert_ok(hero_bar.material_override == game.battlefield_3d.health_bar_materials["hero"], "Friendly HP bars reuse cached PBR material")
+	_assert_ok(enemy_bar.material_override == game.battlefield_3d.health_bar_materials["enemy"], "Enemy HP bars reuse cached PBR material")
+	sample_hero.queue_free()
+	sample_enemy.queue_free()
+
 	# Replacing regional enemy GLBs must never visually heal damaged units.
 	var health_sample: Array = []
 	var max_health_sample: Array = []
