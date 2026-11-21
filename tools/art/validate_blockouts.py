@@ -64,8 +64,19 @@ def validate(path, require_animation=True):
     for scene in gltf.get("scenes",[]):
         for root in scene["nodes"]:
             assert 0 <= root < node_count, f"{path}: invalid scene root"
+    def unpack_accessor(index):
+        acc=gltf["accessors"][index]
+        view=gltf["bufferViews"][acc["bufferView"]]
+        start=json_end+8+view.get("byteOffset",0)+acc.get("byteOffset",0)
+        width=COMPONENTS[acc["type"]]
+        fmt={5121:"B",5123:"H",5125:"I",5126:"f"}[acc["componentType"]]
+        count=acc["count"]
+        values=struct.unpack_from("<"+fmt*(count*width),data,start)
+        return [values[i:i+width] for i in range(0,len(values),width)]
     for animation in gltf.get("animations",[]):
         assert animation.get("samplers") and animation.get("channels"), f"{path}: empty animation"
+        targets=[(channel["target"]["node"],channel["target"]["path"]) for channel in animation["channels"]]
+        assert len(targets)==len(set(targets)), f"{path}: duplicate animated node/property targets in {animation['name']}"
         for channel in animation["channels"]:
             assert 0 <= channel["sampler"] < len(animation["samplers"]), f"{path}: bad sampler index"
             assert 0 <= channel["target"]["node"] < node_count, f"{path}: bad animation target"
@@ -76,6 +87,10 @@ def validate(path, require_animation=True):
             assert input_acc["type"]=="SCALAR" and input_acc["componentType"]==5126, f"{path}: invalid animation timeline"
             assert output_acc["count"]==input_acc["count"], f"{path}: animation keyframe count mismatch"
             assert input_acc["count"]>=2, f"{path}: animation must have multiple keyframes"
+            timeline=[row[0] for row in unpack_accessor(sampler["input"])]
+            assert all(math.isfinite(value) and value>=0 for value in timeline), f"{path}: invalid animation times"
+            assert all(a<b for a,b in zip(timeline,timeline[1:])), f"{path}: non-increasing animation times"
+            assert sampler.get("interpolation","LINEAR") in ("LINEAR","STEP"), f"{path}: unsupported animation interpolation"
             if "max" in input_acc:
                 assert math.isfinite(input_acc["max"][0]) and input_acc["max"][0]>0, f"{path}: invalid duration"
     names = {a["name"] for a in gltf.get("animations",[])}
