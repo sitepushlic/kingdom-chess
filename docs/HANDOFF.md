@@ -1,3 +1,8 @@
+## 2026-11-21 — COMPLETE WORK GRAPHICS EXECUTION HANDOFF (LATEST)
+- Commit `da75f520` replaces `docs/WORK_GRAPHICS_HANDOFF.md` with a complete master execution contract for ChatGPT Work: user constraints, source map, 30 heroes/36 enemies/6 bosses/21 gear/6 regions/18 missions, pipeline, staged acceptance gates, test commands, regression invariants, evidence ledger and next-session prompt.
+- Latest verified fast-art run `44936307760`, job `136943562093`, fails in `tools/art/test_rig_attachments.py:166`: `EnemyRookTower-1 not attached to animated head` in `enemy_r_region_0.glb`. Earlier GLB validation, motion and limb checks in this run passed. Separate Godot workflow `44936307793` also failed; inspect its actual logs. No Godot or device success claimed.
+- **Next Work action:** inspect generator and validator parent relationships for mirrored rook tower attachments, correct root cause, rerun all art QA then Godot import and smoke, continue graphics production. **Never build/export/sign APK; do not move to gameplay priority 2 without user permission.**
+
 ## 2026-11-21 — CI ART VALIDATION ROOT CAUSE AND TIER-SIX ARMOR FIX (LATEST)
 **Scope:** Graphics only. Do not build/export/sign APK. Preserve existing gameplay. Continue large graphics batches and update handoff each turn.
 
