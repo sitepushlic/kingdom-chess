@@ -61,6 +61,9 @@ var danger_material: StandardMaterial3D
 # Low tier limits dynamic lights and costly shadows for Android GPUs.
 var visual_quality := 1
 var fx_enabled := true
+# Geometry cache: instances retain independent transforms/materials, but identical
+# primitive vertex buffers are shared across chess tiles, castle and combat art.
+var primitive_mesh_cache: Dictionary = {}
 
 func set_visual_quality(tier: int) -> void:
 	visual_quality = clampi(tier, 0, 2)
@@ -99,9 +102,12 @@ func _material(color: Color, metallic: float = 0.0, roughness: float = 0.42, emi
 
 func _box(size: Vector3, material: Material, parent: Node3D, at: Vector3) -> MeshInstance3D:
 	var instance := MeshInstance3D.new()
-	var mesh := BoxMesh.new()
-	mesh.size = size
-	instance.mesh = mesh
+	var cache_key: String = "box:%s" % str(size)
+	if not primitive_mesh_cache.has(cache_key):
+		var mesh := BoxMesh.new()
+		mesh.size = size
+		primitive_mesh_cache[cache_key] = mesh
+	instance.mesh = primitive_mesh_cache[cache_key]
 	instance.material_override = material
 	instance.position = at
 	parent.add_child(instance)
@@ -109,12 +115,16 @@ func _box(size: Vector3, material: Material, parent: Node3D, at: Vector3) -> Mes
 
 func _cylinder(radius: float, height: float, material: Material, parent: Node3D, at: Vector3, top_radius: float = -1.0) -> MeshInstance3D:
 	var instance := MeshInstance3D.new()
-	var mesh := CylinderMesh.new()
-	mesh.bottom_radius = radius
-	mesh.top_radius = radius if top_radius < 0.0 else top_radius
-	mesh.height = height
-	mesh.radial_segments = 16
-	instance.mesh = mesh
+	var actual_top: float = radius if top_radius < 0.0 else top_radius
+	var cache_key: String = "cyl:%s:%s:%s" % [str(radius), str(height), str(actual_top)]
+	if not primitive_mesh_cache.has(cache_key):
+		var mesh := CylinderMesh.new()
+		mesh.bottom_radius = radius
+		mesh.top_radius = actual_top
+		mesh.height = height
+		mesh.radial_segments = 16
+		primitive_mesh_cache[cache_key] = mesh
+	instance.mesh = primitive_mesh_cache[cache_key]
 	instance.material_override = material
 	instance.position = at
 	parent.add_child(instance)
@@ -122,12 +132,15 @@ func _cylinder(radius: float, height: float, material: Material, parent: Node3D,
 
 func _sphere(radius: float, material: Material, parent: Node3D, at: Vector3) -> MeshInstance3D:
 	var instance := MeshInstance3D.new()
-	var mesh := SphereMesh.new()
-	mesh.radius = radius
-	mesh.height = radius * 2.0
-	mesh.radial_segments = 12
-	mesh.rings = 6
-	instance.mesh = mesh
+	var cache_key: String = "sphere:%s" % str(radius)
+	if not primitive_mesh_cache.has(cache_key):
+		var mesh := SphereMesh.new()
+		mesh.radius = radius
+		mesh.height = radius * 2.0
+		mesh.radial_segments = 12
+		mesh.rings = 6
+		primitive_mesh_cache[cache_key] = mesh
+	instance.mesh = primitive_mesh_cache[cache_key]
 	instance.material_override = material
 	instance.position = at
 	parent.add_child(instance)
