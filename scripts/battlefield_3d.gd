@@ -253,6 +253,32 @@ func _gear_material(slot: String) -> Material:
 func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 	if not hero_gear.has(slot): return
 	var tier: int = clampi(int(hero_gear[slot].get("rarity", 0)), 0, 6)
+	# Imported modular equipment replaces procedural geometry when generated
+	# GLBs exist. Socket transforms keep weapon, armor and relic independent.
+	var slot_key: String = str({"Оружие":"weapon", "Тело":"armor", "Реликвия":"relic"}.get(slot, ""))
+	if slot_key != "":
+		var gear_path: String = "res://assets/equipment/%s_tier_%d.glb" % [slot_key, tier]
+		if ResourceLoader.exists(gear_path):
+			var gear_scene: Resource = load(gear_path)
+			if gear_scene is PackedScene:
+				var gear_model: Node = (gear_scene as PackedScene).instantiate()
+				if gear_model is Node3D:
+					var socket := Node3D.new()
+					socket.name = "GearSocket_" + slot_key
+					match slot_key:
+						"weapon":
+							socket.position = Vector3(0.43, 0.87, -0.08)
+							socket.scale = Vector3.ONE * 0.64
+						"armor":
+							socket.position = Vector3(0, 0.83, -0.08)
+							socket.scale = Vector3.ONE * 0.95
+						"relic":
+							socket.position = Vector3(-0.39, 0.89, -0.16)
+							socket.scale = Vector3.ONE * 0.72
+					parent.add_child(socket)
+					socket.add_child(gear_model)
+					return
+				gear_model.free()
 	var mat: Material = _gear_material(slot)
 	match slot:
 		"Оружие":
