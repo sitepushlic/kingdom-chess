@@ -314,3 +314,13 @@ Commits saved to `main`:
 - **`97e81a31723d90d7fc06ab4c2585009eca7be5fa`**: validator decodes all skinned vertex positions, normals, weights and joint indices and rejects nonfinite positions, nonunit normals, nonnormalized/out-of-range weights and invalid joint references.
 **Unverified:** No observed completed Actions job, actual Python validation execution, Godot import or Android APK build. Changes are committed but integration behavior remains unproven; do not claim successful release.
 **Next:** obtain and act on CI run logs, ensure all six glTF skins import as intended, verify bone attachments visually, complete Android build and device testing, then refine original geometry and animation.
+
+## 34. Exhaustive Godot skeleton import and negative-test quality gate — 2026-11-21
+Commits on `main` this batch:
+- **`092e3ea9814d8006847735d3267812eb0c344925`**: clarified bind-space transform contract for weighted limbs (no change to generated mesh math).
+- **`b6e0b201b32fd75468266db86888269352d6eb04`**: upgraded Godot smoke from loading all 72 character GLBs to actually instantiating every one, checking at least six imported `Skeleton3D` nodes and eight required deforming bones (cape, spine, elbows and knees), then freeing instances. This is intended to catch actual glTF-to-Godot skeleton import regressions.
+- **`d439d4a886f3b1e59a34dc3666f7b633895489d4`**: raised the smoke timeout to 240 seconds to accommodate exhaustive skeleton instantiation.
+- **`8462d298d519c672b0dbe112f26c65921e08fe0d`**: created `tools/art/test_validator_failures.py` with a positive pristine-GLB check and three deliberately corrupted GLB cases: invalid torso weights, duplicate animation targets and a broken inverse bind matrix. Tests require the validator to reject each corrupt file.
+- **`e55faa96063bd385120714ee1255f2d8fcdecd62`**, **`641b1d195ffdde343b2304949be1e8ff9348ec4b`**: integrated these negative tests into both fast art CI and Android CI.
+**Observed verification:** only successful GitHub file commits; no actual Python validator, Godot import or Android APK execution observed. The strict six-skeleton expectation could reveal importer differences; if it fails, inspect actual imported `Skeleton3D` trees rather than weakening tests without evidence.
+**Next priority:** obtain Actions job logs and correct failures; verify APK, inspect visual deforming rigs and socket alignment on device, then progress beyond blockout geometry.
