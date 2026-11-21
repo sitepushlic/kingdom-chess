@@ -126,3 +126,10 @@ For EVERY future implementation session:
 - Commit `b68b8fb` changes `Progression.sanitize_equipment_slots()` to reject string, boolean, non-finite and fractional saved slot indices rather than coercing them with `int()`. A malformed saved value like `"0"` must not equip item zero.
 - Commit `09da905` adds smoke regressions for string, boolean and fractional saved slot references. Legitimate integer references still use the existing validation path.
 - CI for these edits must be checked after this handoff commit; **do not claim success until it finishes**. Next: make save-profile scalar loading robust to malformed JSON types; implement unique mission objectives and persistent statuses. Commercial art and device QA remain outstanding.
+
+## Automated development — profile scalar recovery (2026-11-21)
+- Confirmed CI **#181 success** before edits: https://github.com/sitepushlic/kingdom-chess/actions/runs/44834978788 .
+- Commit `a9e250b` (`scripts/progression.gd`): introduced `safe_save_int()` and `sanitize_profile()`. Profile load now rejects strings, booleans, fractional, non-finite and oversized numeric save values for level, XP, gold, potions, wins and dry loot streak instead of coercing them with `int()`. Malformed values revert to safe defaults; valid integral JSON floats are supported, in-range values preserved and bounded values clamped. Invalid items and slots continue through existing equipment sanitization.
+- Commit `cd377bb` (`tests/smoke.gd`): regressions for malformed profile fields, fractional gold, negative streak, invalid inventory/slots, integral float compatibility and string currency rejection.
+- **CI #182 running** at handoff time: https://github.com/sitepushlic/kingdom-chess/actions/runs/44841894440 . Verify smoke tests and Android debug APK export; do not claim this change passes until complete. Latest verified successful prior run #181.
+- Next: implement unique mission victory conditions and persistent status design with tests; original 3D art, device QA, co-op validation and release signing remain unfinished. Commercial readiness is not implied by run number.
