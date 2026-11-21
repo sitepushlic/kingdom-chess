@@ -64,6 +64,15 @@ func _run() -> void:
 	invalid_sync = valid_sync.duplicate(true)
 	invalid_sync["acted"] = [64]
 	_assert_ok(not game.valid_raid_snapshot(invalid_sync), "Out-of-range acted square is rejected")
+	invalid_sync = valid_sync.duplicate(true)
+	invalid_sync["ap"] = -1
+	_assert_ok(not game.valid_raid_snapshot(invalid_sync), "Negative AP is rejected before save restore")
+	invalid_sync = valid_sync.duplicate(true)
+	invalid_sync["ap"] = 99
+	_assert_ok(not game.valid_raid_snapshot(invalid_sync), "Oversized AP is rejected before save restore")
+	invalid_sync = valid_sync.duplicate(true)
+	invalid_sync["acted"] = ["0"]
+	_assert_ok(not game.valid_raid_snapshot(invalid_sync), "String action indices cannot enter restored state")
 
 	var malformed_board: Array = game.pieces.duplicate()
 	var malformed_hp: Array = game.health.duplicate()
