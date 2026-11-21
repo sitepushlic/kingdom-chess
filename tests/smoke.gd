@@ -1273,6 +1273,23 @@ func _run() -> void:
 	game.battlefield_3d.show_combat_number(60, 0)
 	_assert_ok(game.battlefield_3d.board_root.get_child_count() == numbers_valid, "Invalid cells and zero values cannot allocate combat labels")
 
+	# A large burst of damage ticks must never spawn unbounded Label3D
+	# nodes; repeated hits to one cell are vertically staggered.
+	var combat_label_first: Label3D = null
+	var combat_label_second: Label3D = null
+	game.battlefield_3d.show_combat_number(60, 7, false)
+	combat_label_first = game.battlefield_3d.board_root.get_child(game.battlefield_3d.board_root.get_child_count() - 1) as Label3D
+	game.battlefield_3d.show_combat_number(60, 8, false)
+	combat_label_second = game.battlefield_3d.board_root.get_child(game.battlefield_3d.board_root.get_child_count() - 1) as Label3D
+	_assert_ok(combat_label_first != null and combat_label_second != null and combat_label_first.position != combat_label_second.position, "Consecutive combat numbers on one tile have staggered positions")
+	for tick in range(40):
+		game.battlefield_3d.show_combat_number(60, tick + 1, false)
+	var combat_number_count: int = 0
+	for popup_node in game.battlefield_3d.board_root.get_children():
+		if popup_node is Label3D and popup_node.name.begins_with("CombatNumber"):
+			combat_number_count += 1
+	_assert_ok(combat_number_count <= game.battlefield_3d.combat_number_limit, "Multi-hit burst respects 18-label 3D node cap")
+
 	# Main gameplay events must invoke the 3D label path and avoid the
 	# invisible legacy button-label animation on the hidden chess grid.
 	var old_2d_children: int = game.buttons[60].get_child_count()
