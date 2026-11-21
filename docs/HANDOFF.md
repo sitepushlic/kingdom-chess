@@ -1,3 +1,8 @@
+## COMBAT EVENT LOG FIX — 2026-11-21
+- **Gameplay code commit `cba65058`**: `scripts/main.gd` now appends critical-hit and block events instead of overwriting the previous battle log, and renders bleed messages with an actual newline rather than a visible `\\n` escape. This preserves turn-by-turn feedback for multiple combat effects in a single action.
+- Previously committed loot usability fix `dd060bf` and 420 reward-generation Godot smoke assertions `8186686` remain in main. These changes were committed but **not verified by a current Godot execution**.
+- **Handoff updated in this commit**. Environment has no local Godot binary or working direct GitHub clone; obtain actual Actions run status, Godot 4.3 parser/import/smoke output and APK before claiming build success. Prior run 44927365536 was cancelled, not a successful APK build. Remaining: CI green, playable Android validation, visual polish and broader battle testing.
+
 ## CAMPAIGN LOOT USABILITY FIX — 2026-11-21
 - **Code `dd060bf`**: `Progression.roll_item_for_progress` now rejects generated loot with `item.level > player.level`, in addition to rarity exceeding `rarity_cap(wins, level)`. The old `roll_item` deliberately rolls levels from `level - 1` through `level + 1`, so a valid-rarity drop could previously be unusable when earned. It now retries for a usable item and, after 40 retries, clamps the generated item's rarity and level to the earned gates without inflating stats. Level input is bounded to 1..50.
 - **Godot test `8186686`**: 420 generated drops across 7 levels × 5 victory counts × boss/non-boss × 6 iterations with maximum luck, asserting each is valid and `Progression.can_equip` returns true. Added to `tests/smoke.gd`; **not yet executed in Godot**, no APK green claim.
