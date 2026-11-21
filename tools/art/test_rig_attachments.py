@@ -113,6 +113,23 @@ def check(path):
     assert armor_parts, f"{path}: no class-specific 3D armor silhouette"
     if "BossShoulderCrest1" in by_name:
         assert "BossRibCageUpper" in by_name and "BossBackStandard" in by_name
+    # Six region bosses must be identifiable by geometry alone.
+    if path.name.startswith("boss_region_"):
+        region=int(path.stem.rsplit("_",1)[1])
+        signature_by_region={
+            0:("AshTyrantVent1","AshTyrantFlame-1","AshTyrantCrown"),
+            1:("GlacierWing1_0","GlacierWing-1_2","GlacierCrownHorn1"),
+            2:("ThornColossusTrunk1","ThornColossusTwig-1_2","ThornColossusSeed"),
+            3:("ObsidianGlyph1_0","ObsidianGlyph-1_2","ObsidianThirdEye"),
+            4:("AstralRay00","AstralRay07","AstralDiademCore"),
+            5:("CrimsonWingFinger1_0","CrimsonWingFinger-1_2","CrimsonDragonHeart"),
+        }
+        for signature in signature_by_region[region]:
+            assert signature in by_name, f"{path}: missing boss silhouette {signature}"
+        for name in ("AshTyrantCrown","GlacierCrownHorn1","ObsidianThirdEye",
+                     "AstralDiademCore","CrimsonCrownHorn1"):
+            if name in by_name:
+                assert parents[by_name[name]]==head_id, f"{path}: {name} detached from animated head"
     # Every character's weapon must follow its actual wrist, rather
     # than staying under the stationary BodyRig during attacks.
     right=by_name["Arm1Lower"]
