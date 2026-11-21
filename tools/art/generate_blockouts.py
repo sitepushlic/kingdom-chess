@@ -55,11 +55,11 @@ def make_character(identifier, boss=False):
         accent = [round(accent[i]*.35 + biome_tint[i]*.65,4) for i in range(3)]+[1]
     if boss: accent = [0.72,0.16+num*0.04,0.27+num*0.03,1]
     mats = [
-        {"name":"Armor","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":accent,"metallicFactor":0.65,"roughnessFactor":0.38}},
-        {"name":"Steel","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":[0.61,0.67,0.72,1],"metallicFactor":0.82,"roughnessFactor":0.31}},
-        {"name":"Skin","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":[0.72,0.50,0.37,1],"metallicFactor":0.0,"roughnessFactor":0.8}},
-        {"name":"Gold","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":[0.88,0.67,0.29,1],"metallicFactor":0.85,"roughnessFactor":0.28}},
-        {"name":"ArcaneGlow","doubleSided":True,"pbrMetallicRoughness":{"baseColorFactor":[accent[0],accent[1],accent[2],1],"metallicFactor":0.1,"roughnessFactor":0.25},"emissiveFactor":[min(1,accent[0]*.85),min(1,accent[1]*.85),min(1,accent[2]*.85)]},
+        {"name":"Armor","doubleSided":False,"pbrMetallicRoughness":{"baseColorFactor":accent,"metallicFactor":0.65,"roughnessFactor":0.38}},
+        {"name":"Steel","doubleSided":False,"pbrMetallicRoughness":{"baseColorFactor":[0.61,0.67,0.72,1],"metallicFactor":0.82,"roughnessFactor":0.31}},
+        {"name":"Skin","doubleSided":False,"pbrMetallicRoughness":{"baseColorFactor":[0.72,0.50,0.37,1],"metallicFactor":0.0,"roughnessFactor":0.8}},
+        {"name":"Gold","doubleSided":False,"pbrMetallicRoughness":{"baseColorFactor":[0.88,0.67,0.29,1],"metallicFactor":0.85,"roughnessFactor":0.28}},
+        {"name":"ArcaneGlow","doubleSided":False,"pbrMetallicRoughness":{"baseColorFactor":[accent[0],accent[1],accent[2],1],"metallicFactor":0.1,"roughnessFactor":0.25},"emissiveFactor":[min(1,accent[0]*.85),min(1,accent[1]*.85),min(1,accent[2]*.85)]},
     ]
     nodes = [{"name":"Root","children":[1]},{"name":"BodyRig","children":[]}]
     meshes = []
