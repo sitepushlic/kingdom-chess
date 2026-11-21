@@ -215,3 +215,11 @@ For EVERY future implementation session:
 - Commit `356fdc1` (`tests/smoke.gd`): regressions construct all seven tiers across three equipment slots and check each crest has exactly rarity+1 meshes.
 - CI: direct Actions page access was unavailable (web fetch DisabledError); GitHub connector does not expose a repository-wide workflow-run list. **No claim that these new commits passed CI or produced an APK.** Check https://github.com/sitepushlic/kingdom-chess/actions and inspect Godot smoke output and artifact upload.
 - Art limitations: these are still procedural geometry accents, not authored character GLBs or bespoke equipment meshes. Major remaining work: six original rigged class models with authored clips, differentiated enemies, optimized seven-tier item assets, six finished environments, VFX, screenshots and profiling on real Android devices. Next prioritize importing one original rigged hero with tested move/attack animations, then scale to remaining classes.
+
+## Original 3D character mesh delivery — 2026-11-21
+- Baseline **CI #224 passed** before this art pass: https://github.com/sitepushlic/kingdom-chess/actions/runs/44873075980 .
+- Commit `df3d50b`: `_load_authored_character` now loads actual imported original OBJ Mesh resources for six chess classes when available, then GLB PackedScene, then procedural fallback. Sets hero/enemy material on the OBJ MeshInstance. Imported rigged GLB pipeline remains available.
+- Six original **low-poly 3D OBJ meshes committed** under `assets/characters/`: pawn `32afee0`, rook `c448d33`, knight `1667cd7`, bishop `5f8c1e7`, queen `7d22ffa`, king `318ac91`. Meshes have distinct chess silhouettes, authored vertex and face data, and use the existing VisualRig movement/attack pivot animation. **Not skeletal rigged, not high-poly, no texture maps**; they are a concrete first authored mesh asset pack, not final commercial art.
+- Commit `320bb1d`: tests assert all six OBJ meshes are present and load as Godot Mesh resources.
+- Commit `c468f3c`: asset README documents real shipped OBJ art and limits.
+- Check newest CI after these commits for OBJ importer/parser errors and Android APK. Next: textured and rigged GLBs, animation clips, unique enemy art, Android performance and visual screenshots.
