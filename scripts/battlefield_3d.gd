@@ -1695,6 +1695,29 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 			camera_shake.tween_property(camera, "position", base_camera_position + Vector3(-0.07, 0.04, 0), 0.055)
 			camera_shake.tween_property(camera, "position", base_camera_position, 0.11)
 
+func show_combat_number(index: int, amount: int, healing: bool = false) -> void:
+	# The legacy 2D square grid is hidden behind the 3D SubViewport.
+	# Render actual readable world-space numbers instead of invisible 2D labels.
+	if board_root == null or index < 0 or index >= 64 or amount <= 0:
+		return
+	var number := Label3D.new()
+	number.name = "CombatNumber"
+	number.text = ("+" if healing else "−") + str(amount)
+	number.font_size = 52
+	number.pixel_size = 0.006
+	number.outline_size = 9
+	number.modulate = Color("#88f4c4") if healing else Color("#ffb477")
+	number.outline_modulate = Color("#111725")
+	number.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	number.no_depth_test = true
+	number.position = _square_position(index) + Vector3(0.0, 1.9, 0.0)
+	board_root.add_child(number)
+	var float_tween := create_tween()
+	float_tween.set_parallel(true)
+	float_tween.tween_property(number, "position:y", number.position.y + 0.78, 0.85).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	float_tween.tween_property(number, "modulate:a", 0.0, 0.85).set_delay(0.22)
+	float_tween.chain().tween_callback(number.queue_free)
+
 func _spawn_hit_impact(target: int, magical: bool) -> void:
 	# An impact must read at chessboard scale without adding GPU lights.
 	# All geometry is short-lived and released by its own tween.
