@@ -537,6 +537,29 @@ func _run() -> void:
 	var plain_ally: Node3D = game.battlefield_3d._build_piece("K", false, false)
 	_assert_ok(geared_bearer.find_child("Rarity_Оружие", true, false) != null, "Selected bearer receives equipped weapon")
 	_assert_ok(plain_ally.find_child("Rarity_Оружие", true, false) == null, "Other allied unit has no selected hero gear")
+	# High-rarity enchantment effects must be built once and respond
+	# to graphics quality changes without re-importing equipment GLBs.
+	game.battlefield_3d.hero_gear = {"Оружие": {"rarity": 6, "upgrade": 0}, "Тело": {"rarity": 6, "upgrade": 0}, "Реликвия": {"rarity": 6, "upgrade": 0}}
+	var halo_bearer: Node3D = game.battlefield_3d._build_piece("K", false, true)
+	var enchantment_a: MeshInstance3D = halo_bearer.find_child("EnchantmentHalo_0", true, false) as MeshInstance3D
+	var enchantment_b: MeshInstance3D = halo_bearer.find_child("EnchantmentHalo_1", true, false) as MeshInstance3D
+	_assert_ok(enchantment_a != null and enchantment_b != null, "Legendary gear creates two quality-switchable enchantment halos")
+	if enchantment_a != null and enchantment_b != null:
+		var original_actor: Variant = game.battlefield_3d.piece_nodes.get(63, null)
+		game.battlefield_3d.piece_nodes[63] = halo_bearer
+		game.battlefield_3d.set_visual_quality(0)
+		_assert_ok(not enchantment_a.visible and not enchantment_b.visible, "Low quality hides all gear enchantment rings")
+		game.battlefield_3d.set_visual_quality(1)
+		_assert_ok(enchantment_a.visible and not enchantment_b.visible, "Medium quality shows one gear enchantment ring")
+		game.battlefield_3d.set_visual_quality(2)
+		_assert_ok(enchantment_a.visible and enchantment_b.visible, "High quality restores both gear enchantment rings")
+		if original_actor != null:
+			game.battlefield_3d.piece_nodes[63] = original_actor
+		else:
+			game.battlefield_3d.piece_nodes.erase(63)
+		game.battlefield_3d.set_visual_quality(1)
+	halo_bearer.queue_free()
+	game.battlefield_3d.hero_gear = {"Оружие": {"rarity": 3, "upgrade": 0}, "Тело": {"rarity": 3, "upgrade": 0}, "Реликвия": {"rarity": 3, "upgrade": 0}}
 	# Imported GLB gear must follow animated arm joints, not float at
 	# world-space offsets while the hero swings or casts.
 	var weapon_socket: Node = geared_bearer.find_child("GearSocket_weapon", true, false)
