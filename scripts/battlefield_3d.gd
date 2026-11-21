@@ -13,6 +13,7 @@ var highlights: Array[MeshInstance3D] = []
 var hazard_markers: Array[MeshInstance3D] = []
 var king_warning: MeshInstance3D
 var checked_king_square := -1
+var selected_square_visual: int = -1
 var poison_indicators: Dictionary = {}
 var enemy_poison_indicators: Dictionary = {}
 var active_hazards: Array[int] = []
@@ -1639,6 +1640,7 @@ func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int,
 		var existing: Node3D = piece_nodes[cell]
 		if bool(existing.get_meta("selected_hero_piece", false)) != (cell == hero_model_cell):
 			piece_types[cell] = ""
+	selected_square_visual = selected if selected >= 0 and selected < 64 else -1
 	for index in range(64):
 		var piece: String = str(pieces[index])
 		if piece == "":
@@ -1663,6 +1665,9 @@ func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int,
 		if piece != "" and piece_nodes.has(index) and health.size() == 64 and max_health.size() == 64:
 			_apply_health_fill(piece_nodes[index], index, health, max_health)
 		highlights[index].visible = index == selected or legal_squares.has(index) or index == danger
+		if index != selected:
+			highlights[index].scale = Vector3.ONE
+			highlights[index].position.y = 0.078
 		if highlights[index].visible:
 			highlights[index].material_override = selection_material if index == selected else (danger_material if index == danger else move_material)
 	for index in piece_nodes.keys():
@@ -2035,6 +2040,14 @@ func _animate_limbs(rig: Node3D, clip: String) -> void:
 
 func _process(delta: float) -> void:
 	clock += delta
+	# Pulse only the selected chess square. All legal destinations stay
+	# still, so players can distinguish selection from movement options.
+	if selected_square_visual >= 0 and selected_square_visual < highlights.size():
+		var selection: MeshInstance3D = highlights[selected_square_visual]
+		if selection.visible:
+			var beat: float = sin(clock * 4.2)
+			selection.scale = Vector3(1.0 + 0.075 * beat, 1.0, 1.0 + 0.075 * beat)
+			selection.position.y = 0.078 + 0.015 * (beat + 1.0)
 	# A short palette crossfade makes each new region visually distinct.
 	if region_light_transition > 0.0 and world_environment != null:
 		var blend: float = minf(1.0, delta * 3.5)
