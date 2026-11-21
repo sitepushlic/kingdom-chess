@@ -74,6 +74,10 @@ func _run() -> void:
 		_assert_ok(board_root.get_node_or_null("FileCoordinate_H_1") != null, "Chessboard displays H file coordinate")
 		_assert_ok(board_root.get_node_or_null("RankCoordinate_8_-1") != null, "Chessboard displays rank eight")
 		_assert_ok(board_root.get_node_or_null("RankCoordinate_1_1") != null, "Chessboard displays rank one")
+		for x in [-1, 1]:
+			for z in [-1, 1]:
+				_assert_ok(board_root.get_node_or_null("BoardCornerPlinth_%d_%d" % [x, z]) != null, "3D board has four carved corner plinths")
+				_assert_ok(board_root.get_node_or_null("BoardCornerGem_%d_%d" % [x, z]) != null, "3D board has four corner gemstones")
 	# Chess-first RPG movement: threat geometry, king safety and pinned pieces.
 	game.mode = "arena"
 	game._reset()
