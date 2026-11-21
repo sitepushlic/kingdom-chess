@@ -68,6 +68,11 @@ func _run() -> void:
 	game.pieces[53] = ""
 	game.pieces[52] = ""
 	_assert_ok(game._king_threatened(game.pieces, 1), "Rook gives check on open file")
+	_assert_ok(game.battlefield_3d != null, "3D board exists for check warning")
+	game.battlefield_3d.set_checked_king(60)
+	_assert_ok(game.battlefield_3d.checked_king_square == 60 and game.battlefield_3d.king_warning.visible, "Threatened king has visible 3D warning")
+	game.battlefield_3d.set_checked_king(-1)
+	_assert_ok(game.battlefield_3d.checked_king_square == -1 and not game.battlefield_3d.king_warning.visible, "3D check warning clears")
 	game.turn = 1
 	game.ap = 0
 	game.acted = [60]
