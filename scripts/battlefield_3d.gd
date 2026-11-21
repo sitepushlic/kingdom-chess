@@ -545,6 +545,23 @@ func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int,
 			var piece_node: Node3D = piece_nodes[index]
 			piece_node.position = _square_position(index)
 
+# Imported glTF clips may be namespaced by an AnimationLibrary (e.g. default/move).
+# Resolve exact names first, then qualified names; never play an unrelated clip.
+func _play_authored_clip(rig: Node3D, clip: String) -> bool:
+	var model: Node = rig.get_node_or_null("AuthoredCharacter")
+	if model == null: return false
+	var player: AnimationPlayer = model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if player == null: return false
+	if player.has_animation(clip):
+		player.play(clip)
+		return true
+	for name in player.get_animation_list():
+		var qualified: String = str(name)
+		if qualified.ends_with("/" + clip) or qualified.ends_with("|" + clip):
+			player.play(qualified)
+			return true
+	return false
+
 func animate_move(source: int, target: int) -> void:
 	if not piece_nodes.has(source): return
 	var actor: Node3D = piece_nodes[source]
@@ -567,11 +584,7 @@ func animate_move(source: int, target: int) -> void:
 		lean.tween_property(move_rig, "rotation:z", -0.16, 0.15)
 		lean.tween_property(move_rig, "rotation:z", 0.08, 0.18)
 		lean.tween_property(move_rig, "rotation:z", 0.0, 0.10)
-		var authored: Node = move_rig.get_node_or_null("AuthoredCharacter")
-		if authored != null:
-			var move_player: AnimationPlayer = authored.find_child("AnimationPlayer", true, false) as AnimationPlayer
-			if move_player != null and move_player.has_animation("move"):
-				move_player.play("move")
+		_play_authored_clip(move_rig, "move")
 	var tween := create_tween()
 	tween.tween_property(actor, "position", destination + Vector3(0, 0.9, 0), 0.19).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(actor, "position", destination, 0.22).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
@@ -589,11 +602,7 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 		swing.tween_property(rig, "rotation", Vector3(-0.18, 0.24 if magical else -0.22, -0.26), 0.12).set_trans(Tween.TRANS_QUAD)
 		swing.tween_property(rig, "rotation", Vector3(0.22, -0.28 if magical else 0.32, 0.30), 0.13).set_trans(Tween.TRANS_QUART)
 		swing.tween_property(rig, "rotation", Vector3.ZERO, 0.18).set_trans(Tween.TRANS_BACK)
-		var model: Node = rig.get_node_or_null("AuthoredCharacter")
-		if model != null:
-			var player: AnimationPlayer = model.find_child("AnimationPlayer", true, false) as AnimationPlayer
-			if player != null and player.has_animation("attack"):
-				player.play("attack")
+		_play_authored_clip(rig, "attack")
 	var anticipation := create_tween()
 	anticipation.tween_property(attacker, "position", start - direction * 0.16 + Vector3(0, 0.10, 0), 0.11).set_trans(Tween.TRANS_CUBIC)
 	anticipation.tween_property(attacker, "position", start + direction * 0.25 + Vector3(0, 0.19, 0), 0.12).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
