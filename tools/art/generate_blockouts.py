@@ -29,6 +29,11 @@ CUBE_VERTS = [vertex for normal,face in FACE_CORNERS for vertex in face]
 CUBE_NORMALS = [normal for normal,face in FACE_CORNERS for _ in face]
 CUBE_TRI = [base+offset for base in range(0,24,4) for offset in (0,1,2,0,2,3)]
 
+# Shared immutable PNG payloads across all 72 characters. The five texture
+# patterns are independent of character palette (baseColorFactor applies tint).
+# Rebuilding 10 x 128px PNGs for every GLB wastes millions of Python pixel loops.
+_PNG_CACHE = {}
+
 def make_character(identifier, boss=False):
     num = int(identifier.split("_")[-1])
     family = (num-1) % 5
@@ -1164,6 +1169,9 @@ def make_character(identifier, boss=False):
     # provide more visual structure than the previous 32px flat grain.
     # Keep this deterministic and embedded; no third-party art licenses.
     def material_png(material_index):
+        key=("albedo",material_index)
+        if key in _PNG_CACHE:
+            return _PNG_CACHE[key]
         size=128
         rows=bytearray()
         def line_distance(v, period):
@@ -1212,11 +1220,16 @@ def make_character(identifier, boss=False):
                     rows.extend((tone,tone,tone,255))
         def chunk(kind,data):
             return struct.pack(">I",len(data))+kind+data+struct.pack(">I",zlib.crc32(kind+data)&0xffffffff)
-        return (b"\x89PNG\r\n\x1a\n"+
+        result=(b"\x89PNG\r\n\x1a\n"+
                 chunk(b"IHDR",struct.pack(">IIBBBBB",size,size,8,6,0,0,0))+
                 chunk(b"IDAT",zlib.compress(bytes(rows),9))+
                 chunk(b"IEND",b""))
+        _PNG_CACHE[key]=result
+        return result
     def normal_png(material_index):
+        key=("normal",material_index)
+        if key in _PNG_CACHE:
+            return _PNG_CACHE[key]
         # Tangent-space normal detail: woven cloth, brushed metal, skin
         # pores, chased gold and arcane circuitry. Normals are deliberately
         # subtle so they do not distort silhouettes or shimmer on mobile.
@@ -1247,10 +1260,12 @@ def make_character(identifier, boss=False):
                                max(0,min(255,round(127.5*(1+1/norm)))),255))
         def chunk(kind,data):
             return struct.pack(">I",len(data))+kind+data+struct.pack(">I",zlib.crc32(kind+data)&0xffffffff)
-        return (b"\x89PNG\r\n\x1a\n"+
+        result=(b"\x89PNG\r\n\x1a\n"+
                 chunk(b"IHDR",struct.pack(">IIBBBBB",size,size,8,6,0,0,0))+
                 chunk(b"IDAT",zlib.compress(bytes(pixels),9))+
                 chunk(b"IEND",b""))
+        _PNG_CACHE[key]=result
+        return result
     images=[]
     textures=[]
     for material_index in range(5):
