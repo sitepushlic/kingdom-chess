@@ -578,3 +578,15 @@ For EVERY future implementation session:
 **Verification:** GitHub accepted commits; smoke/CI execution, Android APK and device FPS remain UNVERIFIED. Quality-tier spark behavior has assertions but no confirmed test run. Visual improvement is a small VFX step, NOT full graphics priority completion.
 
 **Graphics priority remaining:** authored original high-quality rigged GLB heroes (30 differentiated appearances), combat animations, distinct gear rarity sets, full six-region environmental art, camera polish, hit feedback, GPU/CPU profiling and Android performance QA. Current procedural piece models and limited VFX are not commercial-ready. Other blockers: chess checkmate/AP/HP edge cases, network replay, progression balance and Android testing. Continue actual graphics implementation before reporting priority complete.
+
+## Full handoff — 2026-11-21, active manual graphics development
+
+**Priority:** complete visual production before user-facing completion notice. User explicitly requested no automation until separately requested; do not call run_now or re-enable schedules. Work in current chat only when prompted. No interim completion claims.
+
+**Target and architecture:** Godot 4.3 Android portrait 3D chess/RPG, original rigged characters, 30 heroes, 7 equipment rarity tiers, 6 regions/18 missions, chess-legal combat with HP/AP, balanced progression and LAN. Code: `scripts/battlefield_3d.gd` visuals, `scripts/main.gd` gameplay, `scripts/hero_roster.gd` heroes, `scripts/progression.gd` gear/campaign, `tests/smoke.gd` Godot regression tests, `.github/workflows/android.yml` Android export.
+
+**This manual session:** `970ee879b407c2a3522412df23f7f510b6d7644d` implements `_spawn_attack_trail`: short-lived layered 3D spark arcs for magical and physical attacks, with mobile visual quality tier budgets (low 0, medium 4, high 8), unshaded shared trail material/mesh and automatic cleanup. Called from existing `attack`. `b44a3d961ffc0d417b783c5c9436970bea6acde0` adds smoke assertions for low/medium transient mesh budgets. This documentation commit updates full handoff.
+
+**Verified:** GitHub accepted commits. **Not verified:** Godot 4.3 smoke CI execution, Android APK, performance, animations on real devices. Visual milestone NOT COMPLETE: original authored rigged GLB models for 30 heroes, unique rarity gear appearances, animation sets, six differentiated environments and gameplay art direction remain to be produced and integrated. Existing procedural chess sculptures and effects are temporary art.
+
+**Next priorities:** obtain working local/CI Godot verification, correct any parser/test failures; import original rigged 3D characters with animation library naming conventions; ensure all 30 hero identities appear visually (not just roster data); implement distinct equipment rarity material sets and regional scenes; optimize meshes/materials, then verify Android FPS and APK. Keep complete history and explicit test caveats in future handoffs. Do not message user claiming priority finished until complete.
