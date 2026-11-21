@@ -255,3 +255,9 @@ For EVERY future implementation session:
 - Commit `f219b23` updates `tests/smoke.gd`: creates a real `AnimationPlayer` with a named `AnimationLibrary` and checks qualified move/attack playback and missing-clip behavior.
 - GitHub Actions result for these commits **not verified**: repository-wide workflow-run listing is unavailable in the connected GitHub actions, and external search did not expose the current workflow. Check https://github.com/sitepushlic/kingdom-chess/actions and fix any GDScript parser/test failures. No new APK success claim.
 - Still missing: production rigged GLB character assets with skeletal animation tracks, per-hero art, seven-rarity 3D equipment models, authored regional environments, VFX, screenshots and mid-range Android frame-time measurements. This compatibility fix alone does not improve mesh quality.
+
+## Chess-first combat safety step — 2026-11-21
+- Product owner confirmed chess movement and king-centric victory must remain the foundation; HP, attacks, armor, skills, bosses and progression layer on top. Design contract: `docs/CHESS_RPG_COMBAT_RULES.md` (commit `baf490f`).
+- Commit `17ce65c` updates `scripts/main.gd`: pure `_chess_attacks_square` checks pawn diagonals, knight leaps, king adjacency and unobstructed sliding attacks; `_king_destination_safe` simulates a king move and rejects attacked destination squares in **arena only**. `_legal` now rejects out-of-bounds cell indices. Raid behavior intentionally unchanged.
+- **Unverified**: no Godot runtime or CI test was run for this commit. Verify GitHub Actions and GDScript parse; add dedicated regression tests. This is not checkmate or complete orthodox chess. Still missing: king-in-check response, pinned pieces, castling, en passant, promotion, turn/attack semantics and consistent RPG check resolution.
+- Concurrent hourly automation may update main; always fetch current blob SHA before editing.
