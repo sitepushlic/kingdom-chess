@@ -61,6 +61,7 @@ func set_visual_quality(tier: int) -> void:
 		rim_light.visible = visual_quality > 0
 
 
+var hero_model_cell: int = -1
 var move_material: StandardMaterial3D
 
 func _material(color: Color, metallic: float = 0.0, roughness: float = 0.42, emission: Color = Color.BLACK) -> StandardMaterial3D:
@@ -329,7 +330,7 @@ func _load_authored_character(kind: String, parent: Node3D) -> bool:
 	var path: String = str(CHARACTER_SCENE_PATHS.get(kind, ""))
 	if not bool(parent.get_meta("hero", true)) and bool(parent.get_meta("boss", false)):
 		path = "res://assets/characters/boss_region_%d.glb" % clampi(current_region, 0, 5)
-	elif bool(parent.get_meta("hero", false)) and not selected_hero_visual.is_empty() and str(selected_hero_visual.get("piece", "")) == kind:
+	elif bool(parent.get_meta("hero", false)) and bool(parent.get_meta("selected_hero_piece", false)) and not selected_hero_visual.is_empty() and str(selected_hero_visual.get("piece", "")) == kind:
 		var hero_id: String = str(selected_hero_visual.get("id", ""))
 		if hero_id.is_valid_filename() and hero_id.begins_with("hero_"):
 			path = "res://assets/characters/%s.glb" % hero_id
@@ -406,6 +407,7 @@ func set_selected_hero_visual(hero: Dictionary) -> void:
 	if selected_hero_signature == next_signature: return
 	selected_hero_signature = next_signature
 	selected_hero_visual = hero.duplicate(true)
+	hero_model_cell = -1
 	# Force a fresh model on the next board synchronization so the selected
 	# hero's identity appears in 3D, not only in the roster UI.
 	for cell in piece_types.keys():
@@ -596,11 +598,12 @@ func _add_region_boss_costume(parent: Node3D) -> void:
 			var disc := _ring(0.38, 0.06, metal, parent, Vector3(0, 1.40, 0.20))
 			disc.rotation.x = PI * 0.45
 
-func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
+func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bool = true) -> Node3D:
 	var unit := Node3D.new()
 	var white := letter == letter.to_upper()
 	unit.set_meta("hero", white)
 	unit.set_meta("boss", is_boss)
+	unit.set_meta("selected_hero_piece", selected_hero_piece)
 	var material := hero_material if white else enemy_material
 	var accent := gold_material if white else dark_material
 	_cylinder(0.31, 0.16, accent, unit, Vector3(0, 0.08, 0))
@@ -613,7 +616,7 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	if not _load_authored_character(kind, unit):
 		_add_humanoid_costume(kind, white, unit)
 	_add_character_surface_detail(kind, white, unit)
-	if white: _add_selected_hero_identity(kind, unit)
+	if white and selected_hero_piece: _add_selected_hero_identity(kind, unit)
 	# Each class has an identifiable elevated crest, even at portrait mobile scale.
 	if kind == "N":
 		for side in [-1.0, 1.0]:
@@ -863,6 +866,19 @@ func set_checked_king(index: int) -> void:
 		king_warning.position = _square_position(checked_king_square) + Vector3(0, 0.14, 0)
 
 func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int, health: Array = [], max_health: Array = []) -> void:
+	# Only one unit represents the equipped hero. Preserve its identity across
+	# movement and rebuilds, and choose a deterministic new bearer if captured.
+	var chosen_piece: String = str(selected_hero_visual.get("piece", ""))
+	if hero_model_cell < 0 or hero_model_cell >= 64 or str(pieces[hero_model_cell]) != chosen_piece:
+		hero_model_cell = -1
+		for candidate in range(64):
+			if chosen_piece != "" and str(pieces[candidate]) == chosen_piece:
+				hero_model_cell = candidate
+				break
+	for cell in piece_nodes.keys():
+		var existing: Node3D = piece_nodes[cell]
+		if bool(existing.get_meta("selected_hero_piece", false)) != (cell == hero_model_cell):
+			piece_types[cell] = ""
 	for index in range(64):
 		var piece: String = str(pieces[index])
 		if piece == "":
@@ -874,7 +890,7 @@ func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int,
 		elif not piece_nodes.has(index) or str(piece_types.get(index, "")) != piece:
 			if piece_nodes.has(index):
 				(piece_nodes[index] as Node3D).queue_free()
-			var node := _build_piece(piece, index == 4 and piece == "k")
+			var node := _build_piece(piece, index == 4 and piece == "k", index == hero_model_cell)
 			node.position = _square_position(index)
 			piece_nodes[index] = node
 			piece_types[index] = piece
@@ -926,6 +942,7 @@ func animate_move(source: int, target: int) -> void:
 	piece_types[target] = piece_types[source]
 	piece_types.erase(source)
 	piece_nodes[target] = actor
+	if hero_model_cell == source: hero_model_cell = target
 	moving_nodes[target] = true
 	var destination := _square_position(target)
 	var move_rig: Node3D = actor.get_meta("visual_rig", null)
