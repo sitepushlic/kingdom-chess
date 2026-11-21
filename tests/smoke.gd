@@ -74,6 +74,17 @@ func _run() -> void:
 		_assert_ok(board_root.get_node_or_null("FileCoordinate_H_1") != null, "Chessboard displays H file coordinate")
 		_assert_ok(board_root.get_node_or_null("RankCoordinate_8_-1") != null, "Chessboard displays rank eight")
 		_assert_ok(board_root.get_node_or_null("RankCoordinate_1_1") != null, "Chessboard displays rank one")
+		_assert_ok(game.battlefield_3d.BOARD_STYLES.size() == 4, "Four visual-only chessboard styles are available")
+		var original_dark: Color = game.battlefield_3d.tile_materials[0].albedo_color
+		var original_piece_count: int = game.battlefield_3d.piece_nodes.size()
+		game.battlefield_3d.set_board_visual_style(2)
+		_assert_ok(game.battlefield_3d.board_style_index == 2, "Board style changes to obsidian")
+		_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color != original_dark, "Board style changes visible material color")
+		_assert_ok(game.battlefield_3d.piece_nodes.size() == original_piece_count, "Board cosmetics never rebuild combat pieces")
+		game.battlefield_3d.set_board_visual_style(999)
+		_assert_ok(game.battlefield_3d.board_style_index == 3, "Board style selection clamps invalid index")
+		game.battlefield_3d.set_board_visual_style(0)
+		_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == original_dark, "Original chessboard palette restores exactly")
 		for x in [-1, 1]:
 			for z in [-1, 1]:
 				_assert_ok(board_root.get_node_or_null("BoardCornerPlinth_%d_%d" % [x, z]) != null, "3D board has four carved corner plinths")
