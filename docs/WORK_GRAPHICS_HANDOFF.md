@@ -367,3 +367,11 @@ Committed on `main`:
 - **`c53e5d81c2aa7d2d0f27a7a3fa61ed379657d344`**: expanded negative GLB suite to ten corruption scenarios, adding NaN animated translations and non-float32 animation output.
 **Verification:** GitHub source commits succeeded. Actual CI execution and successful APK export remain unconfirmed. No new finished 3D art is claimed in this batch.
 **Next:** obtain Actions job results and logs through a suitable GitHub workflow-runs interface; fix failures, confirm the Android APK and inspect bone/armor alignment in a Godot runtime. Continue 3D detail only after the import pipeline is proven.
+
+## 40. Distal armor follows actual limb joints; Android CI checks all Python scripts — 2026-11-21
+Commits on `main`:
+- **`6fbc94f054ce1b0f475c8e957e8d95ad4fc3dddc`**: Android CI now compiles every script under `tools/art`, including the new negative GLB and mesh topology regression tests, instead of a manually maintained partial script list.
+- **`347d3779129ffcbfcbc95f7e625f6a4790a2f23c`**: actual 3D rigging improvement across 72 character models: gauntlets now parent to `Arm1Lower`/`Arm-1Lower`; shin guards and boots to `Leg1Lower`/`Leg-1Lower`. Reparenting adjusts local Y by the inverse lower-joint offset to retain original bind pose. Previously these rigid armor pieces stayed under upper shoulder/hip pivots, so they would not follow elbow/knee flex.
+- **`a4581d760eb2fe070e9f87f54dea92863ed8e8a1`**: structural GLB validator requires all six distal armor pieces to be children of their appropriate lower joint for every generated character.
+**Unverified:** Changes are committed, but no complete Python generation/validation run, Godot import, CI result or Android APK is observed in this environment. The runtime placement of the reparented plates needs visual confirmation in Godot and on Android. Do not call the game production-ready.
+**Next:** retrieve and diagnose GitHub Actions run logs; fix actual failures; verify Android export, skin deformation and armor alignment; continue full 3D silhouette/environment quality work.
