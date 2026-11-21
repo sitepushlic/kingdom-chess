@@ -314,8 +314,10 @@ def validate(path, require_animation=True):
             limb_inverse=gltf["accessors"][limb_skin["inverseBindMatrices"]]
             assert limb_inverse["type"]=="MAT4" and limb_inverse["count"]==2, f"{path}: missing limb bind matrices"
             expected_gear = ("Gauntlet" if joint_name.startswith("Arm") else "ShinPlate") + joint_name.replace("Arm","").replace("Leg","")
-            attached = [gltf["nodes"][i].get("name") for i in joint["children"]]
-            assert expected_gear in attached, f"{path}: {expected_gear} must follow animated limb"
+            lower_joint_index = limb_skin["joints"][1]
+            assert lower_joint_index in joint["children"], f"{path}: lower limb bone must descend from upper pivot"
+            attached = [gltf["nodes"][i].get("name") for i in gltf["nodes"][lower_joint_index].get("children", [])]
+            assert expected_gear in attached, f"{path}: {expected_gear} must follow animated lower limb"
     for animation in gltf.get("animations",[]):
         channels = animation["channels"]
         assert any(channel["target"]["path"] == "translation" for channel in channels), f"{path}: missing root motion"
