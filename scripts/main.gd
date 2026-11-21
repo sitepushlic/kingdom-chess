@@ -1534,6 +1534,7 @@ func _chess_attacks_square(board: Array, source: int, target: int) -> bool:
 	return true
 
 func _legal(a: int, b: int) -> bool:
+	if pieces.size() != 64 or health.size() != 64: return false
 	if a < 0 or a >= 64 or b < 0 or b >= 64: return false
 	if a == b or pieces[a] == "": return false
 	if _team(pieces[a]) == _team(pieces[b]): return false
@@ -1658,6 +1659,8 @@ func _on_3d_board_input(event: InputEvent) -> void:
 			_tap(square_index)
 
 func _tap(i: int) -> void:
+	# Network peers and touch handlers must never index outside the chessboard.
+	if i < 0 or i >= 64: return
 	if lan_connected and not lan_host:
 		_request_action.rpc_id(1, "tap", i)
 		return
