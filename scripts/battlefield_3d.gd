@@ -19,6 +19,7 @@ var enemy_material: StandardMaterial3D
 var gold_material: StandardMaterial3D
 var dark_material: StandardMaterial3D
 var board_root: Node3D
+var region_scenery: Node3D
 var torches: Array[OmniLight3D] = []
 var torch_flames: Array[MeshInstance3D] = []
 var current_region := -1
@@ -114,6 +115,9 @@ func _ready() -> void:
 	add_child(world)
 	board_root = Node3D.new()
 	add_child(board_root)
+	region_scenery = Node3D.new()
+	region_scenery.name = "RegionScenery"
+	board_root.add_child(region_scenery)
 	_box(Vector3(9.2, 0.48, 9.2), _material(Color("#29202a"), 0.45), board_root, Vector3(0, -0.43, 0))
 	_box(Vector3(8.6, 0.13, 8.6), gold_material, board_root, Vector3(0, -0.13, 0))
 	for i in range(64):
@@ -310,6 +314,52 @@ func set_boss_phase(phase: int) -> void:
 		boss_crown.albedo_color = Color("#ff2c5f") if enraged else Color("#e56587")
 		boss_crown.emission_energy_multiplier = 2.8 if enraged else 0.6
 
+func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
+	# All scenery remains outside the playable 8x8 grid; no extra per-frame updates.
+	for child in region_scenery.get_children():
+		region_scenery.remove_child(child)
+		child.queue_free()
+	var region := clampi(region_index, 0, 5)
+	var stone := _material(palette[0].lightened(0.20), 0.25, 0.68)
+	var trim := _material(palette[1].darkened(0.28), 0.48, 0.38)
+	var magic := _material(palette[2], 0.22, 0.20, palette[2] * 0.65)
+	for n in range(12):
+		var angle := (float(n) + 0.5) * TAU / 12.0
+		var radius := 5.25 + float(n % 3) * 0.34
+		var pos := Vector3(cos(angle) * radius, 0, sin(angle) * radius)
+		var height := 0.95 + float(n % 4) * 0.22
+		match region:
+			0: # Ember fortress: crenellated battlements and braziers.
+				_cylinder(0.27, height, stone, region_scenery, pos + Vector3(0, height * 0.5 - 0.25, 0))
+				_box(Vector3(0.68, 0.16, 0.68), trim, region_scenery, pos + Vector3(0, height - 0.26, 0))
+				for side in [-1.0, 1.0]:
+					_box(Vector3(0.14, 0.23, 0.16), stone, region_scenery, pos + Vector3(side * 0.24, height - 0.08, 0))
+			1: # Frostlands: asymmetric ice spires.
+				var shard := _cylinder(0.30, height * 1.7, magic, region_scenery, pos + Vector3(0, height * 0.75 - 0.4, 0), 0.015)
+				shard.rotation.z = sin(angle * 3.0) * 0.16
+				_cylinder(0.38, 0.17, stone, region_scenery, pos + Vector3(0, -0.12, 0))
+			2: # Overgrown ruins: trunks and tiered canopies.
+				_cylinder(0.13, height, trim, region_scenery, pos + Vector3(0, height * 0.5 - 0.25, 0), 0.10)
+				for tier in range(3):
+					_cylinder(0.48 - tier * 0.10, 0.40, stone if tier == 0 else magic, region_scenery, pos + Vector3(0, height * 0.6 + tier * 0.28, 0), 0.08)
+			3: # Arcane catacombs: obelisks with floating runes.
+				_box(Vector3(0.37, height * 1.5, 0.37), stone, region_scenery, pos + Vector3(0, height * 0.65, 0))
+				_ring(0.29, 0.035, magic, region_scenery, pos + Vector3(0, height * 1.4, 0))
+			4: # Storm citadel: lightning rods and suspended energy orbs.
+				_cylinder(0.20, height, stone, region_scenery, pos + Vector3(0, height * 0.5 - 0.2, 0), 0.11)
+				_cylinder(0.045, 0.60, trim, region_scenery, pos + Vector3(0, height + 0.12, 0), 0.0)
+				_sphere(0.17, magic, region_scenery, pos + Vector3(0, height + 0.48, 0))
+			5: # Void throne: broken black pillars and corruption halos.
+				var column := _cylinder(0.26, height * 1.45, stone, region_scenery, pos + Vector3(0, height * 0.58 - 0.2, 0), 0.14)
+				column.rotation.z = sin(angle * 2.0) * 0.20
+				_ring(0.38, 0.038, magic, region_scenery, pos + Vector3(0, 0.12, 0))
+	# Four larger landmarks establish a silhouette behind the arena without obstructing play.
+	for corner_x in [-1.0, 1.0]:
+		for corner_z in [-1.0, 1.0]:
+			var corner := Vector3(corner_x * 5.75, 0, corner_z * 5.75)
+			_cylinder(0.48, 1.7, trim, region_scenery, corner + Vector3(0, 0.50, 0), 0.34)
+			_ring(0.40, 0.055, magic, region_scenery, corner + Vector3(0, 1.35, 0))
+
 func set_region(region_index: int) -> void:
 	if current_region == region_index: return
 	current_region = region_index
@@ -327,6 +377,7 @@ func set_region(region_index: int) -> void:
 		mat.albedo_color = palette[0] if (int(index / 8) + index % 8) % 2 == 0 else palette[1]
 	for torch in torches:
 		torch.light_color = palette[2]
+	_rebuild_region_scenery(region_index, palette)
 
 func set_hazards(cells: Array[int], modifier: String) -> void:
 	if active_hazards == cells and hazard_type == modifier: return
