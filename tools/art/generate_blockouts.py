@@ -590,6 +590,60 @@ def make_character(identifier, boss=False):
                 box("CrimsonWing"+str(side),(side*.62,1.11,.22),(.39,.85,.12),0,side*.43)
                 box("CrimsonFang"+str(side),(side*.20,1.65,-.15),(.11,.39,.13),4,side*.18)
             box("CrimsonCore",(0,.93,-.27),(.30,.33,.10),4)
+    # Boss silhouette overhaul: six unique multi-layered back and head
+    # structures, designed to read from the tactical camera without relying
+    # on color alone. Every part shares the existing beveled GLB meshes.
+    if boss:
+        if num == 1:  # Ash tyrant: volcanic crown and furnace exhausts.
+            for side in (-1,1):
+                box("AshTyrantVent"+str(side),(side*.39,1.44,.29),(.22,.80,.22),1,side*.22)
+                box("AshTyrantFlame"+str(side),(side*.42,1.91,.31),(.12,.41,.12),4,side*.24)
+                box("AshTyrantJaw"+str(side),(side*.19,1.24,-.23),(.13,.31,.14),3,side*.20)
+            box("AshTyrantCore",(0,1.00,-.31),(.31,.36,.14),4)
+            box("AshTyrantCrown",(0,1.86,.04),(.42,.15,.30),3)
+        elif num == 2:  # Glacier monarch: layered ice wings and crystal helm.
+            for side in (-1,1):
+                for layer in range(3):
+                    box("GlacierWing%s_%d"%(side,layer),
+                        (side*(.45+layer*.19),1.28+layer*.16,.24),
+                        (.17,.69+layer*.19,.15),4,side*(.35+layer*.13))
+                box("GlacierCrownHorn"+str(side),(side*.25,1.84,.02),(.14,.61,.14),4,side*.28)
+            box("GlacierHeart",(0,.94,-.31),(.28,.38,.12),4)
+        elif num == 3:  # Thorn colossus: antler branches and layered bark.
+            for side in (-1,1):
+                box("ThornColossusTrunk"+str(side),(side*.36,1.57,.20),(.19,.99,.21),0,side*.30)
+                for twig in range(3):
+                    box("ThornColossusTwig%s_%d"%(side,twig),
+                        (side*(.49+twig*.12),1.73+twig*.15,.19),
+                        (.13,.38,.12),3,side*(.45+twig*.11))
+                box("ThornColossusRoot"+str(side),(side*.30,.26,.14),(.22,.56,.20),0,side*.30)
+            box("ThornColossusSeed",(0,.96,-.29),(.26,.34,.12),4)
+        elif num == 4:  # Obsidian oracle: floating glyph plates and crown.
+            for side in (-1,1):
+                for plate in range(3):
+                    box("ObsidianGlyph%s_%d"%(side,plate),
+                        (side*(.52+plate*.13),.82+plate*.34,.15),
+                        (.17,.30,.09),4,side*(.18+plate*.20))
+                box("ObsidianCrown"+str(side),(side*.23,1.83,.04),(.18,.49,.17),1,side*.27)
+            box("ObsidianThirdEye",(0,1.48,-.26),(.18,.20,.08),4)
+        elif num == 5:  # Astral sovereign: starburst mantle and orbit nodes.
+            for ray in range(8):
+                theta=ray*math.pi/4
+                box("AstralRay%02d"%ray,
+                    (math.cos(theta)*.56,1.25+math.sin(theta)*.38,.30),
+                    (.13,.51,.12),4,-theta)
+            for side in (-1,1):
+                box("AstralOrbitNode"+str(side),(side*.79,1.43,.16),(.21,.21,.21),4)
+            box("AstralDiademCore",(0,1.84,-.12),(.22,.28,.15),4)
+        else:  # Crimson dragon: layered wing fingers and draconic crest.
+            for side in (-1,1):
+                for finger in range(3):
+                    box("CrimsonWingFinger%s_%d"%(side,finger),
+                        (side*(.62+finger*.22),1.27+finger*.15,.30),
+                        (.14,.91-finger*.12,.14),0,side*(.50+finger*.16))
+                box("CrimsonCrownHorn"+str(side),(side*.25,1.87,.05),(.15,.63,.16),3,side*.34)
+                box("CrimsonClaw"+str(side),(side*.35,.22,-.24),(.16,.31,.17),4,side*.22)
+            box("CrimsonDragonHeart",(0,.97,-.33),(.31,.38,.13),4)
     # First actual GPU-skinned component: a two-bone cloth mantle. The
     # 24-vertex cape is bound to shoulder and hem joints with blended weights.
     # Unlike the articulated rigid boxes above, this uses glTF skinning
