@@ -68,6 +68,14 @@ func _run() -> void:
 	for loot_test in range(20):
 		var starter_drop: Dictionary = Progression.roll_item_for_progress(1, 0, true, 3)
 		_assert_ok(int(starter_drop["rarity"]) == 0, "Boss loot and luck cannot bypass starting rarity")
+	# Random campaign loot must be usable when earned, including the +1 item-level roll.
+	for reward_level in [1, 2, 5, 10, 20, 35, 50]:
+		for reward_wins in [0, 3, 9, 18, 25]:
+			for reward_boss in [false, true]:
+				for reward_attempt in range(6):
+					var reward: Dictionary = Progression.roll_item_for_progress(reward_level, reward_wins, reward_boss, 3)
+					_assert_ok(Progression.is_valid_equipment_item(reward), "Campaign reward remains a valid item")
+					_assert_ok(Progression.can_equip(reward, reward_wins, reward_level), "Campaign reward never rolls above player level or rarity gate")
 	_assert_ok(HeroRoster.HEROES.size() == 30, "30 unique authored heroes are available")
 	var hero_ids: Dictionary = {}
 	var rarity_counts: Dictionary = {}
