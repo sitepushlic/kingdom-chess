@@ -185,6 +185,10 @@ func _run() -> void:
 	var weak_weapon: Dictionary = Progression.roll_item(1)
 	weak_weapon["slot"] = "Оружие"
 	weak_weapon["level"] = 1
+	weak_weapon["rarity"] = 0
+	weak_weapon["upgrade"] = 0
+	weak_weapon["set_id"] = -1
+	weak_weapon["trait_id"] = -1
 	var locked_weapon: Dictionary = weak_weapon.duplicate(true)
 	locked_weapon["level"] = 50
 	locked_weapon["attack"] = 9999
@@ -301,6 +305,7 @@ func _run() -> void:
 	clip_model.name = "AuthoredCharacter"
 	clip_rig.add_child(clip_model)
 	var clip_player := AnimationPlayer.new()
+	clip_player.name = "AnimationPlayer"
 	clip_model.add_child(clip_player)
 	var clip_library := AnimationLibrary.new()
 	var move_clip := Animation.new()
@@ -411,9 +416,12 @@ func _run() -> void:
 	var upgraded: Dictionary = Progression.upgrade_item(boss_drop)
 	_assert_ok(int(upgraded["upgrade"]) == 1 and Progression.item_score(upgraded) > Progression.item_score(boss_drop), "Forging improves gear power")
 	_assert_ok(int(boss_drop.get("upgrade", 0)) == 0, "Forging does not mutate source item")
-	var set_items: Array = [
-		{"slot":"Оружие","set_id":1}, {"slot":"Тело","set_id":1}, {"slot":"Реликвия","set_id":1}
-	]
+	var set_items: Array = []
+	for slot in Progression.ITEM_SLOTS:
+		var piece: Dictionary = Progression.roll_item(15)
+		piece["slot"] = slot
+		piece["set_id"] = 1
+		set_items.append(piece)
 	var set_bonus: Dictionary = Progression.set_bonus(set_items, {"Оружие":0,"Тело":1,"Реликвия":2})
 	_assert_ok(int(set_bonus["attack"]) > 0 and int(set_bonus["armor"]) > 0, "Three-piece set activates two and three piece bonuses")
 	_assert_ok(game.battlefield_3d != null and game.battlefield_3d.tiles.size() == 64, "Actual 3D arena contains 64 modeled squares")
@@ -450,11 +458,17 @@ func _run() -> void:
 	_assert_ok(not game.battlefield_3d.boss_enraged, "Boss enrage state resets correctly")
 	game.battlefield_3d.attack(60, 52)
 	_assert_ok(game.battlefield_3d.piece_nodes.has(60), "3D attack animation preserves board state")
-	game.equipment = [
-		{"name":"Test sword","slot":"Оружие","level":1,"attack":12,"crit":0},
-		{"name":"Test armor","slot":"Тело","level":1,"attack":2,"armor":8,"hp":30},
-		{"name":"Test relic","slot":"Реликвия","level":1,"attack":1,"lifesteal":10}
-	]
+	var test_sword: Dictionary = weak_weapon.duplicate(true)
+	test_sword["attack"] = 12
+	var test_armor: Dictionary = usable_armor.duplicate(true)
+	test_armor["attack"] = 2
+	test_armor["armor"] = 8
+	test_armor["hp"] = 30
+	var test_relic: Dictionary = usable_relic.duplicate(true)
+	test_relic["attack"] = 1
+	test_relic["lifesteal"] = 10
+	game.equipment = [test_sword, test_armor, test_relic]
+	game.mode = "raid"
 	game.equipped_slots = {"Оружие":0,"Тело":1,"Реликвия":2}
 	game.shared_raid_stats = {"level": 9, "attack": 44, "armor": 12, "hp": 75, "crit": 8, "lifesteal": 4}
 	game.lan_connected = true
