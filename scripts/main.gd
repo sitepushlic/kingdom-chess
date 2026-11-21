@@ -113,6 +113,11 @@ var battlefield_container: SubViewportContainer
 const GRAPHICS_SETTINGS_PATH := "user://graphics.cfg"
 var graphics_quality := 1
 var graphics_button: Button
+var owned_boards: Array = [0]
+var selected_board := 0
+var board_gallery_dialog: AcceptDialog
+var board_gallery_list: ItemList
+var board_gallery_details: Label
 
 func _ready() -> void:
 	hp_bar_friendly_style = StyleBoxFlat.new()
@@ -179,6 +184,7 @@ func _ready() -> void:
 	battlefield_3d = Battlefield3D.new()
 	battlefield_viewport.add_child(battlefield_3d)
 	battlefield_3d.set_visual_quality(graphics_quality)
+	battlefield_3d.set_board_visual_style(selected_board)
 	battlefield_container.gui_input.connect(_on_3d_board_input)
 	var grid := GridContainer.new()
 	grid.columns = 8
@@ -566,11 +572,82 @@ void fragment() {
 	_make_action_button("♜  АРЕНА ДЛЯ ДВОИХ", _menu_start_arena, column)
 	_make_action_button("◈  КООПЕРАТИВ ПО WI-FI", _menu_start_coop, column)
 	_make_action_button("🎒  СНАРЯЖЕНИЕ", _open_inventory, column)
+	_make_action_button("♟  МОЯ КОЛЛЕКЦИЯ ДОСОК", _open_board_gallery, column)
 	graphics_button = _make_action_button("", _cycle_graphics_quality, column)
 	_update_graphics_label()
 	_make_action_button("❔  КАК ИГРАТЬ", _show_tutorial, column)
 	_make_action_button("ПРОДОЛЖИТЬ БИТВУ", _menu_continue, column)
 	main_menu.visible = true
+
+func _open_board_gallery() -> void:
+	if board_gallery_dialog == null:
+		board_gallery_dialog = AcceptDialog.new()
+		board_gallery_dialog.title = "КОЛЛЕКЦИЯ ШАХМАТНЫХ ДОСОК"
+		board_gallery_dialog.min_size = Vector2i(560, 520)
+		add_child(board_gallery_dialog)
+		var layout := VBoxContainer.new()
+		board_gallery_dialog.add_child(layout)
+		var intro := Label.new()
+		intro.text = "Доски — только внешний вид. Побеждай в рейдах, собирай золото и открывай новые."
+		intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		layout.add_child(intro)
+		board_gallery_list = ItemList.new()
+		board_gallery_list.custom_minimum_size = Vector2(520, 250)
+		layout.add_child(board_gallery_list)
+		board_gallery_details = Label.new()
+		board_gallery_details.custom_minimum_size.y = 65
+		board_gallery_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		layout.add_child(board_gallery_details)
+		board_gallery_list.item_selected.connect(_on_board_gallery_selected)
+		var choose := Button.new()
+		choose.text = "КУПИТЬ ИЛИ УСТАНОВИТЬ"
+		choose.custom_minimum_size.y = 55
+		choose.pressed.connect(_choose_board)
+		layout.add_child(choose)
+	_refresh_board_gallery()
+	board_gallery_dialog.popup_centered()
+
+func _refresh_board_gallery() -> void:
+	if board_gallery_list == null:
+		return
+	board_gallery_list.clear()
+	for index in range(Battlefield3D.BOARD_STYLES.size()):
+		var palette: Dictionary = Battlefield3D.BOARD_STYLES[index]
+		var marker := "✓" if index == selected_board else ("◆" if owned_boards.has(index) else "🔒")
+		board_gallery_list.add_item("%s %s" % [marker, str(palette["name"])])
+	board_gallery_list.select(selected_board)
+	_on_board_gallery_selected(selected_board)
+
+func _on_board_gallery_selected(index: int) -> void:
+	if board_gallery_details == null or index < 0 or index >= Battlefield3D.BOARD_STYLES.size():
+		return
+	board_gallery_details.text = Progression.board_unlock_reason(index, owned_boards, raid_wins, gold)
+	board_gallery_details.text += "\nДоска не влияет на характеристики героев и правила боя."
+
+func _choose_board() -> void:
+	if board_gallery_list == null:
+		return
+	var selected_items: PackedInt32Array = board_gallery_list.get_selected_items()
+	if selected_items.is_empty():
+		return
+	var index: int = selected_items[0]
+	if index < 0 or index >= Battlefield3D.BOARD_STYLES.size():
+		return
+	if not owned_boards.has(index):
+		if raid_wins < Progression.BOARD_WIN_REQUIREMENTS[index] or gold < Progression.BOARD_COSTS[index]:
+			_on_board_gallery_selected(index)
+			return
+		gold -= Progression.BOARD_COSTS[index]
+		owned_boards.append(index)
+		owned_boards.sort()
+	selected_board = index
+	if battlefield_3d != null:
+		battlefield_3d.set_board_visual_style(selected_board)
+	_save_profile()
+	_refresh_board_gallery()
+	board_gallery_list.select(index)
+	_on_board_gallery_selected(index)
+	_draw()
 
 func _load_graphics_quality() -> void:
 	var config := ConfigFile.new()
@@ -1088,6 +1165,8 @@ func _load_profile() -> void:
 	var profile: Dictionary = Progression.load_profile()
 	player_level = int(profile["level"])
 	selected_hero = str(profile.get("selected_hero", "hero_01"))
+	owned_boards = Progression.sanitize_board_collection(profile.get("owned_boards", [0]))
+	selected_board = int(profile.get("selected_board", 0))
 	experience = int(profile["xp"])
 	gold = int(profile["gold"])
 	potions = int(profile["potions"])
@@ -1171,7 +1250,8 @@ func _save_profile() -> void:
 	Progression.save_profile({
 		"level": player_level, "xp": experience, "gold": gold,
 		"potions": potions, "items": equipment,
-		"equipped": equipped, "slots": equipped_slots, "wins": raid_wins, "dry_streak": dry_loot_streak, "selected_hero": selected_hero
+		"equipped": equipped, "slots": equipped_slots, "wins": raid_wins, "dry_streak": dry_loot_streak, "selected_hero": selected_hero,
+		"owned_boards": owned_boards, "selected_board": selected_board
 	})
 
 func _item_stat(stat: String) -> int:
