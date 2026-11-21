@@ -429,6 +429,9 @@ func _run() -> void:
 	game.battlefield_3d.set_selected_hero_visual(HeroRoster.get_hero("hero_30"))
 	var rare_hero_visual: Node3D = game.battlefield_3d._build_piece("K")
 	_assert_ok(rare_hero_visual.find_child("HeroIdentity_30", true, false) != null, "Highest rarity hero has distinct 3D crest")
+	var epic_halo: Node3D = rare_hero_visual.find_child("HeroRarityHalo", true, false) as Node3D
+	_assert_ok(epic_halo != null and epic_halo.visible, "High-rarity hero has a visible animated 3D identity halo")
+
 	var authored_boss_visual: Node3D = game.battlefield_3d._build_piece("k", true, false)
 	_assert_ok(authored_boss_visual.find_child("AuthoredCharacter", true, false) != null, "Regional boss imports its dedicated 3D scene")
 	_assert_ok(authored_boss_visual.find_child("EmberHorn1", true, false) != null or authored_boss_visual.find_child("GlacierSpire0", true, false) != null, "Regional boss retains authored physical landmarks")
@@ -1172,6 +1175,9 @@ func _run() -> void:
 			_assert_ok(active_aura.visible, "Boss enrage reveals animated crown aura")
 	game.battlefield_3d.set_boss_phase(1)
 	_assert_ok(not game.battlefield_3d.boss_enraged, "Boss enrage state resets correctly")
+	if game.battlefield_3d.piece_nodes.has(4):
+		_assert_ok(absf((game.battlefield_3d.piece_nodes[4] as Node3D).position.y) < 0.001, "Boss returns to board height after enrage")
+
 	# Quality-tier combat regression: low graphics must never allocate
 	# translucent transient meshes, while medium retains visible impacts.
 	game.battlefield_3d.set_visual_quality(0)
