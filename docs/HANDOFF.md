@@ -3,6 +3,36 @@
 Updated: 2026-11-21. Repository: https://github.com/sitepushlic/kingdom-chess ; default branch: `main`.
 This file is the persistent handoff for the next development session. Update it after every substantial implementation, with actual commits and CI status; never label the game production-ready without device and playtesting evidence.
 
+## FULL CURRENT HANDOFF — 2026-11-21 (read this first)
+
+### Goal and acceptance criteria
+- Build a commercial-quality, portrait Android 3D tactical chess RPG on Godot 4.3. Keep legal chess movement, king safety, check/mate and meaningful HP/AP tactical combat; six themed regions, 18 campaign missions, bosses, co-op, 30 unlockable heroes, seven rarity tiers and progression gates. A debug APK alone is NOT a finished release.
+- Finished requires original rigged characters and animation sets, distinct equipment silhouettes, polished environments/VFX/audio/UI, balanced campaign/PvP, tested multiplayer and Android performance on physical devices, verified release signing/store readiness. None of those may be claimed without evidence.
+
+### Repository and working architecture
+- Repository: `sitepushlic/kingdom-chess`, branch `main`. Source files: `scripts/main.gd` (UI, chess/RPG rules, save, LAN), `scripts/battlefield_3d.gd` (SubViewport 3D renderer, camera, lighting, markers, procedural pieces/scenery), `scripts/progression.gd` (economy, items, campaign), `scripts/hero_roster.gd` (30 heroes), `tests/smoke.gd` (headless tests), `.github/workflows/android.yml` (CI debug export).
+- Chess safety includes threat geometry, pinned-piece handling and check-aware end turns; still needs systematic HP-aware checkmate/action testing and rules decisions for nonlethal attacks, stalemate, castling and en passant.
+- Six region palettes and procedural 3D scenery, warning markers, character import hooks and equipment markers exist. Most art is still procedural geometry, NOT verified commercial-grade authored 3D assets.
+- Graphics tiers 0/1/2: low disables shadows, torch/rim lighting and optional region scenery; medium shows scenery with two torch lights, no directional shadow; high enables full lighting and shadow. Main-menu graphics button cycles tiers and persists `user://graphics.cfg`.
+
+### Changes in THIS run — verified GitHub writes, not verified runtime
+1. `227d4b5`: `scripts/battlefield_3d.gd` hides optional region scenery in low tier, restores it in medium/high, and skips decorative orb animation when effects are disabled. Reapplies visibility when a region is rebuilt. Gameplay board and chess pieces remain visible.
+2. `25623b6`: `tests/smoke.gd` adds assertions for low-tier scenery culling and high-tier restoration.
+3. This handoff commit: current full state and next-session instructions. Prior commits `48a2b61`, `a9d2294`, `271ae34`, `cbb22f9`, `c5fb6e8`, `0747298`, `59d0fd2` implement/test graphics tiers, UI setting and king-check 3D warning. See detailed chronological notes below.
+
+### Verification and known risks
+- Confirmed only that GitHub accepted the above source changes. **No Godot runtime, Android device FPS, APK installation or CI pass verified in this run.** Inspect latest Actions job for `25623b6` and this handoff; collect failure logs and fix before marking successful.
+- Earlier CI #282 failed on a test-initialization race; `1c1176e` changed smoke tests to wait one frame, but follow-up CI status remains unconfirmed here.
+- Scenery culling reduces draw submissions but does not free the created meshes or measure FPS. Tier switching does not change mesh complexity, texture budgets or viewport resolution. Quality button may need mobile UI layout verification.
+- Check/mate and HP combat interactions can soft-lock in some situations; enemy AI, LAN authority, balancing and campaign variety still need gameplay tests. No device performance evidence or signed production APK.
+
+### Required NEXT execution (autonomous, multiple stages)
+1. Fetch latest `main`, read this full handoff and source before edits; avoid conflicting with hourly automation. Inspect newest GitHub Actions runs, identify smoke failures and repair with tests.
+2. Improve actual authored 3D model/rig/animation pipeline and asset validation, not just primitive geometry; preserve legal movement and visual clarity. Add substantive code/assets plus regression tests in separate commits.
+3. Profile low/medium/high tiers on representative Android hardware when available; document FPS, draw calls, memory, battery and thermal measurements instead of claiming speculative performance gains.
+4. Validate HP-aware check and mate, AP, pawn promotion and LAN consistency; resolve high-risk combat edge cases. Continue multiple stages in one session rather than stopping after one commit.
+5. **Every run must update this full handoff snapshot** (goals, architecture, real commits, tested vs untested, open issues, exact next actions), preserving history below. In the user response, provide a full structured handoff, not just a one-line status.
+
 ## Product brief — what the finished game MUST become
 Portrait-first Android commercial-quality **3D tactical chess RPG**, with intuitive gameplay:
 1. Select a hero chess unit, see legal 3D squares, spend two action points per turn to move, attack, or cast class-specific abilities.
