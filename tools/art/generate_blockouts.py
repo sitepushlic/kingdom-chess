@@ -321,6 +321,19 @@ def make_character(identifier, boss=False):
             box("NightThroneSeal",(0,.97,-.21),(.22,.22,.075),4)
             for side in (-1, 1):
                 box("NightThroneFang"+str(side),(side*.24,1.59,.05),(.10,.40,.12),0,side*.25)
+    # Face-readable details at tactical camera distance. Heroes receive
+    # expressive gold brows and clear eye highlights; enemy eyes are
+    # emissive and bosses use a single ominous visor. All reuse existing
+    # shared chamfered meshes and do not require additional materials.
+    if boss:
+        box("BossVisor",(0,1.39,-.183),(.30,.075,.065),4)
+        box("BossVisorBridge",(0,1.43,-.189),(.055,.13,.05),3)
+    else:
+        for side in (-1,1):
+            box("FaceEye"+str(side),(side*.105,1.39,-.184),(.075,.055,.044),
+                3 if identifier.startswith("hero_") else 4)
+        box("FaceBrow",(0,1.475,-.183),(.28,.045,.050),
+            3 if identifier.startswith("hero_") else 1)
     # Six head geometry signatures.
     if signature==0:
         box("Crown",(0,1.52,0),(.40,.14,.31),3)
