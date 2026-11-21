@@ -54,7 +54,8 @@ def check(path):
                 assert abs(position[1]-(upper_position[1]+local[1]+offset))<1e-5
                 # Reparenting must retain the originally authored world Y:
                 # local offset relative to lower bone cancels the lower shift.
-                assert local[1]>0, f"{path}: {name} incorrectly shifted in rest pose"
+                expected_center={("Gauntlet"+side):.66,("ShinPlate"+side):.30,("Boot"+side):.12}[name]
+                assert abs(position[1]-expected_center)<1e-5, f"{path}: {name} rest Y drifted: {position[1]} vs {expected_center}"
                 assert all(math.isfinite(x) for x in position), f"{path}: {name} nonfinite bind position"
     return True
 
