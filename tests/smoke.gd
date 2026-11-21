@@ -15,6 +15,19 @@ func _assert_ok(condition: bool, description: String) -> void:
 		push_error("TEST FAILED: " + description)
 
 func _run() -> void:
+	_assert_ok(Progression.CASTLE_BUILDINGS.size() == 5, "Castle has five functional buildings")
+	_assert_ok(Progression.sanitize_castle({"forge":4,"academy":-3,"barracks":"99","treasury":100000,"infirmary":1.5}) == {"forge":4,"barracks":0,"treasury":0,"academy":0,"infirmary":0}, "Castle save rejects forged, negative and malformed upgrades")
+	_assert_ok(Progression.castle_bonus({"forge":100}, "forge") == 30, "Castle PvE attack bonus is capped")
+	_assert_ok(Progression.castle_bonus({"barracks":100}, "barracks") == 100, "Castle PvE health bonus is capped")
+	_assert_ok(Progression.castle_bonus({"treasury":100}, "treasury") == 50, "Castle raid gold bonus is capped")
+	_assert_ok(Progression.castle_bonus({"academy":100}, "academy") == 50, "Castle raid XP bonus is capped")
+	_assert_ok(Progression.castle_bonus({"infirmary":100}, "infirmary") == 30, "Castle healing bonus is capped")
+	var forge_building: Dictionary = Progression.CASTLE_BUILDINGS[0]
+	_assert_ok(Progression.castle_upgrade_cost(forge_building, 0) == 160 and Progression.castle_upgrade_cost(forge_building, 1) == 640, "Building upgrades have increasing costs")
+	_assert_ok(Progression.castle_upgrade_allowed(forge_building, 0, 0, 160), "Starter forge can be built")
+	_assert_ok(not Progression.castle_upgrade_allowed(forge_building, 1, 0, 10000), "Further upgrades require raid victories")
+	_assert_ok(not Progression.castle_upgrade_allowed(forge_building, 0, 0, 159), "Building requires sufficient gold")
+	_assert_ok(not Progression.castle_upgrade_allowed(forge_building, 100, 9999, 10000000), "Building level cap enforced")
 	_assert_ok(Progression.sanitize_board_collection([3, 3, -1, 2, 4, "1", 1.5, 1]) == [0, 1, 2, 3], "Board ownership sanitizes duplicates, forged indices and fractions")
 	_assert_ok(Progression.sanitize_board_collection("malformed") == [0], "Invalid collection restores starter board")
 	var forged_board_profile: Dictionary = Progression.default_profile()
@@ -99,6 +112,32 @@ func _run() -> void:
 			_assert_ok(game.battlefield_3d.ambient_motes[0].visible, "High quality enables ambient motes")
 			game.battlefield_3d.set_visual_quality(1)
 			_assert_ok(not game.battlefield_3d.ambient_motes[0].visible, "Medium quality disables ambient motes")
+		game._open_castle()
+		_assert_ok(game.castle_list.item_count == 5, "Castle dialog displays five upgradeable buildings")
+		var initial_castle: Dictionary = game.castle.duplicate(true)
+		var castle_gold: int = game.gold
+		var castle_wins: int = game.raid_wins
+		game.castle = Progression.default_castle()
+		game.gold = 160
+		game.raid_wins = 0
+		game.castle_list.select(0)
+		game._upgrade_castle_building()
+		_assert_ok(game.castle["forge"] == 1 and game.gold == 0, "Castle forge purchases exactly once for correct cost")
+		game._upgrade_castle_building()
+		_assert_ok(game.castle["forge"] == 1 and game.gold == 0, "Insufficient resources cannot buy another castle level")
+		game.mode = "raid"
+		var raid_attack: int = game._attack_bonus()
+		var raid_health: int = game._max_hp("P", true)
+		game.mode = "arena"
+		_assert_ok(game._attack_bonus() == 0, "Castle upgrades do not affect arena attack")
+		_assert_ok(game._max_hp("P", true) <= raid_health, "Castle upgrades do not affect arena HP")
+		game.mode = "raid"
+		_assert_ok(game._attack_bonus() == raid_attack, "Castle PvE attack bonus remains active")
+		game.castle = initial_castle
+		game.gold = castle_gold
+		game.raid_wins = castle_wins
+		game._save_profile()
+		game.castle_dialog.hide()
 		_assert_ok(game.owned_boards.has(0), "Starter cosmetic board always owned")
 		game._open_board_gallery()
 		_assert_ok(game.board_gallery_list.item_count == 4, "Board collection dialog lists four skins")
