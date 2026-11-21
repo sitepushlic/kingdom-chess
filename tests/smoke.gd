@@ -254,6 +254,28 @@ func _run() -> void:
 	_assert_ok(Progression.hazard_cells("frost", 2).is_empty(), "Hazards only appear ahead of strike rounds")
 	_assert_ok(Progression.hazard_cells("ambush", 4).is_empty(), "Non-damage modifiers do not display misleading danger cells")
 	game.battlefield_3d.set_hazards(Progression.hazard_cells("rift", 3), "rift")
+	# Imported glTF animations often live in a named AnimationLibrary.
+	var clip_rig := Node3D.new()
+	var clip_model := Node3D.new()
+	clip_model.name = "AuthoredCharacter"
+	clip_rig.add_child(clip_model)
+	var clip_player := AnimationPlayer.new()
+	clip_model.add_child(clip_player)
+	var clip_library := AnimationLibrary.new()
+	var move_clip := Animation.new()
+	move_clip.length = 0.5
+	clip_library.add_animation("move", move_clip)
+	var attack_clip := Animation.new()
+	attack_clip.length = 0.5
+	clip_library.add_animation("attack", attack_clip)
+	clip_player.add_animation_library("Imported", clip_library)
+	game.battlefield_3d.add_child(clip_rig)
+	_assert_ok(game.battlefield_3d._play_authored_clip(clip_rig, "move"), "Imported library move clip resolves")
+	_assert_ok(clip_player.current_animation == "Imported/move", "Imported move clip plays")
+	_assert_ok(game.battlefield_3d._play_authored_clip(clip_rig, "attack"), "Imported library attack clip resolves")
+	_assert_ok(clip_player.current_animation == "Imported/attack", "Imported attack clip plays")
+	_assert_ok(not game.battlefield_3d._play_authored_clip(clip_rig, "idle"), "Missing imported clip does not play unrelated animation")
+	clip_rig.queue_free()
 	_assert_ok(game.battlefield_3d.hazard_markers.size() == 64, "3D battlefield has hazard marker for every square")
 	_assert_ok(game.battlefield_3d.hazard_markers[3].visible and not game.battlefield_3d.hazard_markers[0].visible, "3D hazard markers match forecasted squares")
 	game.battlefield_3d.set_hazards(Progression.hazard_cells("none", 1), "none")
