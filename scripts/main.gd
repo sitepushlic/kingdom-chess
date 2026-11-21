@@ -1471,8 +1471,10 @@ func _king_threatened(board: Array, team: int) -> bool:
 func _move_preserves_king(source: int, destination: int) -> bool:
 	if mode == "raid": return true
 	if pieces[destination] != "":
-		# The damage system resolves this attack without moving until the target dies.
-		# Allow the strike but do not incorrectly model it as a capture.
+		# A nonlethal strike keeps its attacker on the source square.
+		# A king may never finish a lethal capture on an attacked square.
+		if pieces[source].to_upper() == "K":
+			return _king_destination_safe(source, destination)
 		return true
 	return _king_destination_safe(source, destination)
 
