@@ -318,7 +318,21 @@ def make_character(identifier, boss=False):
         cape_joints.extend((0,1,0,0))
     cape_pos=accessor(cape_positions,"72f",24,5126,"VEC3",34962,
                       ([-.43,.36,.165],[.43,1.12,.235]))
-    cape_normal=normals
+    # The tapered cloth's side faces are slanted; reusing box normals
+    # produces visibly incorrect lighting. Derive face normals from the
+    # actual deformed rest-pose geometry, preserving flat shaded edges.
+    cape_normals=[]
+    for face_start in range(0,24,4):
+        verts=[cape_positions[(face_start+j)*3:(face_start+j+1)*3] for j in range(4)]
+        u=[verts[1][j]-verts[0][j] for j in range(3)]
+        v=[verts[2][j]-verts[0][j] for j in range(3)]
+        cross=(u[1]*v[2]-u[2]*v[1],
+               u[2]*v[0]-u[0]*v[2],
+               u[0]*v[1]-u[1]*v[0])
+        magnitude=math.sqrt(sum(value*value for value in cross))
+        assert magnitude>1e-8, "Degenerate tapered cape face"
+        cape_normals.extend([component/magnitude for component in cross]*4)
+    cape_normal=accessor(cape_normals,"72f",24,5126,"VEC3",34962)
     cape_joint=accessor(cape_joints,"96B",24,5121,"VEC4",34962)
     cape_weight=accessor(cape_weights,"96f",24,5126,"VEC4",34962)
     meshes.append({"name":"DeformingMantle","primitives":[{
