@@ -498,17 +498,33 @@ def make_character(identifier, boss=False):
             for quad in quads:
                 assert len(quad)==4, f"Invalid limb quad {limb_name}: {quad}"
                 offset=len(limb_vertices)
-                limb_vertices.extend(quad)
-                limb_normals.extend([normal]*4)
+                # Three radius bands make arms/legs taper toward wrists and
+                # ankles while keeping the same deforming elbow/knee ring.
+                # All factors <= 1 preserve the existing accessor bounds.
+                profile={-1:.78,0:.90,1:1.0}
+                panel=[]
+                for x,y,z in quad:
+                    factor=profile[y]
+                    panel.append((center[0]+x*dimensions[0]*factor/2,
+                                  center[1]+y*dimensions[1]/2,
+                                  center[2]+z*dimensions[2]*factor/2))
+                u=[panel[1][i]-panel[0][i] for i in range(3)]
+                v=[panel[2][i]-panel[0][i] for i in range(3)]
+                cross=(u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])
+                magnitude=math.sqrt(sum(component*component for component in cross))
+                assert magnitude>1e-8, f"Degenerate tapered limb {limb_name}"
+                limb_vertices.extend(panel)
+                limb_normals.extend([tuple(component/magnitude for component in cross)]*4)
                 limb_triangles.extend(offset+index for index in (0,1,2,0,2,3))
         verts=[]
         weights=[]
         joints=[]
-        for x,y,z in limb_vertices:
-            verts.extend((center[0]+x*dimensions[0]/2,
-                          center[1]+y*dimensions[1]/2,
-                          center[2]+z*dimensions[2]/2))
-            distal={-1:.12,0:.50,1:.88}[y]
+        for index,(x,y,z) in enumerate(limb_vertices):
+            verts.extend((x,y,z))
+            # Original cube-ring y is reconstructed from the panel's
+            # bind-space Y; exact midpoint is preserved by construction.
+            ring=(y-center[1])/(dimensions[1]/2)
+            distal=.12 if ring<-.5 else (.88 if ring>.5 else .50)
             weights.extend((1-distal,distal,0,0))
             joints.extend((0,1,0,0))
         mins=[center[j]-dimensions[j]/2 for j in range(3)]
