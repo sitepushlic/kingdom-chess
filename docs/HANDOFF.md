@@ -1,3 +1,8 @@
+## Godot 4.3 import parser repair — 2026-11-21
+- Android run `44916821652` FAILED at `Import project` after successfully generating/uploading all 93 GLBs. Actual job log shows `res://tests/smoke.gd:140` and `:187`: `Cannot infer the type of original_hero_visual / rare_hero_visual` because `_build_piece()` does not provide a statically inferable return type.
+- Commit `1bd3cea4ad30a584372f7b0bb5a5d5eaa0a20352` changed both smoke-test declarations to explicit `Node3D` typing, matching how other 3D visuals are typed in the same test. Requires fresh Godot import verification.
+- Fast art CI run `44916777543` remains verified green; Android APK NOT YET VERIFIED. Next: check newest Android workflow, fix further import/smoke/export errors based on actual logs, confirm APK artifact, then device QA and finish game content. Do not assert successful build until GitHub confirms.
+
 ## VERIFIED 3D art CI recovery — 2026-11-21
 - Read real failure logs for fast art run `44916702025`: `hero_01.glb: Leg1 must be an articulated pivot`. Generator moves rigid armor to distal bones; a valid upper pivot can therefore have one child (the lower bone), while validator incorrectly required two. Commit `ace201052d94e22d1f599700f5b998f2938e5ed4` corrected the minimum from 2 to 1; lower-bone membership, skin integrity and attachment checks remain enforced.
 - **VERIFIED PASS:** GitHub Actions fast art job run `44916777543` concluded `success`: all 93 generated GLB structures, animated joints/recovery, 288 skinned limbs, 432 armor sockets, deliberate corruption regression, deterministic regeneration and art QA manifest succeeded. Link: https://github.com/sitepushlic/kingdom-chess/actions/runs/44916777543 . This is a CI result, not visual/production art QA.
