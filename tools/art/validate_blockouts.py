@@ -28,6 +28,7 @@ def validate(path, require_animation=True):
     assert gltf["buffers"][0]["byteLength"] <= bin_size, f"{path}: buffer overrun"
     for view in gltf["bufferViews"]:
         assert view["buffer"] == 0
+        assert view.get("byteOffset",0) % 4 == 0, f"{path}: glTF buffer view is not 4-byte aligned"
         assert view.get("byteOffset",0) + view["byteLength"] <= bin_size, f"{path}: buffer view overflow"
     for acc in gltf["accessors"]:
         view = gltf["bufferViews"][acc["bufferView"]]
@@ -35,9 +36,31 @@ def validate(path, require_animation=True):
         assert acc.get("byteOffset",0) + byte_len <= view["byteLength"], f"{path}: accessor overflow"
     # Check glTF node graph and animation sampler consistency before Godot.
     node_count=len(gltf["nodes"])
+    parent_counts=[0]*node_count
     for node in gltf["nodes"]:
         for child in node.get("children",[]):
             assert isinstance(child,int) and 0 <= child < node_count, f"{path}: invalid child index"
+            parent_counts[child]+=1
+        for key in ("translation","rotation","scale"):
+            if key in node:
+                values=node[key]
+                assert len(values)==(4 if key=="rotation" else 3), f"{path}: malformed {key}"
+                assert all(math.isfinite(value) for value in values), f"{path}: nonfinite {key}"
+        if "rotation" in node:
+            assert abs(sum(value*value for value in node["rotation"])-1.0)<0.02, f"{path}: nonunit quaternion"
+    assert all(count<=1 for count in parent_counts), f"{path}: glTF node with multiple parents"
+    visited=set()
+    active=set()
+    def visit(index):
+        assert index not in active, f"{path}: cyclic glTF hierarchy"
+        if index in visited: return
+        active.add(index)
+        for child in gltf["nodes"][index].get("children",[]): visit(child)
+        active.remove(index)
+        visited.add(index)
+    for scene in gltf.get("scenes",[]):
+        for root in scene["nodes"]: visit(root)
+    assert len(visited)==node_count, f"{path}: orphaned glTF nodes"
     for scene in gltf.get("scenes",[]):
         for root in scene["nodes"]:
             assert 0 <= root < node_count, f"{path}: invalid scene root"
