@@ -1741,6 +1741,16 @@ func _end_turn() -> void:
 		_request_action.rpc_id(1, "end")
 		return
 	if winner != "": return
+	# In arena a player cannot pass the turn while their king is in check.
+	# RPG attacks may require multiple actions to defeat a threatening unit.
+	# Restore one action so the defender can continue resolving the threat.
+	if mode == "arena" and _king_threatened(pieces, turn):
+		ap = maxi(1, ap)
+		acted.clear()
+		selected = -1
+		battle_log = "ШАХ! Защитите короля перед завершением хода."
+		_draw()
+		return
 	if mode == "raid" and turn == 1:
 		_boss_action()
 		return
