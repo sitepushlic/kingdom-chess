@@ -1137,6 +1137,19 @@ func _run() -> void:
 	game.battlefield_3d.set_region(3)
 	game.battlefield_3d.set_region(4)
 	_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == obsidian_dark and game.battlefield_3d.tile_materials[1].albedo_color == obsidian_light, "Selected board skin survives biome changes")
+	_assert_ok(game.battlefield_3d.coordinate_labels.size() == 32, "Board exposes 32 file/rank 3D coordinate labels")
+	game.battlefield_3d.set_coordinate_labels_enabled(false)
+	var all_coordinates_hidden: bool = true
+	for coordinate_label in game.battlefield_3d.coordinate_labels:
+		if coordinate_label.visible:
+			all_coordinates_hidden = false
+	_assert_ok(all_coordinates_hidden, "Coordinate accessibility toggle hides all 32 board labels")
+	game.battlefield_3d.set_coordinate_labels_enabled(true)
+	var all_coordinates_visible: bool = true
+	for coordinate_label in game.battlefield_3d.coordinate_labels:
+		if not coordinate_label.visible:
+			all_coordinates_visible = false
+	_assert_ok(all_coordinates_visible, "Coordinate accessibility toggle restores all 32 board labels")
 	game.battlefield_3d.set_board_visual_style(-1)
 	_assert_ok(not game.battlefield_3d.board_style_customized, "Resetting board skin returns to biome palette")
 	_assert_ok(game.battlefield_3d.board_edge_material.albedo_color == Color("#433246"), "Reset board skin restores carved wooden frame")
