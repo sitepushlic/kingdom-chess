@@ -1,3 +1,17 @@
+## 2026-11-21 — COMBAT TWEEN LIFECYCLE AND CAPTURE ANIMATION FIX (LATEST)
+**Standing user instructions:** Do maximum substantive work in one pass, update HANDOFF every time, continue completing Kingdom Chess with 3D graphics. **Never build/export/sign APK unless explicitly instructed otherwise.** Do not claim Godot tests passed without run evidence.
+
+### Commits to main in this pass
+- `01b1c2c6` **3D tween lifecycle hardening:** movement, death, attack swing, anticipation, beam and camera-shake tweens now `bind_node(target)`. They stop safely when the target actor, rig, beam or camera is freed during combat, avoiding property animation against deleted objects.
+- `9c8168b7` **Critical combat race fixed:** main gameplay calls `battlefield_3d.attack(source,target)` immediately before `animate_move(source,target)` on lethal captures. Both formerly animated the same actor position simultaneously. `attack()` now stores and cancels its previous anticipation tween; `animate_move()` kills that tween, clears metadata and resets actor to source before the leap, avoiding jitter/snap-back on captures.
+- `a98627a5` **GDScript compatibility:** replaced an ambiguous conditional-expression statement with explicit `if` before clearing attack tween metadata.
+- `9f6d3290` **Smoke regression:** two rapid attacks must produce distinct anticipation tweens and cancel the earlier one. Does not mutate the logical chessboard.
+
+### Verification / remaining work
+- Changes committed to GitHub main. **No successful Godot 4.3 launch, CI smoke, or actual rendered playtest observed in this turn.** Test assertions are authored but unverified.
+- Other current work in main includes cosmetic board reset, coordinate visibility settings, 3D combat numbers, boss enrage rig and health warning rings. Remaining: run real CI diagnostics and fix failures, inspect 72 character and 21 equipment GLBs, animation polish, gameplay progression/balance, mobile GPU profiling.
+- APK remains explicitly paused.
+
 ## 2026-11-21 — PERSISTENT COORDINATE UI AND ANIMATED ART FALLBACK
 **User:** Large substantive batches, update HANDOFF each turn, finish 3D game. **NO APK build/export/signing.** Never claim tests passed without runtime evidence.
 
