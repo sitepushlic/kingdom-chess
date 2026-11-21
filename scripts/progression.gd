@@ -81,7 +81,29 @@ static func sanitize_profile(parsed: Dictionary) -> Dictionary:
 		profile["items"] = []
 	if typeof(profile.get("slots")) != TYPE_DICTIONARY:
 		profile["slots"] = {"Оружие":-1,"Тело":-1,"Реликвия":-1}
-	profile["slots"] = sanitize_equipment_slots(profile["items"], profile["slots"], int(profile["level"]))
+	# Compact invalid inventory entries without changing which valid items are equipped.
+	# Saved slot indices refer to the old array and must be remapped after compaction.
+	var cleaned_items: Array = []
+	var index_map: Dictionary = {}
+	for old_index in range(profile["items"].size()):
+		var entry: Variant = profile["items"][old_index]
+		if typeof(entry) == TYPE_DICTIONARY and is_valid_equipment_item(entry):
+			index_map[old_index] = cleaned_items.size()
+			cleaned_items.append(entry)
+	var remapped_slots: Dictionary = {}
+	for slot in ITEM_SLOTS:
+		var raw_index: Variant = profile["slots"].get(slot, -1)
+		remapped_slots[slot] = -1
+		if typeof(raw_index) != TYPE_INT and typeof(raw_index) != TYPE_FLOAT:
+			continue
+		if not is_finite(float(raw_index)) or absf(float(raw_index)) > 1000000.0:
+			continue
+		if float(raw_index) != float(int(raw_index)):
+			continue
+		if index_map.has(int(raw_index)):
+			remapped_slots[slot] = index_map[int(raw_index)]
+	profile["items"] = cleaned_items
+	profile["slots"] = sanitize_equipment_slots(cleaned_items, remapped_slots, int(profile["level"]))
 	profile["equipped"] = int(profile["slots"]["Оружие"])
 	return profile
 
