@@ -1064,7 +1064,7 @@ func animate_move(source: int, target: int) -> void:
 		var vanish := create_tween()
 		# The authored death clip lasts 0.70s; keep its final pose visible
 		# before shrinking the defeated unit out of the scene.
-		vanish.tween_interval(0.46)
+		vanish.tween_interval(0.70)
 		vanish.tween_property(victim, "scale", victim.scale * 0.92, 0.12)
 		vanish.tween_property(victim, "scale", Vector3.ZERO, 0.22).set_trans(Tween.TRANS_CUBIC)
 		vanish.tween_callback(victim.queue_free)
