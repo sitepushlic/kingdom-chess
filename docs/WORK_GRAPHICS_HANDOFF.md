@@ -61,3 +61,12 @@ User communication: Russian, concise, concrete, no fluff. User is frustrated by 
 Open repo, read this file and `docs/HANDOFF.md`, inspect current source/assets, establish Godot CI baseline, then **execute A–G autonomously in the current Work session**. Do not stop after writing a plan or a couple of minor commits. If runtime/tool limits prevent finishing, preserve complete reproducible handoff and honestly state exact remaining blockers; do not pretend background execution is happening.
 
 **Prompt to Work:** “Открой `sitepushlic/kingdom-chess`, прочитай `docs/WORK_GRAPHICS_HANDOFF.md` и `docs/HANDOFF.md`. Полностью реализуй только пункт 1 — 3D-графику по критериям приёмки. Создай и подключи реальные 3D-ассеты и анимации, проверь Godot 4.3/Android CI, исправь ошибки, обнови хэндоф. Не переходи к пункту 2 и не присылай промежуточные отчёты. Не заявляй о завершении без фактической проверки.”
+
+## 6. Manual graphics implementation batch — 2026-11-21 (after initial Work brief)
+This batch is committed to `main`, not verified in Godot:
+- `db31da2d1d1722c56d6b1b41528ae16741220eed`: `_add_hero_signature_costume` generates 30 deterministic **procedural** costume/head silhouettes: five body archetypes × six signature head geometries, plus rarity metalwork; called by `_add_selected_hero_identity`. This improves differentiation but **does not satisfy the requirement for 30 authored/rigged GLBs**.
+- `315c920f70085257646c8816cd102b68b52c206a`: tests 30 costume recipes.
+- `346c09eba885de6de8d80d6dd3783e2f7bdc5d30`, `11fa154b21755abab2d7a92f9c820688b3ce6258`, `6f427ff0f063b39b07d369694a34c3c80b2dac45`: seven physical gear silhouettes per weapon/body/relic slot, selected-gear 3D integration. This is procedural geometry, not final authored equipment.
+- `5826ab4cda349a3aa1a14431f5cbd6065dd09162`: tests 21 tier/slot mesh combinations.
+- Environment check in this session: local runtime has neither Godot nor Blender; no actual Godot parser/test run, Android APK or visual device inspection was performed. **The code is unverified and may have errors.** Run Godot 4.3 headless and fix any errors before relying on it.
+- Highest priority next: install/run Godot in a capable environment; audit smoke test and 3D node tree; produce original rigged GLB characters, boss art and modular equipment; integrate authored animation clips and mobile performance; complete 6 regions and Android checks. Preserve priority 1 restriction.
