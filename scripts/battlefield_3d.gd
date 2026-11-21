@@ -1268,6 +1268,7 @@ func set_region(region_index: int) -> void:
 	region_background_target = palette[0].darkened(0.72)
 	region_light_target = palette[1].lightened(0.20)
 	region_rim_target = palette[2]
+	rim_light.light_color = palette[2]
 	region_light_transition = 1.0
 	key_light.light_color = palette[1].lightened(0.35)
 	rim_light.light_energy = 1.25 if region_index == 5 else 1.6
