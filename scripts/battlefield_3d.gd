@@ -1758,7 +1758,8 @@ func animate_move(source: int, target: int) -> void:
 	var attack_motion: Tween = actor.get_meta("attack_motion_tween", null) as Tween
 	if attack_motion != null and attack_motion.is_running():
 		attack_motion.kill()
-	actor.remove_meta("attack_motion_tween") if actor.has_meta("attack_motion_tween") else null
+	if actor.has_meta("attack_motion_tween"):
+		actor.remove_meta("attack_motion_tween")
 	actor.position = _square_position(source)
 	if piece_nodes.has(target):
 		if hero_model_cell == target: hero_model_cell = -1
