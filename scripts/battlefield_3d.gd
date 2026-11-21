@@ -278,11 +278,23 @@ func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 					var character: Node = parent.get_node_or_null("AuthoredCharacter")
 					if character != null:
 						if slot_key == "armor":
-							# The imported torso leans and bobs. Chest armor must
-							# follow BodyRig, not the static board piece root.
-							var torso: Node = character.find_child("BodyRig", true, false)
-							if torso is Node3D:
-								attachment_parent = torso as Node3D
+							# Weighted torso flexes at SpineChest; attach chest
+							# armor to that imported bone when Godot exposes it.
+							var chest_bone_found: bool = false
+							for candidate in character.find_children("*", "Skeleton3D", true, false):
+								var skeleton: Skeleton3D = candidate as Skeleton3D
+								if skeleton.find_bone("SpineChest") >= 0:
+									var chest_attachment := BoneAttachment3D.new()
+									chest_attachment.name = "BoneSocket_SpineChest"
+									chest_attachment.bone_name = "SpineChest"
+									skeleton.add_child(chest_attachment)
+									attachment_parent = chest_attachment
+									chest_bone_found = true
+									break
+							if not chest_bone_found:
+								var torso: Node = character.find_child("BodyRig", true, false)
+								if torso is Node3D:
+									attachment_parent = torso as Node3D
 						else:
 							var joint_name: String = "Arm1" if slot_key == "weapon" else "Arm-1"
 							var joint: Node = character.find_child(joint_name, true, false)
@@ -306,7 +318,7 @@ func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 							socket.position = Vector3(0.13, -0.19, -0.08) if attachment_parent != parent else Vector3(0.43, 0.87, -0.08)
 							socket.scale = Vector3.ONE * 0.64
 						"armor":
-							socket.position = Vector3(0, 0.83, -0.08)
+							socket.position = Vector3(0, -0.18, -0.08) if attachment_parent is BoneAttachment3D else Vector3(0, 0.83, -0.08)
 							socket.scale = Vector3.ONE * 0.95
 						"relic":
 							socket.position = Vector3(-0.27, -0.17, -0.16) if attachment_parent != parent else Vector3(-0.39, 0.89, -0.16)
