@@ -95,6 +95,24 @@ def check(path):
     assert authored, f"{path}: no authored signature headgear"
     for name in authored:
         assert parents[by_name[name]]==head_id, f"{path}: {name} is static headgear"
+    # Regression: class-specific facial geometry must follow neck motion.
+    face_prefixes=("RoyalFacePlate","RoyalTempleGem","RoyalDiadem",
+                   "RaiderTusk","RaiderJawGuard","RaiderWarPaint",
+                   "RangerHoodSeam","RangerMaskStrap","RangerNoseGuard",
+                   "ForgeFaceplate","ForgeVisorSlot","ForgeJawBolt","ForgeNoseRidge",
+                   "MageTempleLens","MageArcaneEtch","MageChinSigil",
+                   "VeteranTempleSpike","VeteranBrowEmblem")
+    class_faces=[name for name in by_name if name.startswith(face_prefixes)]
+    assert len(class_faces)>=3, f"{path}: missing class-specific face detail"
+    for name in class_faces:
+        assert parents[by_name[name]]==head_id, f"{path}: {name} is not animated with head"
+        assert all(math.isfinite(v) for v in world_position(by_name[name]))
+    armor_prefixes=("RoyalShieldRim","RaiderDiagonalHarness",
+                    "RangerArrowFeather","ForgeSegment","MageHangingStole")
+    armor_parts=[name for name in by_name if name.startswith(armor_prefixes)]
+    assert armor_parts, f"{path}: no class-specific 3D armor silhouette"
+    if "BossShoulderCrest1" in by_name:
+        assert "BossRibCageUpper" in by_name and "BossBackStandard" in by_name
     # Every character's weapon must follow its actual wrist, rather
     # than staying under the stationary BodyRig during attacks.
     right=by_name["Arm1Lower"]
