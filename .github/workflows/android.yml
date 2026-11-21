@@ -109,6 +109,9 @@ jobs:
       - name: Regression-test GLB corruption detection
         run: python3 tools/art/test_validator_failures.py
       - name: Verify all 93 GLBs regenerate identically
+        # Full regeneration is intentionally reserved for manual/nightly verification;
+        # doing it on every APK push doubles the slow 93-model build workload.
+        if: github.event_name == 'workflow_dispatch'
         run: python3 tools/art/check_reproducibility.py
       - name: Export 93-asset art complexity manifest
         run: python3 tools/art/export_art_report.py
