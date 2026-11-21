@@ -2010,6 +2010,8 @@ func _boss_action() -> void:
 func _draw() -> void:
 	if not lan_connected and pieces.size() == 64:
 		_save_battle()
+	if status == null or mode_button == null or boss_portrait == null or boss_bar == null or phase_label == null or inventory_label == null or equipment_label == null or info == null:
+		return
 	status.text = winner if winner != "" else ("ГЕРОИ" if mode == "raid" else ("СВЕТЛЫЕ" if turn == 1 else "ТЁМНЫЕ")) + " • ОД: " + str(ap) + (" • ШАХ!" if mode == "arena" and _king_threatened(pieces, turn) else "")
 	mode_button.text = "⚔ АРЕНА" if mode == "arena" else "⚔ РЕЙД"
 	boss_portrait.visible = mode == "raid"
