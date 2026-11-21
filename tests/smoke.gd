@@ -1189,6 +1189,11 @@ func _run() -> void:
 		var active_aura: Node3D = active_boss.get_node_or_null("BossEnrageAura")
 		if active_aura != null:
 			_assert_ok(active_aura.visible, "Boss enrage reveals animated crown aura")
+			active_aura.visible = false
+			active_boss.scale = Vector3.ONE
+			game.battlefield_3d.set_boss_phase(2)
+			_assert_ok(active_aura.visible and active_boss.scale.x > 1.4, "Reapplying same boss phase restores visuals after actor rebuild")
+
 	game.battlefield_3d.set_boss_phase(1)
 	_assert_ok(not game.battlefield_3d.boss_enraged, "Boss enrage state resets correctly")
 	if game.battlefield_3d.piece_nodes.has(4):
