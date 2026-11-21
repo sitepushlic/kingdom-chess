@@ -246,6 +246,10 @@ func _run() -> void:
 	game.hero_poison[48] = 2
 	var poison_snapshot: Dictionary = game._snapshot()
 	_assert_ok(int(poison_snapshot["hero_poison"][48]) == 2, "Poison status survives battle snapshot for save and LAN")
+	game.battlefield_3d.set_poison_indicators(game.hero_poison)
+	_assert_ok(game.battlefield_3d.poison_indicators.has(48), "Poisoned hero has a 3D status marker")
+	game.battlefield_3d.set_poison_indicators({})
+	_assert_ok(game.battlefield_3d.poison_indicators.is_empty(), "Poison status markers disappear when cleared")
 	game.hero_poison.clear()
 	game._send_snapshot(poison_snapshot)
 	_assert_ok(game.hero_poison.is_empty(), "Remote snapshot is ignored when LAN client is not connected")
