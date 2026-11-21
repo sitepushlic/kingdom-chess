@@ -87,7 +87,9 @@ def make_character(identifier, boss=False):
     def box(name, center, size, material=0, angle=0):
         # Put articulated limbs under an actual shoulder/hip pivot so
         # rotation tracks swing around joints rather than around box centers.
-        if name.startswith("Arm") and name[3:] in ("1","-1"):
+        if name == "Head":
+            joint = (0,1.17,0)
+        elif name.startswith("Arm") and name[3:] in ("1","-1"):
             joint = (center[0], 1.06, center[2])
         elif name.startswith("Leg") and name[3:] in ("1","-1"):
             joint = (center[0], .53, center[2])
@@ -104,6 +106,15 @@ def make_character(identifier, boss=False):
         idx=len(nodes)
         nodes.append({"name":name,"mesh":material,"translation":list(center),"scale":[v/2 for v in size],
                       "rotation":[0,0,math.sin(angle/2),math.cos(angle/2)]})
+        head_parts=("Eye","CheekGuard","BrowRidge","KingCrown","QueenDiadem",
+                    "BishopMitre","KnightWing","RangerHood","EmberHorn",
+                    "GlacierSpire","AstralCrown","CrimsonFang")
+        if name.startswith(head_parts):
+            head_pivot=next((n for n in nodes if n.get("name")=="Head"),None)
+            if head_pivot is not None:
+                nodes[idx]["translation"]=[center[i]-head_pivot["translation"][i] for i in range(3)]
+                head_pivot["children"].append(idx)
+                return
         if name.startswith("Gauntlet") or name.startswith("ShinPlate") or name.startswith("Boot"):
             side=name.split("Gauntlet")[-1] if name.startswith("Gauntlet") else (name.split("ShinPlate")[-1] if name.startswith("ShinPlate") else name.split("Boot")[-1])
             pivot_name=("Arm" if name.startswith("Gauntlet") else "Leg")+side
@@ -377,6 +388,19 @@ def make_character(identifier, boss=False):
         samplers.append({"input":t,"output":hem_output,"interpolation":"LINEAR"})
         channels.append({"sampler":len(samplers)-1,
                          "target":{"node":cape_root_index+1,"path":"rotation"}})
+        # Articulated head turns and nods; eyes, brow, helmets and crowns
+        # are children of the neck pivot and therefore follow the motion.
+        head_angles={
+            "idle":[0,.035,0], "move":[0,-.05,.06],
+            "attack":[0,-.16,.08,0], "hit":[0,.20,0],
+            "death":[0,-.14,-.28], "cast":[0,-.12,.05],
+        }[name]
+        head_output=accessor([v for angle in head_angles
+                              for v in (math.sin(angle/2),0,0,math.cos(angle/2))],
+                             str(len(head_angles)*4)+"f",len(head_angles),5126,"VEC4")
+        samplers.append({"input":t,"output":head_output,"interpolation":"LINEAR"})
+        channels.append({"sampler":len(samplers)-1,
+                         "target":{"node":node_ids["Head"],"path":"rotation"}})
         for limb, angles in limb_poses[name].items():
             if limb not in node_ids:
                 continue
