@@ -29,7 +29,12 @@ def check(path):
             assert i not in seen, f"{path}: cyclic rig"
             seen.add(i)
             node=nodes[i]
-            assert "rotation" not in node or node["rotation"]==[0,0,0,1], f"{path}: rotated rest joint requires matrix evaluation"
+            # A node's own rotation does not move its origin. Parent
+            # transforms are unrotated in the generated bind skeleton;
+            # decorative pauldrons may legitimately have local rotation.
+            if i in parents:
+                parent=nodes[parents[i]]
+                assert "rotation" not in parent or parent["rotation"]==[0,0,0,1], f"{path}: rotated ancestor requires matrix evaluation"
             xyz=node.get("translation",[0,0,0])
             for k in range(3): point[k]+=xyz[k]
             if i not in parents: return point
