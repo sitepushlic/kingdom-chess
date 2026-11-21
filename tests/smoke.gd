@@ -74,6 +74,8 @@ func _run() -> void:
 	_assert_ok(game.battlefield_3d != null, "3D board exists for check warning")
 	_assert_ok(game.battlefield_3d.tile_materials.size() == 2, "Chessboard uses two reusable 3D tile materials")
 	_assert_ok(game.battlefield_3d.tiles.size() == 64, "Chessboard retains all 64 3D tiles")
+	_assert_ok(game.battlefield_3d.highlights.size() == 64, "All legal-move highlight markers remain present")
+	_assert_ok(game.battlefield_3d.highlights[0].material_override == game.battlefield_3d.highlights[63].material_override, "Legal-move markers reuse one 3D material")
 	_assert_ok(game.battlefield_3d.tiles[0].material_override == game.battlefield_3d.tiles[2].material_override, "Same-color tiles share material instance")
 	_assert_ok(game.battlefield_3d.tiles[0].material_override != game.battlefield_3d.tiles[1].material_override, "Alternating chess squares keep distinct materials")
 	game.battlefield_3d.set_region(1)
