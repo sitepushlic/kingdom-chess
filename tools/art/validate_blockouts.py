@@ -82,6 +82,14 @@ def validate(path, require_animation=True):
             assert 0 <= channel["target"]["node"] < node_count, f"{path}: bad animation target"
             assert channel["target"]["path"] in ("translation","rotation","scale"), f"{path}: unsupported target"
         for channel in animation["channels"]:
+            sampler=animation["samplers"][channel["sampler"]]
+            input_acc=gltf["accessors"][sampler["input"]]
+            output_acc=gltf["accessors"][sampler["output"]]
+            assert input_acc["count"]==output_acc["count"], f"{path}: animation keyframe/value count mismatch"
+            target_path=channel["target"]["path"]
+            assert target_path in ("translation","rotation","scale"), f"{path}: unsupported animation target {target_path}"
+            expected_type="VEC4" if target_path=="rotation" else "VEC3"
+            assert output_acc["type"]==expected_type, f"{path}: invalid {target_path} keyframe vector type"
             if channel["target"]["path"]=="rotation":
                 sampler=animation["samplers"][channel["sampler"]]
                 acc=gltf["accessors"][sampler["output"]]
