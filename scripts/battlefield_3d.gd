@@ -360,6 +360,62 @@ func _add_selected_hero_identity(kind: String, parent: Node3D) -> void:
 		halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	emblem.set_meta("hero_id", identifier)
 
+func _add_humanoid_costume(kind: String, white: bool, parent: Node3D) -> void:
+	# Mobile-friendly layered armor and weapons. Class silhouettes remain legible
+	# at the portrait camera's distance; authored GLB meshes still take priority.
+	var steel: Material = _material(Color("#b6c5d2") if white else Color("#75667d"), 0.7, 0.29)
+	var cloth: Material = _material(Color("#246e8a") if white else Color("#6e304f"), 0.15, 0.74)
+	var trim: Material = gold_material if white else boss_crown
+	var skin: Material = _material(Color("#d9a47e") if white else Color("#a87b83"), 0.0, 0.79)
+	# Legs, boots, torso, articulated arms and a face give a recognizable
+	# humanoid silhouette instead of the earlier abstract chess totem.
+	for side in [-1.0, 1.0]:
+		_cylinder(0.072, 0.34, steel, parent, Vector3(side * 0.115, 0.43, 0), 0.085)
+		_box(Vector3(0.16, 0.12, 0.22), trim, parent, Vector3(side * 0.115, 0.29, -0.055))
+		var shoulder := _sphere(0.125, steel, parent, Vector3(side * 0.255, 0.93, 0))
+		shoulder.scale = Vector3(1.0, 0.76, 1.12)
+		var arm := _cylinder(0.065, 0.38, cloth, parent, Vector3(side * 0.295, 0.72, 0))
+		arm.rotation.z = side * 0.17
+		_sphere(0.065, skin, parent, Vector3(side * 0.32, 0.52, -0.025))
+	_cylinder(0.21, 0.51, cloth, parent, Vector3(0, 0.75, 0), 0.17)
+	_box(Vector3(0.36, 0.16, 0.28), steel, parent, Vector3(0, 0.93, 0))
+	_box(Vector3(0.28, 0.05, 0.06), trim, parent, Vector3(0, 0.72, -0.175))
+	_cylinder(0.065, 0.13, skin, parent, Vector3(0, 1.075, 0))
+	_sphere(0.16, skin, parent, Vector3(0, 1.24, 0))
+	# Eyes and class-specific headwear distinguish the front of each character.
+	for side in [-1.0, 1.0]:
+		_sphere(0.024, dark_material, parent, Vector3(side * 0.065, 1.26, -0.144))
+	match kind:
+		"P": # Scout: hood, short dagger and travel satchel.
+			_cylinder(0.19, 0.19, cloth, parent, Vector3(0, 1.37, 0), 0.09)
+			_box(Vector3(0.17, 0.22, 0.11), trim, parent, Vector3(-0.27, 0.68, 0.12))
+			_box(Vector3(0.045, 0.32, 0.065), steel, parent, Vector3(0.35, 0.48, -0.06))
+		"R": # Guardian: tower shield and heavy crown helm.
+			_box(Vector3(0.35, 0.59, 0.10), steel, parent, Vector3(-0.39, 0.76, -0.12))
+			_box(Vector3(0.08, 0.40, 0.13), trim, parent, Vector3(-0.39, 0.76, -0.19))
+			_cylinder(0.20, 0.18, steel, parent, Vector3(0, 1.37, 0))
+		"N": # Knight: crested visor and a long sword.
+			_box(Vector3(0.32, 0.11, 0.12), steel, parent, Vector3(0, 1.27, -0.13))
+			_cylinder(0.045, 0.32, trim, parent, Vector3(0, 1.50, 0), 0.005)
+			_box(Vector3(0.07, 0.63, 0.055), steel, parent, Vector3(0.39, 0.83, -0.08))
+			_box(Vector3(0.25, 0.055, 0.075), trim, parent, Vector3(0.39, 0.56, -0.08))
+		"B": # Mystic: tall hood, staff and luminous focus.
+			_cylinder(0.20, 0.32, cloth, parent, Vector3(0, 1.42, 0), 0.02)
+			_cylinder(0.038, 0.91, trim, parent, Vector3(0.39, 0.83, -0.02))
+			_sphere(0.115, _material(Color("#77e9ff"), 0.12, 0.20, Color("#277caa")), parent, Vector3(0.39, 1.33, -0.02))
+		"Q": # Battlemage: split crown, two orbiting gems, spell wand.
+			for side in [-1.0, 1.0]:
+				_cylinder(0.055, 0.28, trim, parent, Vector3(side * 0.13, 1.48, 0), 0.005)
+				_sphere(0.072, cloth, parent, Vector3(side * 0.29, 1.06, -0.17))
+			_cylinder(0.035, 0.66, trim, parent, Vector3(0.37, 0.79, 0))
+		"K": # Sovereign: royal cape, tall crown and scepter.
+			_box(Vector3(0.50, 0.58, 0.10), cloth, parent, Vector3(0, 0.76, 0.19))
+			_cylinder(0.21, 0.12, trim, parent, Vector3(0, 1.41, 0))
+			for side in [-1.0, 0.0, 1.0]:
+				_cylinder(0.048, 0.22, trim, parent, Vector3(side * 0.14, 1.54, 0), 0.005)
+			_cylinder(0.045, 0.80, trim, parent, Vector3(0.38, 0.84, 0))
+			_sphere(0.09, trim, parent, Vector3(0.38, 1.30, 0))
+
 func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	var unit := Node3D.new()
 	var white := letter == letter.to_upper()
@@ -374,36 +430,7 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 
 	var kind := letter.to_upper()
 	if not _load_authored_character(kind, unit):
-		# Procedural fallback remains usable until each class receives an original GLB.
-		if kind == "P":
-			_cylinder(0.17, 0.45, material, unit, Vector3(0, 0.47, 0), 0.11)
-			_sphere(0.16, accent, unit, Vector3(0, 0.78, 0))
-		elif kind == "R":
-			_cylinder(0.22, 0.7, material, unit, Vector3(0, 0.58, 0))
-			_cylinder(0.31, 0.14, accent, unit, Vector3(0, 0.98, 0))
-			for n in range(4):
-				var a := float(n) * TAU / 4.0
-				_box(Vector3(0.17, 0.19, 0.17), accent, unit, Vector3(cos(a) * 0.22, 1.13, sin(a) * 0.22))
-		elif kind == "N":
-			_cylinder(0.2, 0.34, material, unit, Vector3(0, 0.40, 0), 0.13)
-			_box(Vector3(0.27, 0.58, 0.24), material, unit, Vector3(0, 0.76, -0.10))
-			_box(Vector3(0.27, 0.22, 0.44), accent, unit, Vector3(0, 1.01, -0.22))
-			_sphere(0.055, gold_material, unit, Vector3(-0.15, 0.94, -0.31))
-		elif kind == "B":
-			_cylinder(0.22, 0.62, material, unit, Vector3(0, 0.57, 0), 0.11)
-			_sphere(0.22, accent, unit, Vector3(0, 0.97, 0))
-			_cylinder(0.05, 0.20, gold_material, unit, Vector3(0, 1.25, 0))
-		elif kind == "Q":
-			_cylinder(0.23, 0.75, material, unit, Vector3(0, 0.62, 0), 0.13)
-			_cylinder(0.28, 0.11, accent, unit, Vector3(0, 1.04, 0))
-			for n in range(5):
-				var a := float(n) * TAU / 5.0
-				_sphere(0.095, gold_material, unit, Vector3(cos(a) * 0.23, 1.19, sin(a) * 0.23))
-		else:
-			_cylinder(0.24, 0.82, material, unit, Vector3(0, 0.65, 0), 0.14)
-			_cylinder(0.27, 0.12, accent, unit, Vector3(0, 1.12, 0))
-			_box(Vector3(0.12, 0.47, 0.12), gold_material, unit, Vector3(0, 1.41, 0))
-			_box(Vector3(0.37, 0.10, 0.12), gold_material, unit, Vector3(0, 1.48, 0))
+		_add_humanoid_costume(kind, white, unit)
 	_add_character_surface_detail(kind, white, unit)
 	if white: _add_selected_hero_identity(kind, unit)
 	# Each class has an identifiable elevated crest, even at portrait mobile scale.
