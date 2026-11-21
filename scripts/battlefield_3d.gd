@@ -249,6 +249,52 @@ func _gear_material(slot: String) -> Material:
 
 # Physical rarity marks are deliberately countable at mobile scale; the seven tiers
 # have distinct silhouettes, not only different shader colors.
+func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
+	if not hero_gear.has(slot): return
+	var tier: int = clampi(int(hero_gear[slot].get("rarity", 0)), 0, 6)
+	var mat: Material = _gear_material(slot)
+	match slot:
+		"Оружие":
+			# Seven progressive silhouettes: blade, axe, polearm, twin-prong,
+			# radiant glaive, runic staff, and six-wing sovereign weapon.
+			match tier:
+				0:
+					_box(Vector3(0.075, 0.46, 0.06), mat, parent, Vector3(0.43, 0.89, -0.08))
+				1:
+					_box(Vector3(0.26, 0.24, 0.08), mat, parent, Vector3(0.43, 1.00, -0.08))
+				2:
+					_cylinder(0.045, 0.92, mat, parent, Vector3(0.43, 0.88, -0.08), 0.012)
+				3:
+					for side in [-1.0, 1.0]:
+						_box(Vector3(0.08, 0.48, 0.07), mat, parent, Vector3(0.43 + side * 0.10, 0.96, -0.08))
+				4:
+					var wing := _box(Vector3(0.38, 0.13, 0.07), mat, parent, Vector3(0.43, 1.13, -0.08))
+					wing.rotation.z = 0.38
+				5:
+					_cylinder(0.07, 0.87, mat, parent, Vector3(0.43, 0.86, -0.08), 0.015)
+					_sphere(0.17, mat, parent, Vector3(0.43, 1.34, -0.08))
+				6:
+					for i in range(6):
+						var angle: float = TAU * float(i) / 6.0
+						var wing := _box(Vector3(0.065, 0.34, 0.09), mat, parent, Vector3(0.43 + cos(angle) * 0.16, 1.14 + sin(angle) * 0.16, -0.08))
+						wing.rotation.z = -angle
+		"Тело":
+			# Each tier changes breastplate shape and shoulder profile.
+			var width: float = 0.34 + float(tier) * 0.028
+			_box(Vector3(width, 0.34, 0.12), mat, parent, Vector3(0, 0.80, -0.19))
+			for side in [-1.0, 1.0]:
+				var shoulder := _box(Vector3(0.17 + tier * 0.022, 0.12 + tier * 0.028, 0.25), mat, parent, Vector3(side * 0.29, 1.00, -0.04))
+				shoulder.rotation.z = side * float(tier) * 0.06
+			for i in range(tier):
+				_box(Vector3(0.06, 0.05, 0.05), mat, parent, Vector3(-0.16 + i * 0.055, 0.75, -0.26))
+		"Реликвия":
+			# Seven increasingly elaborate physical amulets.
+			_sphere(0.09 + float(tier) * 0.014, mat, parent, Vector3(-0.39, 0.89, -0.16))
+			for i in range(tier + 1):
+				var angle: float = TAU * float(i) / float(tier + 1)
+				var bead := _sphere(0.028 + tier * 0.004, mat, parent, Vector3(-0.39 + cos(angle) * 0.17, 0.89 + sin(angle) * 0.17, -0.16))
+				bead.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
 func _add_rarity_insignia(slot: String, parent: Node3D, at: Vector3) -> void:
 	if not hero_gear.has(slot): return
 	var rarity: int = clampi(int(hero_gear[slot].get("rarity", 0)), 0, 6)
@@ -532,18 +578,21 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 		if hero_gear.has("Тело"):
 			var armor_mat := _gear_material("Тело")
 			_add_rarity_insignia("Тело", unit, Vector3(0, 0.52, -0.26))
+			_add_equipment_geometry("Тело", unit)
 			_cylinder(0.29, 0.15, armor_mat, unit, Vector3(0, 0.32, 0))
 			for side in [-1.0, 1.0]:
 				_box(Vector3(0.12, 0.28, 0.28), armor_mat, unit, Vector3(side * 0.27, 0.48, 0))
 		if hero_gear.has("Оружие"):
 			var weapon_mat := _gear_material("Оружие")
 			_add_rarity_insignia("Оружие", unit, Vector3(0.42, 1.15, 0))
+			_add_equipment_geometry("Оружие", unit)
 			_cylinder(0.045, 0.82, weapon_mat, unit, Vector3(0.42, 0.68, 0))
 			_box(Vector3(0.33, 0.065, 0.13), weapon_mat, unit, Vector3(0.42, 0.87, 0))
 			_cylinder(0.09, 0.21, weapon_mat, unit, Vector3(0.42, 1.13, 0), 0.015)
 		if hero_gear.has("Реликвия"):
 			var relic_mat := _gear_material("Реликвия")
 			_add_rarity_insignia("Реликвия", unit, Vector3(-0.39, 0.83, 0))
+			_add_equipment_geometry("Реликвия", unit)
 			_sphere(0.13, relic_mat, unit, Vector3(-0.39, 0.81, 0))
 			_cylinder(0.05, 0.32, gold_material, unit, Vector3(-0.39, 0.57, 0))
 		var set_count := 0
