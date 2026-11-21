@@ -139,6 +139,7 @@ func _run() -> void:
 	_assert_ok(not game.battlefield_3d.key_light.shadow_enabled and not game.battlefield_3d.rim_light.visible, "Low mobile quality disables shadows and rim light")
 	_assert_ok(not game.battlefield_3d.region_scenery.visible, "Low mobile quality culls optional 3D region scenery")
 	_assert_ok(game.battlefield_3d.torches.all(func(light): return not light.visible), "Low mobile quality disables dynamic torch lights")
+	_assert_ok(game.battlefield_3d.torch_flames.all(func(flame): return not flame.visible), "Low quality also culls torch flame meshes")
 	var low_flame_scale: Vector3 = game.battlefield_3d.torch_flames[0].scale
 	game.battlefield_3d._process(0.25)
 	_assert_ok(game.battlefield_3d.torch_flames[0].scale == low_flame_scale, "Low quality skips hidden torch animation work")
@@ -146,8 +147,10 @@ func _run() -> void:
 	_assert_ok(game.battlefield_3d.key_light.shadow_enabled and game.battlefield_3d.rim_light.visible, "High quality restores shadow and rim light")
 	_assert_ok(game.battlefield_3d.region_scenery.visible, "High quality restores 3D region scenery")
 	_assert_ok(game.battlefield_3d.torches.all(func(light): return light.visible), "High quality restores torch lighting")
+	_assert_ok(game.battlefield_3d.torch_flames.all(func(flame): return flame.visible), "High quality restores all flame meshes")
 	game.battlefield_3d.set_visual_quality(1)
 	_assert_ok(not game.battlefield_3d.key_light.shadow_enabled and game.battlefield_3d.torches[0].visible and not game.battlefield_3d.torches[1].visible, "Default mobile quality uses half the torch lights")
+	_assert_ok(game.battlefield_3d.torch_flames[0].visible and not game.battlefield_3d.torch_flames[1].visible, "Medium quality culls flame meshes for disabled lights")
 	game.battlefield_3d.set_checked_king(60)
 	_assert_ok(game.battlefield_3d.checked_king_square == 60 and game.battlefield_3d.king_warning.visible, "Threatened king has visible 3D warning")
 	game.battlefield_3d.set_checked_king(-1)
