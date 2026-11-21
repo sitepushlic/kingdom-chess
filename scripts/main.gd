@@ -1664,7 +1664,7 @@ func _tap(i: int) -> void:
 	if lan_connected and not lan_host:
 		_request_action.rpc_id(1, "tap", i)
 		return
-	if winner != "" or enemy_turn or (mode == "raid" and turn == -1): return
+	if winner != "" or enemy_turn or ap <= 0 or (mode == "raid" and turn == -1): return
 	if curse_mode:
 		if selected >= 0 and pieces[i] != "" and _team(pieces[i]) == -turn and _legal(selected,i):
 			_apply_curse(i)
