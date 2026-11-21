@@ -546,6 +546,7 @@ def make_character(identifier, boss=False):
     # and a 50/50 deformation band at the spine joint.
     torso_positions=[]
     torso_normals=[]
+    torso_uvs=[]
     torso_weights=[]
     torso_joints=[]
     torso_indices=[]
@@ -589,18 +590,23 @@ def make_character(identifier, boss=False):
             magnitude=math.sqrt(sum(component*component for component in cross))
             assert magnitude>1e-8, "Degenerate torso panel"
             torso_normals.extend([component/magnitude for component in cross]*4)
+            # Continuous vertical UVs across the waist/chest seam.
+            for px,py,pz in panel_positions:
+                horizontal=(px/.225+1)*.5 if abs(cross[2])>=abs(cross[0]) else (pz/.145+1)*.5
+                torso_uvs.extend((max(0,min(1,horizontal)),(py-.61)/.54))
             torso_indices.extend(base+index for index in (0,1,2,0,2,3))
     torso_count=len(torso_positions)//3
     assert torso_count==40
     torso_pos=accessor(torso_positions,str(torso_count*3)+"f",torso_count,5126,"VEC3",34962,
                        ([-.225,.61,-.145],[.225,1.15,.145]))
     torso_normal=accessor(torso_normals,str(torso_count*3)+"f",torso_count,5126,"VEC3",34962)
+    torso_uv=accessor(torso_uvs,str(torso_count*2)+"f",torso_count,5126,"VEC2",34962,([0,0],[1,1]))
     torso_joint=accessor(torso_joints,str(torso_count*4)+"B",torso_count,5121,"VEC4",34962)
     torso_weight=accessor(torso_weights,str(torso_count*4)+"f",torso_count,5126,"VEC4",34962)
     torso_index=accessor(torso_indices,str(len(torso_indices))+"H",len(torso_indices),5123,"SCALAR",34963)
     meshes.append({"name":"DeformingTorso","primitives":[{
         "attributes":{"POSITION":torso_pos,"NORMAL":torso_normal,
-                      "JOINTS_0":torso_joint,"WEIGHTS_0":torso_weight},
+                      "TEXCOORD_0":torso_uv,"JOINTS_0":torso_joint,"WEIGHTS_0":torso_weight},
         "indices":torso_index,"material":0}]})
     torso_inverse=[]
     for y in (.70,1.03):
@@ -726,10 +732,16 @@ def make_character(identifier, boss=False):
                 limb_normals.extend([tuple(component/magnitude for component in cross)]*4)
                 limb_triangles.extend(offset+index for index in (0,1,2,0,2,3))
         verts=[]
+        uv_coords=[]
         weights=[]
         joints=[]
         for index,(x,y,z) in enumerate(limb_vertices):
             verts.extend((x,y,z))
+            # Limb UVs follow the length axis and wrap around the
+            # tapered perimeter. All values are normalized to [0,1].
+            horizontal=(x-center[0])/dimensions[0]+.5
+            vertical=(y-center[1])/dimensions[1]+.5
+            uv_coords.extend((max(0,min(1,horizontal)),max(0,min(1,vertical))))
             # Original cube-ring y is reconstructed from the panel's
             # bind-space Y; exact midpoint is preserved by construction.
             ring=(y-center[1])/(dimensions[1]/2)
@@ -743,13 +755,14 @@ def make_character(identifier, boss=False):
                            (mins,maxs))
         normal_index=accessor([v for n in limb_normals for v in n],
                               str(vertex_count*3)+"f",vertex_count,5126,"VEC3",34962)
+        uv_index=accessor(uv_coords,str(vertex_count*2)+"f",vertex_count,5126,"VEC2",34962,([0,0],[1,1]))
         joint_index=accessor(joints,str(vertex_count*4)+"B",vertex_count,5121,"VEC4",34962)
         weight_index=accessor(weights,str(vertex_count*4)+"f",vertex_count,5126,"VEC4",34962)
         triangle_index=accessor(limb_triangles,str(len(limb_triangles))+"H",
                                 len(limb_triangles),5123,"SCALAR",34963)
         meshes.append({"name":limb_name+"DeformingSurface","primitives":[{
             "attributes":{"POSITION":pos_index,"NORMAL":normal_index,
-                          "JOINTS_0":joint_index,"WEIGHTS_0":weight_index},
+                          "TEXCOORD_0":uv_index,"JOINTS_0":joint_index,"WEIGHTS_0":weight_index},
             "indices":triangle_index,"material":1}]})
         root=pivot["translation"]
         lower=[root[0],root[1]+lower_offset,root[2]]
