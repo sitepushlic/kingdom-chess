@@ -77,6 +77,7 @@ var gear_material_cache: Dictionary = {}
 var equipment_scene_cache: Dictionary = {}
 var character_scene_cache: Dictionary = {}
 var health_bar_materials: Dictionary = {}
+var critical_health_material: StandardMaterial3D
 var combat_number_serial: int = 0
 var combat_number_limit: int = 18
 var castle_material_cache: Dictionary = {}
@@ -113,6 +114,10 @@ func set_visual_quality(tier: int) -> void:
 		if not is_instance_valid(actor): continue
 		var rarity_halo: Node3D = actor.find_child("HeroRarityHalo", true, false) as Node3D
 		if rarity_halo != null: rarity_halo.visible = visual_quality > 0
+		var warning: MeshInstance3D = actor.get_meta("critical_health_ring", null) as MeshInstance3D
+		if warning != null:
+			var health_ratio: float = float(last_health[cell]) / float(maxi(1, int(last_max_health[cell]))) if last_health.size() == 64 and last_max_health.size() == 64 else 1.0
+			warning.visible = health_ratio > 0.0 and health_ratio <= 0.25 and visual_quality > 0
 
 
 var hero_model_cell: int = -1
@@ -1011,6 +1016,15 @@ func _build_piece(letter: String, is_boss: bool = false, selected_hero_piece: bo
 	var bar_fill := _box(Vector3(0.69, 0.055, 0.10), health_bar_materials[health_key], unit, Vector3(0, 1.76, 0.02))
 	bar_fill.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	unit.set_meta("health_fill", bar_fill)
+	# Shared critical-health warning ring gives the player an immediate,
+	# color-independent spatial cue when a piece falls below 25% HP.
+	if critical_health_material == null:
+		critical_health_material = _material(Color("#ffb05e"), 0.14, 0.28, Color("#f34d39"))
+	var warning: MeshInstance3D = _ring(0.39, 0.025, critical_health_material, unit, Vector3(0, 0.31, 0))
+	warning.name = "CriticalHealthRing"
+	warning.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	warning.visible = false
+	unit.set_meta("critical_health_ring", warning)
 	if white and selected_hero_piece and not hero_gear.is_empty():
 		if hero_gear.has("Тело"):
 			var armor_mat := _gear_material("Тело")
@@ -1575,6 +1589,9 @@ func _apply_health_fill(actor: Node3D, cell: int, health: Array, max_health: Arr
 	var ratio: float = clampf(float(health[cell]) / float(maxi(1, int(max_health[cell]))), 0.0, 1.0)
 	fill.scale.x = maxf(0.001, ratio)
 	fill.position.x = -0.345 * (1.0 - ratio)
+	var warning: MeshInstance3D = actor.get_meta("critical_health_ring", null) as MeshInstance3D
+	if warning != null:
+		warning.visible = ratio > 0.0 and ratio <= 0.25 and visual_quality > 0
 
 func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int, health: Array = [], max_health: Array = []) -> void:
 	# Only one unit represents the equipped hero. Preserve its identity across
