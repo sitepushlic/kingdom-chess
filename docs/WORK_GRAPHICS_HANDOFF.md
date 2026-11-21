@@ -358,3 +358,12 @@ Changes committed on `main`:
 - **`f911d26e44ecfa52fdec3b40beedcffc8c1fec08`**: negative validator suite now injects NaN into skinned vertex coordinates and an invalid bone index, expanding from six to eight corrupted GLB cases.
 **Status:** GitHub writes confirmed. No observed Actions execution or APK; no claim that these tests pass. Verify the `MeshInstance3D.skeleton` import contract against Godot 4.3 output, then investigate any failures rather than bypassing checks.
 **Next:** get an actual GitHub Actions run result, confirm Godot skeleton imports, run Android APK export and inspect generated logs; proceed with higher-fidelity 3D geometry after integration passes.
+
+## 39. CI smoke reliability and stricter animation validation — 2026-11-21
+Committed on `main`:
+- **`5caa328f55bfda2cb5fff83be0e2baf62a5433d0`**: Godot smoke resolves imported clips from animation libraries before calling `AnimationPlayer.get_animation`. Previously, a clip present only in a named library could produce an unnecessary engine error during fallback lookup.
+- **`9d93564b6f4fc744103c06e7e42440f38e633395`**: Android CI no longer force-quits the smoke script after 15 frames. The smoke script controls its own termination, with the existing external 240-second timeout still protecting the runner.
+- **`92b4f2df9405dcd4b0c8ac78a459b5d4c0d2ca5f`**: validator now checks all translation/rotation/scale animation keyframes for finite float32 values; animated scale must remain positive.
+- **`c53e5d81c2aa7d2d0f27a7a3fa61ed379657d344`**: expanded negative GLB suite to ten corruption scenarios, adding NaN animated translations and non-float32 animation output.
+**Verification:** GitHub source commits succeeded. Actual CI execution and successful APK export remain unconfirmed. No new finished 3D art is claimed in this batch.
+**Next:** obtain Actions job results and logs through a suitable GitHub workflow-runs interface; fix failures, confirm the Android APK and inspect bone/armor alignment in a Godot runtime. Continue 3D detail only after the import pipeline is proven.
