@@ -205,6 +205,24 @@ func _run() -> void:
 	game.pieces[51] = "p"
 	_assert_ok(game._chess_attacks_square(game.pieces, 51, 60), "Pawn threatens diagonal king square")
 	_assert_ok(not game._chess_attacks_square(game.pieces, 51, 59), "Pawn does not threaten forward square")
+	# Stalemate: black king a8, white king c6, white queen b6.
+	# a8 is safe, but a7, b7 and b8 are attacked.
+	game.pieces.fill("")
+	game.health.fill(0)
+	game.pieces[0] = "k"
+	game.pieces[18] = "K"
+	game.pieces[17] = "Q"
+	game.health[0] = 100
+	game.health[18] = 100
+	game.health[17] = 100
+	game.turn = 1
+	game.ap = 0
+	game.acted.clear()
+	game.winner = ""
+	_assert_ok(not game._king_threatened(game.pieces, -1), "Stalemated king is not in check")
+	_assert_ok(not game._has_legal_action(-1), "Stalemated king has no legal actions")
+	game._end_turn()
+	_assert_ok(game.winner == "НИЧЬЯ", "Turn boundary declares stalemate draw")
 	game._reset()
 	await process_frame
 	_assert_ok(ProjectSettings.get_setting("display/window/size/viewport_width") == 720, "Portrait viewport width")
