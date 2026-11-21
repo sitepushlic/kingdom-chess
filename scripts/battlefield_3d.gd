@@ -100,6 +100,12 @@ func set_visual_quality(tier: int) -> void:
 		halo.visible = visual_quality >= 2
 	for mote in ambient_motes:
 		mote.visible = visual_quality >= 2
+	for cell in piece_nodes.keys():
+		var actor: Node3D = piece_nodes[cell]
+		for part in actor.get_children():
+			if part is Node3D and str(part.name).begins_with("HeroIdentity_"):
+				var rarity_halo: Node3D = part.get_node_or_null("HeroRarityHalo")
+				if rarity_halo != null: rarity_halo.visible = visual_quality > 0
 
 
 var hero_model_cell: int = -1
@@ -769,7 +775,9 @@ func _add_selected_hero_identity(kind: String, parent: Node3D) -> void:
 	_sphere(0.095 + float(rarity) * 0.008, crest_mat, emblem, Vector3(0, 1.31, -0.16))
 	if rarity >= 3:
 		var halo := _ring(0.28, 0.02, crest_mat, emblem, Vector3(0, 1.14, 0))
+		halo.name = "HeroRarityHalo"
 		halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		halo.visible = visual_quality > 0
 	emblem.set_meta("hero_id", identifier)
 
 func _add_humanoid_costume(kind: String, white: bool, parent: Node3D) -> void:
@@ -1042,6 +1050,8 @@ func set_boss_phase(phase: int) -> void:
 		if aura != null: aura.visible = enraged and visual_quality > 0
 		var burst := create_tween()
 		burst.tween_property(boss, "scale", Vector3.ONE * (1.42 if enraged else 1.12), 0.24).set_trans(Tween.TRANS_BACK)
+		if not enraged:
+			boss.position.y = 0.0
 		boss_crown.albedo_color = Color("#ff2c5f") if enraged else Color("#e56587")
 		boss_crown.emission_energy_multiplier = 2.8 if enraged else 0.6
 
@@ -1946,6 +1956,13 @@ func _process(delta: float) -> void:
 		if moving_nodes.has(index): continue
 		var actor: Node3D = piece_nodes[index]
 		if is_instance_valid(actor):
+			if visual_quality > 0 and bool(actor.get_meta("selected_hero_piece", false)):
+				for part in actor.get_children():
+					if part is Node3D and str(part.name).begins_with("HeroIdentity_"):
+						var halo: Node3D = part.get_node_or_null("HeroRarityHalo")
+						if halo != null:
+							halo.rotation.y = clock * 0.65
+							halo.position.y = 1.14 + 0.05 * sin(clock * 1.8)
 			var idle_phase: float = clock * (0.83 if index == 4 else 1.15) + float(index) * 0.41
 			actor.rotation.y = sin(idle_phase) * (0.09 if index == 4 and boss_enraged else 0.035)
 			# Distinct subtle idle silhouettes: breathing and weight shift only.
