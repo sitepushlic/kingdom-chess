@@ -793,6 +793,18 @@ func _run() -> void:
 	var graphics_config := ConfigFile.new()
 	_assert_ok(graphics_config.load(game.GRAPHICS_SETTINGS_PATH) == OK, "Graphics quality persists in user configuration")
 	_assert_ok(int(graphics_config.get_value("graphics", "quality", -1)) == game.graphics_quality, "Saved graphics quality matches selected tier")
+	_assert_ok(game.coordinates_button != null and game.coordinates_button.text.contains("КООРДИНАТЫ"), "Coordinate visibility selector is available in main menu")
+	var coordinates_before: bool = game.coordinates_visible
+	game._toggle_coordinates()
+	_assert_ok(game.coordinates_visible != coordinates_before, "Coordinate menu selector toggles saved preference")
+	_assert_ok(game.battlefield_3d.coordinates_enabled == game.coordinates_visible, "Coordinate menu immediately updates 3D board")
+	var coordinates_config := ConfigFile.new()
+	_assert_ok(coordinates_config.load(game.GRAPHICS_SETTINGS_PATH) == OK, "Coordinate preference persists to graphics.cfg")
+	_assert_ok(bool(coordinates_config.get_value("graphics", "coordinates", coordinates_before)) == game.coordinates_visible, "Saved coordinate preference matches 3D visibility")
+	_assert_ok(int(coordinates_config.get_value("graphics", "quality", -1)) == game.graphics_quality, "Saving coordinates preserves selected graphics tier")
+	game._toggle_coordinates()
+	_assert_ok(game.coordinates_visible == coordinates_before, "Coordinate toggle restores previous preference")
+
 	game._cycle_graphics_quality()
 	game._cycle_graphics_quality()
 
