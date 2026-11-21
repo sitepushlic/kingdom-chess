@@ -73,6 +73,7 @@ def validate(path, require_animation=True):
     for animation in gltf.get("animations",[]):
         channels = animation["channels"]
         assert any(channel["target"]["path"] == "translation" for channel in channels), f"{path}: missing root motion"
+        assert any(channel["target"]["path"] == "rotation" and gltf["nodes"][channel["target"]["node"]]["name"]=="BodyRig" for channel in channels), f"{path}: missing full-body lean animation"
         assert any(channel["target"]["path"] == "rotation" and gltf["nodes"][channel["target"]["node"]]["name"].startswith("Arm") for channel in channels), f"{path}: missing arm animation in {animation['name']}"
         if animation["name"] in ("move","death"):
             assert any(channel["target"]["path"] == "rotation" and gltf["nodes"][channel["target"]["node"]]["name"].startswith("Leg") for channel in channels), f"{path}: missing leg animation in {animation['name']}"
