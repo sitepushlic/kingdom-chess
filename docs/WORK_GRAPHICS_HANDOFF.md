@@ -246,3 +246,14 @@ This batch is the first step beyond rigid joint-rotated blockouts toward genuine
 - **`cb6ac44d457f42f7c29fb19ef56d6fd1865d5bd3`**: all 72 characters gain an independent neck/head pivot; eyes, brow, cheek guards, crowns, helmets and relevant boss horns attach to it. Six animation clips include nod/head recoil keyframes.
 - **`212d7fdf7975ccf13100faf3945f6fb16874bcba`**: Python validator requires Head pivot, parented face geometry and rotation tracks in all clips.
 **Verification:** committed; not run locally or confirmed through Godot Actions. This is articulated rigid head motion, separate from the genuinely skinned two-joint cape. Full-body skeletal deformation still not implemented.
+
+## 27. 3D motion readability, rig-following gear and full face-normal validation — 2026-11-21
+Committed directly to `main`:
+- **`e05a184ad140ceb866199c4886126b750d73afac`**: captured unit now remains visible for the full 0.70-second authored death animation before shrinking, instead of cutting off the clip.
+- **`95f94687643b497bbeff228439ea86a4f3d0945e`**: five hero/enemy body archetypes now use distinct attack and casting arm trajectories; bosses use their own exaggerated windup poses, retaining stable six-clip names.
+- **`25e7fd8b9d41eb8d42b2f3a3248a51dae7d7aeab`**: modular chest armor follows imported animated `BodyRig` instead of remaining fixed to the static unit root. Weapon and relic remain attached to the right/left arm.
+- **`5c4c6f9482bbe817d75a18a28dc68830ffb3c511`**, **`61169743fe281d03358e02c812db34991a8c2597`**: Godot smoke equips all three slots and checks correct animated parent for every imported gear socket.
+- **`e2e1835176cf42cdc642fed7e6334c1dea1a22ed`**: skinned tapered cloth uses recomputed flat-shaded face normals, avoiding lighting errors from the shared cube normal directions.
+- **`f4727908e4424fec85e3c1b4a5b6b161f8303aa5`**: validator checks winding vs normals for *all* unique GLB mesh primitives, including the weighted cape and equipment; rejects reversed faces with backface culling enabled.
+**Verification:** commits saved; local Python/Godot execution and push-triggered Android CI status remain unverified. No claim of a passing APK build. Character body still uses articulated rigid meshes; only the cape is GPU-skinned.
+**Next:** obtain actual Actions logs and resolve failures, extend skinned rigs to torso/arms/legs, improve mesh topology and materials, authored levels, mobile device QA.
