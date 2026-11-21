@@ -184,3 +184,16 @@ This batch committed directly to `main`:
 - **`f1127b3c436dc0bf92e83853dd4e2bdd6c4a21b7`**: mobile asset budgets in Python validator: under 250 KB/GLB, at most 160 nodes and 2,000 estimated rendered triangles per generated asset.
 - **`4f1bc6fbbf4800571fcb19ffca1076c41a0f82f7`**: arm/leg locomotion and combat gestures rotate around X for forward/back swings; impact/death gestures use Z.
 **Verification:** committed to GitHub. CI and Android import **not verified**; workflow lookup for an earlier commit yielded zero runs, so cannot claim green builds. All 93 GLBs are still procedural low-poly blockouts. Priority-1 graphics remains incomplete: proper skinned rigs and animations, production meshes/materials, detailed regions, VFX and Android device QA.
+
+## 20. Equipment-to-animation binding, boss identity and CI diagnostics — 2026-11-21
+A substantial continuous batch was committed directly to `main`:
+- **`5edb39480100002d8ba897b85667cc2bac45773d`**: imported GLB weapon sockets now parent to animated `Arm1` and relic sockets to `Arm-1` when available. Armor remains torso-mounted; procedural fallback preserved. Socket offsets are joint-local.
+- **`f81d9e594faa736ef6aa1fec1368ec22851a1a4e`**: Godot smoke requires selected hero's weapon socket to follow imported arm pivot.
+- **`6a20a519b1342c640a4a502b6f82d60e4869f731`**: captured units play `death` clip and fade in two stages, independently of chess state changes.
+- **`1e18f62bf2124c4c2393822374a5169e6a4d1df8`**, **`470c1b43fa12a67ac1fc5bc2f0b77a57f0eb0c10`**: 21 equipment models gain physically distinct enchanted crystal clusters with emissive material for tiers 4–6; validator rejects low-tier enchantments and missing high-tier enchantments.
+- **`617f4d7898b4fe292087a274c32f0f134b3493ba`**, **`bbc16217553503e762abf434b12d49fb3d353cb4`**: six biome bosses now have specific unique modeled landmarks (ember horns, glacier spires, thorns, runic tablet, astral wings, crimson wings), enforced by validator.
+- **`92fd714502da2f6682f29c7cfb6ccc26b36035d7`**: CI now retains Godot import/smoke logs even on failure, uses `pipefail` and rejects import parser/glTF errors.
+- **`b8d9eb15e33dfd07b44f5672567f38709e376df7`**, **`bd34095f78e64a4b70d21bb7c63fa44c31625e67`**, **`38ef59a941e8b0a9a54cae1616a4c85e0cb03378`**: all characters have additional 3D face, armor and gauntlet detail; gauntlets, boots and shin plates are attached to animated limb pivots, verified by Python validator.
+- **`b7de4cdbe90428d33a1696358b19b0e273baa078`**: CI publishes all 93 generated GLBs as a downloadable 14-day art-pack artifact.
+**Verification:** GitHub commits confirmed. This environment cannot reach GitHub raw URLs to run Python scripts locally; no Godot binary is available. CI status, generated artifact and Android APK remain **unverified**, not passed. The models are low-poly articulated blockouts, not fully skinned character assets.
+**Remaining priority 1:** observe real GitHub Actions run and logs, resolve any generator/Godot errors, upgrade to actual skinning and skeletal rigs, build polished hero/monster designs, improve lighting/material textures and 18 locations, Android device profiling and QA.
