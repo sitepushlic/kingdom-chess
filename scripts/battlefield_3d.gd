@@ -204,6 +204,30 @@ func _gear_material(slot: String) -> Material:
 	var palette := [Color("#b9c6d5"), Color("#62c7b6"), Color("#548dea"), Color("#aa78f5"), Color("#efac57"), Color("#e96d86"), Color("#fff0a4")]
 	return _material(palette[rarity], 0.82, 0.23, palette[rarity] * (0.18 + float(int(item.get("upgrade", 0))) * 0.04))
 
+const CHARACTER_SCENE_PATHS := {
+	"P": "res://assets/characters/pawn.glb",
+	"R": "res://assets/characters/rook.glb",
+	"N": "res://assets/characters/knight.glb",
+	"B": "res://assets/characters/bishop.glb",
+	"Q": "res://assets/characters/queen.glb",
+	"K": "res://assets/characters/king.glb"
+}
+
+func _load_authored_character(kind: String, parent: Node3D) -> bool:
+	# Artists can replace the procedural placeholder without changing combat code.
+	# The GLB root must face local -Z and fit within a one-tile footprint.
+	var path: String = str(CHARACTER_SCENE_PATHS.get(kind, ""))
+	if path == "" or not ResourceLoader.exists(path): return false
+	var scene: Resource = load(path)
+	if not (scene is PackedScene): return false
+	var model: Node = (scene as PackedScene).instantiate()
+	if not (model is Node3D):
+		model.free()
+		return false
+	model.name = "AuthoredCharacter"
+	parent.add_child(model)
+	return true
+
 func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	var unit := Node3D.new()
 	var white := letter == letter.to_upper()
@@ -216,35 +240,37 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	_ring(0.235, 0.016, accent, unit, Vector3(0, 0.265, 0))
 
 	var kind := letter.to_upper()
-	if kind == "P":
-		_cylinder(0.17, 0.45, material, unit, Vector3(0, 0.47, 0), 0.11)
-		_sphere(0.16, accent, unit, Vector3(0, 0.78, 0))
-	elif kind == "R":
-		_cylinder(0.22, 0.7, material, unit, Vector3(0, 0.58, 0))
-		_cylinder(0.31, 0.14, accent, unit, Vector3(0, 0.98, 0))
-		for n in range(4):
-			var a := float(n) * TAU / 4.0
-			_box(Vector3(0.17, 0.19, 0.17), accent, unit, Vector3(cos(a) * 0.22, 1.13, sin(a) * 0.22))
-	elif kind == "N":
-		_cylinder(0.2, 0.34, material, unit, Vector3(0, 0.40, 0), 0.13)
-		_box(Vector3(0.27, 0.58, 0.24), material, unit, Vector3(0, 0.76, -0.10))
-		_box(Vector3(0.27, 0.22, 0.44), accent, unit, Vector3(0, 1.01, -0.22))
-		_sphere(0.055, gold_material, unit, Vector3(-0.15, 0.94, -0.31))
-	elif kind == "B":
-		_cylinder(0.22, 0.62, material, unit, Vector3(0, 0.57, 0), 0.11)
-		_sphere(0.22, accent, unit, Vector3(0, 0.97, 0))
-		_cylinder(0.05, 0.20, gold_material, unit, Vector3(0, 1.25, 0))
-	elif kind == "Q":
-		_cylinder(0.23, 0.75, material, unit, Vector3(0, 0.62, 0), 0.13)
-		_cylinder(0.28, 0.11, accent, unit, Vector3(0, 1.04, 0))
-		for n in range(5):
-			var a := float(n) * TAU / 5.0
-			_sphere(0.095, gold_material, unit, Vector3(cos(a) * 0.23, 1.19, sin(a) * 0.23))
-	else:
-		_cylinder(0.24, 0.82, material, unit, Vector3(0, 0.65, 0), 0.14)
-		_cylinder(0.27, 0.12, accent, unit, Vector3(0, 1.12, 0))
-		_box(Vector3(0.12, 0.47, 0.12), gold_material, unit, Vector3(0, 1.41, 0))
-		_box(Vector3(0.37, 0.10, 0.12), gold_material, unit, Vector3(0, 1.48, 0))
+	if not _load_authored_character(kind, unit):
+		# Procedural fallback remains usable until each class receives an original GLB.
+		if kind == "P":
+			_cylinder(0.17, 0.45, material, unit, Vector3(0, 0.47, 0), 0.11)
+			_sphere(0.16, accent, unit, Vector3(0, 0.78, 0))
+		elif kind == "R":
+			_cylinder(0.22, 0.7, material, unit, Vector3(0, 0.58, 0))
+			_cylinder(0.31, 0.14, accent, unit, Vector3(0, 0.98, 0))
+			for n in range(4):
+				var a := float(n) * TAU / 4.0
+				_box(Vector3(0.17, 0.19, 0.17), accent, unit, Vector3(cos(a) * 0.22, 1.13, sin(a) * 0.22))
+		elif kind == "N":
+			_cylinder(0.2, 0.34, material, unit, Vector3(0, 0.40, 0), 0.13)
+			_box(Vector3(0.27, 0.58, 0.24), material, unit, Vector3(0, 0.76, -0.10))
+			_box(Vector3(0.27, 0.22, 0.44), accent, unit, Vector3(0, 1.01, -0.22))
+			_sphere(0.055, gold_material, unit, Vector3(-0.15, 0.94, -0.31))
+		elif kind == "B":
+			_cylinder(0.22, 0.62, material, unit, Vector3(0, 0.57, 0), 0.11)
+			_sphere(0.22, accent, unit, Vector3(0, 0.97, 0))
+			_cylinder(0.05, 0.20, gold_material, unit, Vector3(0, 1.25, 0))
+		elif kind == "Q":
+			_cylinder(0.23, 0.75, material, unit, Vector3(0, 0.62, 0), 0.13)
+			_cylinder(0.28, 0.11, accent, unit, Vector3(0, 1.04, 0))
+			for n in range(5):
+				var a := float(n) * TAU / 5.0
+				_sphere(0.095, gold_material, unit, Vector3(cos(a) * 0.23, 1.19, sin(a) * 0.23))
+		else:
+			_cylinder(0.24, 0.82, material, unit, Vector3(0, 0.65, 0), 0.14)
+			_cylinder(0.27, 0.12, accent, unit, Vector3(0, 1.12, 0))
+			_box(Vector3(0.12, 0.47, 0.12), gold_material, unit, Vector3(0, 1.41, 0))
+			_box(Vector3(0.37, 0.10, 0.12), gold_material, unit, Vector3(0, 1.48, 0))
 	# Each class has an identifiable elevated crest, even at portrait mobile scale.
 	if kind == "N":
 		for side in [-1.0, 1.0]:
