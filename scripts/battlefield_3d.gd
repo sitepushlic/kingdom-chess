@@ -673,6 +673,53 @@ func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
 				var column := _cylinder(0.26, height * 1.45, stone, region_scenery, pos + Vector3(0, height * 0.58 - 0.2, 0), 0.14)
 				column.rotation.z = sin(angle * 2.0) * 0.20
 				_ring(0.38, 0.038, magic, region_scenery, pos + Vector3(0, 0.12, 0))
+	# Region-specific large architectural silhouettes, all outside the board.
+	# Keep landmark count bounded for GL Compatibility/mobile.
+	match region:
+		0: # Furnace gate: double watchtowers, portcullis and fire altar.
+			for side in [-1.0, 1.0]:
+				_box(Vector3(0.86, 2.30, 0.86), stone, region_scenery, Vector3(side * 2.35, 0.75, 6.25))
+				_box(Vector3(1.10, 0.28, 1.10), trim, region_scenery, Vector3(side * 2.35, 1.99, 6.25))
+			_box(Vector3(3.80, 0.37, 0.50), trim, region_scenery, Vector3(0, 1.75, 6.25))
+			for i in range(6):
+				_box(Vector3(0.12, 1.30, 0.16), stone, region_scenery, Vector3(-1.45 + i * 0.58, 0.86, 6.0))
+		1: # Glacier arch: asymmetrical crystalline columns and ice bridge.
+			for side in [-1.0, 1.0]:
+				for i in range(3):
+					var ice := _cylinder(0.35 - i * 0.05, 1.8 + i * 0.45, magic, region_scenery, Vector3(side * (2.0 + i * 0.65), 0.70, 6.1), 0.01)
+					ice.rotation.z = side * (0.13 + i * 0.12)
+			_box(Vector3(4.20, 0.20, 0.45), stone, region_scenery, Vector3(0, 1.72, 6.3))
+		2: # Ancient grove: sacred tree, roots and hanging canopy.
+			_cylinder(0.44, 2.7, trim, region_scenery, Vector3(0, 1.04, 6.5), 0.25)
+			for i in range(5):
+				var angle: float = TAU * float(i) / 5.0
+				var branch := _cylinder(0.12, 1.35, trim, region_scenery, Vector3(cos(angle) * 0.64, 2.15, 6.5 + sin(angle) * 0.64), 0.035)
+				branch.rotation.z = cos(angle) * 0.78
+				branch.rotation.x = sin(angle) * 0.78
+				_sphere(0.55, magic, region_scenery, Vector3(cos(angle) * 1.15, 2.6, 6.5 + sin(angle) * 1.15))
+		3: # Astral library: monumental doorway, levitating rings and pylons.
+			for side in [-1.0, 1.0]:
+				_box(Vector3(0.55, 2.70, 0.65), stone, region_scenery, Vector3(side * 1.65, 0.95, 6.35))
+			_box(Vector3(3.80, 0.45, 0.70), trim, region_scenery, Vector3(0, 2.38, 6.35))
+			for i in range(3):
+				var portal := _ring(0.60 + i * 0.24, 0.035, magic, region_scenery, Vector3(0, 1.20, 6.10))
+				portal.rotation.x = PI * 0.5
+				portal.rotation.y = float(i) * 0.30
+		4: # Tempest observatory: lightning conductors and suspended core.
+			for side in [-1.0, 1.0]:
+				_cylinder(0.32, 2.75, stone, region_scenery, Vector3(side * 2.0, 1.10, 6.25), 0.09)
+				_cylinder(0.045, 1.10, trim, region_scenery, Vector3(side * 2.0, 2.88, 6.25), 0.0)
+			_sphere(0.52, magic, region_scenery, Vector3(0, 2.35, 6.4))
+			_ring(0.75, 0.06, trim, region_scenery, Vector3(0, 2.35, 6.4))
+		5: # Corrupted throne: fractured steps, black spires, red eclipse.
+			for i in range(4):
+				_box(Vector3(3.5 - i * 0.45, 0.18, 1.10), stone, region_scenery, Vector3(0, -0.18 + i * 0.18, 5.65 + i * 0.36))
+			_box(Vector3(1.20, 2.15, 0.55), trim, region_scenery, Vector3(0, 1.15, 7.10))
+			for side in [-1.0, 1.0]:
+				var spike := _cylinder(0.22, 2.40, stone, region_scenery, Vector3(side * 1.20, 1.0, 6.70), 0.005)
+				spike.rotation.z = side * 0.22
+			var eclipse := _ring(0.95, 0.10, magic, region_scenery, Vector3(0, 2.70, 7.30))
+			eclipse.rotation.x = PI * 0.5
 	# Four larger landmarks establish a silhouette behind the arena without obstructing play.
 	for corner_x in [-1.0, 1.0]:
 		for corner_z in [-1.0, 1.0]:
