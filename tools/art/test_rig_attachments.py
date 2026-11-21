@@ -130,6 +130,25 @@ def check(path):
                      "AstralDiademCore","CrimsonCrownHorn1"):
             if name in by_name:
                 assert parents[by_name[name]]==head_id, f"{path}: {name} detached from animated head"
+    # Second armor silhouette pass: verify accessories inherit the limb
+    # that actually animates, not the stationary BodyRig.
+    limb_armor={
+        "Arm":("RoyalPauldronWing","RaiderArmSpike","RangerForearmWrap",
+               "ForgeShoulderTower","MageShoulderSigil"),
+        "Leg":("RoyalGreaveCrest","RaiderShinFang","ForgeKneeRivet",
+               "MageBootRunes","BossBootSpur","CrimsonClaw"),
+    }
+    for limb_type,prefixes in limb_armor.items():
+        for side in ("1","-1"):
+            for prefix in prefixes:
+                name=prefix+side
+                if name in by_name:
+                    expected=by_name[limb_type+side]
+                    assert parents[by_name[name]]==expected, f"{path}: {name} detached from {limb_type}{side}"
+                    assert all(math.isfinite(v) for v in world_position(by_name[name]))
+    for shield_name in ("RoyalShieldRim","RoyalShieldCore"):
+        if shield_name in by_name:
+            assert parents[by_name[shield_name]]==by_name["Arm-1"], f"{path}: {shield_name} does not follow shield arm"
     # Every character's weapon must follow its actual wrist, rather
     # than staying under the stationary BodyRig during attacks.
     right=by_name["Arm1Lower"]
