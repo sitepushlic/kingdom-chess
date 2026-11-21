@@ -653,6 +653,7 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 	anticipation.tween_property(attacker, "position", start - direction * 0.16 + Vector3(0, 0.10, 0), 0.11).set_trans(Tween.TRANS_CUBIC)
 	anticipation.tween_property(attacker, "position", start + direction * 0.25 + Vector3(0, 0.19, 0), 0.12).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
 	anticipation.tween_property(attacker, "position", start, 0.17).set_trans(Tween.TRANS_BACK)
+	_spawn_attack_trail(source, target, magical)
 	var beam := MeshInstance3D.new()
 	var beam_mesh := CylinderMesh.new()
 	beam_mesh.top_radius = 0.045 if magical else 0.075
@@ -676,6 +677,41 @@ func attack(source: int, target: int, magical: bool = false) -> void:
 	camera_shake.tween_property(camera, "position", base_camera_position + Vector3(0.09, -0.06, 0), 0.045)
 	camera_shake.tween_property(camera, "position", base_camera_position + Vector3(-0.07, 0.04, 0), 0.055)
 	camera_shake.tween_property(camera, "position", base_camera_position, 0.11)
+
+func _spawn_attack_trail(source: int, target: int, magical: bool) -> void:
+	# Layered rising energy trail. All transient geometry is released after the tween.
+	if not fx_enabled or board_root == null or visual_quality <= 0: return
+	var origin: Vector3 = _square_position(source) + Vector3(0, 0.75, 0)
+	var destination: Vector3 = _square_position(target) + Vector3(0, 0.75, 0)
+	var direction: Vector3 = destination - origin
+	if direction.length_squared() < 0.01: return
+	var segments: int = 4 if visual_quality == 1 else 8
+	var tint: Color = Color("#b69bff") if magical else Color("#ffd68b")
+	var glow: StandardMaterial3D = _material(tint, 0.0, 0.15, tint)
+	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	glow.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.075 if magical else 0.052
+	mesh.height = 0.15 if magical else 0.104
+	mesh.radial_segments = 6
+	mesh.rings = 4
+	for step in range(segments):
+		var ratio: float = float(step + 1) / float(segments + 1)
+		var spark := MeshInstance3D.new()
+		spark.mesh = mesh
+		spark.material_override = glow
+		spark.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var lift: float = sin(ratio * PI) * (0.52 if magical else 0.32)
+		var start: Vector3 = origin.lerp(destination, ratio) + Vector3(0, lift, 0)
+		spark.position = start
+		spark.scale = Vector3.ONE * 0.01
+		board_root.add_child(spark)
+		var tween := create_tween()
+		tween.tween_interval(ratio * 0.12)
+		tween.tween_property(spark, "scale", Vector3.ONE * (1.15 - ratio * 0.3), 0.08).set_trans(Tween.TRANS_CUBIC)
+		tween.tween_property(spark, "position", start + direction.normalized() * 0.17 + Vector3(0, 0.13, 0), 0.15)
+		tween.tween_property(spark, "scale", Vector3.ZERO, 0.16)
+		tween.tween_callback(spark.queue_free)
 
 func _spawn_impact_sparks(index: int, healing: bool) -> void:
 	# Short-lived geometry-only particles avoid a GPU particle dependency on Android.
