@@ -64,7 +64,24 @@ def main():
     start=view.get("byteOffset",0)+acc.get("byteOffset",0)+12*4
     struct.pack_into("<f",binary,start,3.0)
     must_reject(pack_glb(doc,bytes(binary)),"invalid inverse bind matrix")
-    print("Validator regression tests: pristine GLB accepted; 3 corrupt GLBs rejected")
+    # Animation input/output counts must match exactly.
+    doc,binary=read_glb(original)
+    sampler=doc["animations"][0]["samplers"][0]
+    doc["accessors"][sampler["output"]]["count"]-=1
+    must_reject(pack_glb(doc,binary),"mismatched animation key count")
+    # Reject animation timelines with repeated or descending key times.
+    doc,binary=read_glb(original)
+    acc=doc["accessors"][doc["animations"][0]["samplers"][0]["input"]]
+    view=doc["bufferViews"][acc["bufferView"]]
+    binary=bytearray(binary)
+    start=view.get("byteOffset",0)+acc.get("byteOffset",0)
+    struct.pack_into("<f",binary,start+4,0.0)
+    must_reject(pack_glb(doc,bytes(binary)),"duplicate animation key timestamp")
+    # Reject unaligned binary buffer views even if payload is otherwise valid.
+    doc,binary=read_glb(original)
+    doc["bufferViews"][0]["byteOffset"]+=1
+    must_reject(pack_glb(doc,binary),"misaligned glTF buffer view")
+    print("Validator regression tests: pristine GLB accepted; 6 corrupt GLBs rejected")
 
 if __name__=="__main__":
     main()
