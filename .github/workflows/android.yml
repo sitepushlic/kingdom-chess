@@ -70,13 +70,15 @@ jobs:
           PY
           keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey
       - name: Check Python art pipeline syntax
-        run: python3 -m py_compile tools/art/generate_blockouts.py tools/art/generate_equipment.py tools/art/validate_blockouts.py tools/art/check_reproducibility.py tools/art/export_art_report.py
+        run: python3 -m py_compile tools/art/generate_blockouts.py tools/art/generate_equipment.py tools/art/validate_blockouts.py tools/art/check_reproducibility.py tools/art/export_art_report.py tools/art/validate_motion.py
       - name: Generate original GLB character blockouts
         run: python3 tools/art/generate_blockouts.py
       - name: Generate 21 modular equipment GLBs
         run: python3 tools/art/generate_equipment.py
       - name: Validate all generated GLB assets
         run: python3 tools/art/validate_blockouts.py
+      - name: Validate real character motion curves and skinned spine tracks
+        run: python3 tools/art/validate_motion.py
       - name: Verify all 93 GLBs regenerate identically
         run: python3 tools/art/check_reproducibility.py
       - name: Export 93-asset art complexity manifest
