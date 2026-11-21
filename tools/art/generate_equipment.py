@@ -132,6 +132,12 @@ def build(slot, tier):
                     (.10,.25+tier*.035,.12),1,side*.19)
         if tier>=4:
             box("ArmorPowerCrystal",(0,.11,-.20),(.14,.16,.07),2)
+        if tier>=6:
+            # Final-tier armor needs its own ascendant silhouette, not only
+            # larger ordinary fins and enchanted shoulder crystals.
+            for side in (-1,1):
+                box("ArmorAscendantWing"+str(side),
+                    (side*.48,.52,.02),(.15,.46,.14),1,side*.34)
     else:
         box("RelicSocket",(0,-.19,.03),(.16+tier*.018,.15,.16),0)
         for side in (-1,1):
