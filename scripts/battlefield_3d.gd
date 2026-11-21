@@ -278,6 +278,9 @@ func _add_equipment_geometry(slot: String, parent: Node3D) -> void:
 						var angle: float = TAU * float(i) / 6.0
 						var wing := _box(Vector3(0.065, 0.34, 0.09), mat, parent, Vector3(0.43 + cos(angle) * 0.16, 1.14 + sin(angle) * 0.16, -0.08))
 						wing.rotation.z = -angle
+			# Countable in-world rank studs make all seven weapon tiers distinct.
+			for stud in range(tier):
+				_sphere(0.023, mat, parent, Vector3(0.30 + float(stud) * 0.043, 0.66, -0.16))
 		"Тело":
 			# Each tier changes breastplate shape and shoulder profile.
 			var width: float = 0.34 + float(tier) * 0.028
