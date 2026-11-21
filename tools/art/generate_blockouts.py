@@ -1000,6 +1000,36 @@ def make_character(identifier, boss=False):
         limb_poses["attack"]["Arm-1"]=[0,.30,-.85,-.35,.25,0]
         limb_poses["cast"]["Arm1"]=[0,-.40,-1.70,-1.40,0]
         limb_poses["cast"]["Arm-1"]=[0,-.40,-1.70,-1.40,0]
+    # Distinct movement personalities instead of identical combat loops:
+    # each region boss gets its own readable attack/cast timing, while
+    # classes differ in walk cadence and reaction. All end in recovery.
+    if boss:
+        boss_strikes={
+            1:([0,-.35,-1.85,-.55,.38,0],[0,-.25,-1.30,-.80,0]),
+            2:([0,.30,-.60,-1.75,-.50,0],[0,-.45,-1.30,-1.60,0]),
+            3:([0,-.15,-1.10,-1.95,.10,0],[0,-.10,-.85,-1.50,0]),
+            4:([0,-.75,-1.40,-.20,-1.05,0],[0,-.60,-1.80,-.30,0]),
+            5:([0,-.15,-.65,-1.85,-.90,0],[0,-.35,-1.90,-1.50,0]),
+            6:([0,.40,-1.35,-2.05,.20,0],[0,-.50,-1.20,-1.85,0]),
+        }
+        attack_curve,cast_curve=boss_strikes[num]
+        limb_poses["attack"]["Arm1"]=attack_curve
+        limb_poses["cast"]["Arm1"]=cast_curve
+        limb_poses["attack"]["Arm-1"]=[-v*.55 for v in attack_curve]
+        limb_poses["cast"]["Arm-1"]=[v*.80 for v in cast_curve]
+    elif family==1:
+        limb_poses["move"]["Arm1"]=[0,-.85,.72]
+        limb_poses["move"]["Arm-1"]=[0,.85,-.72]
+        limb_poses["move"]["Leg1"]=[0,.58,-.51]
+        limb_poses["move"]["Leg-1"]=[0,-.58,.51]
+    elif family==3:
+        limb_poses["move"]["Arm1"]=[0,-.30,.20]
+        limb_poses["move"]["Arm-1"]=[0,.30,-.20]
+        limb_poses["move"]["Leg1"]=[0,.26,-.22]
+        limb_poses["move"]["Leg-1"]=[0,-.26,.22]
+    elif family==4:
+        limb_poses["cast"]["Arm1"]=[0,-.65,-1.85,-.95,0]
+        limb_poses["cast"]["Arm-1"]=[0,-.65,-1.85,-.95,0]
     def sample_motion(poses, target_count):
         """Sample the complete gesture curve without dropping its final pose."""
         if len(poses)==target_count:
