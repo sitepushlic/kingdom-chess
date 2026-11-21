@@ -1365,6 +1365,16 @@ func _run() -> void:
 	var medium_fx_before: int = game.battlefield_3d.board_root.get_child_count()
 	game.battlefield_3d.hit(60)
 	_assert_ok(game.battlefield_3d.board_root.get_child_count() > medium_fx_before, "Medium graphics tier creates visible combat impact VFX")
+	# Repeated melee/magic attack beams must reuse imported GPU resources.
+	game.battlefield_3d.attack(60, 52, false)
+	var physical_beam_key: String = "attack_beam:0:1:100"
+	_assert_ok(game.battlefield_3d.primitive_mesh_cache.has(physical_beam_key), "Physical attack beam mesh cached by chessboard distance")
+	var physical_beam_mesh: Mesh = game.battlefield_3d.primitive_mesh_cache.get(physical_beam_key)
+	var physical_beam_material: Material = game.battlefield_3d.impact_materials.get("attack_beam_physical")
+	game.battlefield_3d.attack(60, 52, false)
+	_assert_ok(game.battlefield_3d.primitive_mesh_cache.get(physical_beam_key) == physical_beam_mesh and game.battlefield_3d.impact_materials.get("attack_beam_physical") == physical_beam_material, "Repeated physical attacks reuse beam GPU resources")
+	game.battlefield_3d.attack(60, 52, true)
+	_assert_ok(game.battlefield_3d.primitive_mesh_cache.has("attack_beam:1:1:100") and game.battlefield_3d.impact_materials.has("attack_beam_magic"), "Magical attacks receive a separate cached beam silhouette and material")
 	var shock_mesh: Mesh = game.battlefield_3d.primitive_mesh_cache["hit_shock_torus"]
 	var hit_material: Material = game.battlefield_3d.impact_materials["damage"]
 	game.battlefield_3d.hit(60, true)
