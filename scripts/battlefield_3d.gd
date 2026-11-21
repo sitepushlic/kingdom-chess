@@ -218,6 +218,23 @@ func _ready() -> void:
 		_box(Vector3(0.18, 0.16, 9.1), edge_wood, board_root, Vector3(float(side) * 4.13, -0.035, 0))
 		_box(Vector3(8.3, 0.035, 0.025), inlay, board_root, Vector3(0, 0.049, float(side) * 4.075))
 		_box(Vector3(0.025, 0.035, 8.3), inlay, board_root, Vector3(float(side) * 4.075, 0.049, 0))
+	# Bronze studs and sculpted crests sit outside the 8x8 play area.
+	var trim_bronze: StandardMaterial3D = _material(Color("#a77d4d"), 0.75, 0.24)
+	var trim_shadow: StandardMaterial3D = _material(Color("#2b2431"), 0.35, 0.55)
+	for side in [-1, 1]:
+		for offset in [-3.4, -2.4, -1.4, -0.4, 0.4, 1.4, 2.4, 3.4]:
+			var stud_z: MeshInstance3D = _sphere(0.048, trim_bronze, board_root, Vector3(offset, 0.052, float(side) * 4.14))
+			stud_z.scale = Vector3(1.0, 0.55, 1.0)
+			var stud_x: MeshInstance3D = _sphere(0.048, trim_bronze, board_root, Vector3(float(side) * 4.14, 0.052, offset))
+			stud_x.scale = Vector3(1.0, 0.55, 1.0)
+	for side_x in [-1, 1]:
+		for side_z in [-1, 1]:
+			var crest: Node3D = Node3D.new()
+			crest.position = Vector3(float(side_x) * 4.29, -0.01, float(side_z) * 4.29)
+			board_root.add_child(crest)
+			_cylinder(0.22, 0.075, trim_shadow, crest, Vector3.ZERO)
+			_cylinder(0.16, 0.09, trim_bronze, crest, Vector3(0, 0.052, 0), 0.11)
+			_sphere(0.075, trim_bronze, crest, Vector3(0, 0.12, 0))
 	# Four carved corner plinths with gem insets, outside the playable
 	# squares. Keep them static and under the mobile light budget.
 	var corner_stone: StandardMaterial3D = _material(Color("#625168"), 0.28, 0.47)
