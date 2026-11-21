@@ -220,6 +220,14 @@ func set_board_visual_style(style_index: int) -> void:
 		var colors: Array = region_palettes[clampi(current_region, 0, 5)]
 		tile_materials[0].albedo_color = colors[0]
 		tile_materials[1].albedo_color = colors[1]
+		# Reset the complete frame, not only the 64 tile colors. Previously
+		# changing from obsidian/ice to biome mode left the wrong frame/gems.
+		if board_edge_material != null:
+			board_edge_material.albedo_color = Color("#433246")
+		if board_inlay_material != null:
+			board_inlay_material.albedo_color = Color("#e0bb74")
+		if board_gem_material != null:
+			board_gem_material.albedo_color = Color("#6ecfcb")
 		return
 	var palette: Dictionary = BOARD_STYLES[board_style_index]
 	tile_materials[0].albedo_color = Color(str(palette["dark"]))
