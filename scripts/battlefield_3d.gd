@@ -4,6 +4,8 @@ const TILE := 1.0
 var piece_nodes: Dictionary = {}
 var piece_types: Dictionary = {}
 var health_fills: Dictionary = {}
+var last_health: Array = []
+var last_max_health: Array = []
 var moving_nodes: Dictionary = {}
 var clock := 0.0
 var camera: Camera3D
@@ -1508,6 +1510,12 @@ func set_region(region_index: int) -> void:
 		var new_enemy: Node3D = _build_piece(kind, cell == 4 and kind == "k", false)
 		new_enemy.position = _square_position(cell)
 		piece_nodes[cell] = new_enemy
+		# Rebuilt biome models must retain actual combat HP and the current
+		# enrage state, not visually respawn with a full health bar.
+		if last_health.size() == 64 and last_max_health.size() == 64:
+			_apply_health_fill(new_enemy, cell, last_health, last_max_health)
+	if boss_enraged:
+		set_boss_phase(2)
 
 func set_hazards(cells: Array[int], modifier: String) -> void:
 	if active_hazards == cells and hazard_type == modifier: return
@@ -1552,6 +1560,16 @@ func set_checked_king(index: int) -> void:
 	if king_warning.visible:
 		king_warning.position = _square_position(checked_king_square) + Vector3(0, 0.14, 0)
 
+func _apply_health_fill(actor: Node3D, cell: int, health: Array, max_health: Array) -> void:
+	if actor == null or health.size() != 64 or max_health.size() != 64:
+		return
+	var fill: MeshInstance3D = actor.get_meta("health_fill", null) as MeshInstance3D
+	if fill == null:
+		return
+	var ratio: float = clampf(float(health[cell]) / float(maxi(1, int(max_health[cell]))), 0.0, 1.0)
+	fill.scale.x = maxf(0.001, ratio)
+	fill.position.x = -0.345 * (1.0 - ratio)
+
 func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int, health: Array = [], max_health: Array = []) -> void:
 	# Only one unit represents the equipped hero. Preserve its identity across
 	# movement and rebuilds, and choose a deterministic new bearer if captured.
@@ -1562,6 +1580,9 @@ func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int,
 			if chosen_piece != "" and str(pieces[candidate]) == chosen_piece:
 				hero_model_cell = candidate
 				break
+	if health.size() == 64 and max_health.size() == 64:
+		last_health = health.duplicate()
+		last_max_health = max_health.duplicate()
 	for cell in piece_nodes.keys():
 		var existing: Node3D = piece_nodes[cell]
 		if bool(existing.get_meta("selected_hero_piece", false)) != (cell == hero_model_cell):
@@ -1582,11 +1603,7 @@ func sync_board(pieces: Array, selected: int, legal_squares: Array, danger: int,
 			piece_nodes[index] = node
 			piece_types[index] = piece
 		if piece != "" and piece_nodes.has(index) and health.size() == 64 and max_health.size() == 64:
-			var piece_node: Node3D = piece_nodes[index]
-			var fill: MeshInstance3D = piece_node.get_meta("health_fill")
-			var ratio := clampf(float(health[index]) / float(maxi(1, int(max_health[index]))), 0.0, 1.0)
-			fill.scale.x = maxi(0.001, ratio)
-			fill.position.x = -0.345 * (1.0 - ratio)
+			_apply_health_fill(piece_nodes[index], index, health, max_health)
 		highlights[index].visible = index == selected or legal_squares.has(index) or index == danger
 		if highlights[index].visible:
 			highlights[index].material_override = selection_material if index == selected else (danger_material if index == danger else move_material)
