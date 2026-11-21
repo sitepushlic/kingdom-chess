@@ -115,6 +115,9 @@ def main():
             chunk_size=struct.unpack_from("<I",data,12)[0]
             gltf=json.loads(data[20:20+chunk_size])
             names=tuple(node["name"] for node in gltf["nodes"])
+            crystals=[name for name in names if "Crystal" in name]
+            assert bool(crystals)==(tier>=4), f"{path}: enchanted crystal progression incorrect"
+            assert len(gltf["materials"])>=3 and "emissiveFactor" in gltf["materials"][2], f"{path}: missing enchantment shader"
             assert names not in shapes, f"{path}: duplicate equipment geometry"
             shapes.add(names)
     print("KINGDOM CHESS: 21 EQUIPMENT GLB FILES VALIDATED")
