@@ -172,6 +172,12 @@ def validate(path, require_animation=True):
                            if node.get("name","").startswith(headgear_prefixes)}
         assert authored_headgear, f"{path}: missing signature headgear"
         assert authored_headgear<=face_children, f"{path}: signature headgear detached from animated head"
+        # Face accents must move with head animations; boss visors use
+        # different geometry from regular hero/enemy eye highlights.
+        if path.stem.startswith("boss_"):
+            assert {"BossVisor","BossVisorBridge"} <= face_children, f"{path}: boss visor not bound to head"
+        else:
+            assert {"FaceEye1","FaceEye-1","FaceBrow"} <= face_children, f"{path}: facial accents not bound to head"
         # Art identity regression: every hero gets class-specific equipment,
         # and every regional enemy must have a recognizable biome silhouette.
         name=path.stem
