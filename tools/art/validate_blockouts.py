@@ -64,9 +64,12 @@ def validate(path, require_animation=True):
         for joint_name in ("Arm1","Arm-1","Leg1","Leg-1"):
             joint_index = next(i for i,node in enumerate(gltf["nodes"]) if node.get("name")==joint_name)
             joint = gltf["nodes"][joint_index]
-            assert "mesh" not in joint and len(joint.get("children",[])) == 1, f"{path}: {joint_name} must be a pivot"
+            assert "mesh" not in joint and len(joint.get("children",[])) >= 2, f"{path}: {joint_name} must be a pivot with attached armor"
             child = gltf["nodes"][joint["children"][0]]
             assert child.get("name") == joint_name+"Mesh" and "mesh" in child, f"{path}: {joint_name} must own limb mesh"
+            expected_gear = ("Gauntlet" if joint_name.startswith("Arm") else "ShinPlate") + joint_name.replace("Arm","").replace("Leg","")
+            attached = [gltf["nodes"][i].get("name") for i in joint["children"]]
+            assert expected_gear in attached, f"{path}: {expected_gear} must follow animated limb"
     for animation in gltf.get("animations",[]):
         channels = animation["channels"]
         assert any(channel["target"]["path"] == "translation" for channel in channels), f"{path}: missing root motion"
