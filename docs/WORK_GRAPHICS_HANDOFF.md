@@ -395,3 +395,10 @@ Commits on `main`:
 - **`a2b1c757fe0f25a82daea9abfbccc9bdc3cc53a2`**: main GLB validator independently enforces all 288 tapered limb profiles and preserved three-ring skin topology.
 **Important:** GitHub commits succeeded; these changes have not been confirmed by executing the complete generator, Godot importer or Android APK. Geometry remains procedural low-poly; mobile visual and performance review is outstanding.
 **Next:** obtain real Actions status and logs, fix generation/import/build errors, visually test deformation on device, then further develop faces, costumes, materials and environment.
+
+## 44. Fix animated weapon attachment across 72 character rigs — 2026-11-21
+- **`8e617b545805860b556f0993699a1ce66de5c826`**: fixed a major visual/animation issue in `tools/art/generate_blockouts.py`: authored 3D swords, axes, bows, staves, hammers, crystals, boss relic blades and weapon grips were static children of `BodyRig` despite swinging arms. These meshes are now parented to the right distal wrist (`Arm1Lower`); shields and left-hand foci/blades follow `Arm-1Lower`. Bind-space translations are converted to wrist-local coordinates to preserve the original rest pose. This applies to all 30 heroes, 36 enemies and 6 bosses.
+- **`d1ccd4cfdaa33669108e547159bbd053e1602afe`**: independent 72-character binary GLB rig QA now verifies weapon grip, appropriate main-hand weapon, optional offhand equipment parent chains, and grip's original world-space Y center.
+- **`ccf1c0e8ab3059300fd2eff07f3d270b00a6a4dc`**: core GLB validator also rejects static/unattached authored weapon geometry.
+**Limitations:** code commits are confirmed. Godot import, actual visual animation, CI result and Android APK have not been executed/verified here. Authored weapon visuals may overlap runtime equipment; inspect and resolve in Godot once CI is accessible.
+**Next:** run/inspect Actions pipeline, fix failing imports and exports, test arm swings and weapon grip in Godot and Android, check runtime equipment visibility and eliminate duplicated meshes, continue visual detailing.
