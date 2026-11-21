@@ -410,3 +410,11 @@ Commits on `main`:
 - **`006c828d07f8e1502475d845fce0bbf7ac26b812`**: core GLB validator requires these nine head-attached facial landmarks on each character.
 **Verification:** GitHub source commits succeeded. Full Python generation, Godot 3D import, mobile visual QA and Android APK export remain unconfirmed. These are low-poly authored details, not completed production facial art.
 **Next:** inspect actual CI status/logs and fix errors, visually review facial proportions and weapon motion, then develop varied face silhouettes, costume materials, detailed environments and mobile performance checks.
+
+## 46. Fix floating signature helmets and expand negative rig regression coverage — 2026-11-21
+- **`fe58ad225a0cfb46339fb77e0c713d26a02415d9`**: fixed six classes of signature headgear (crowns, antlers, tall helmets, crests, halos and masks) remaining under stationary `BodyRig`. Their meshes now inherit the animated `Head` pivot. All generated characters retain their original headgear position while moving with the neck.
+- **`087faa62151a268cc21f57d5509ff0abde70edc9`**: independent 72-character rig QA checks every signature headgear node has `Head` as its parent.
+- **`1e7bf6d4f2b364e0bca1c36870a41dcde808908f`**: added two negative binary GLB regression cases: detach `WeaponGrip` from right wrist and detach `NoseBridge` from head. Validator must reject both; total now 12 negative cases.
+- **`588a96e2dbee54190e48f17eb6e4ff38c9495245`**: core GLB validator requires signature headgear geometry to be parented to `Head` across all 72 characters.
+**Verification:** source changes committed. Complete GLB generation, Python validation, Godot import, CI and Android APK still have no confirmed successful run in this conversation. Do not describe as production-complete 3D.
+**Next:** obtain GitHub Actions logs/run IDs, fix any test/import/export failures; review neck/headgear movement, refine character silhouettes and environment, optimize Android rendering.
