@@ -34,6 +34,14 @@ def validate(path):
         assert acc.get("byteOffset",0) + byte_len <= view["byteLength"], f"{path}: accessor overflow"
     names = {a["name"] for a in gltf.get("animations",[])}
     assert CLIPS.issubset(names), f"{path}: missing clips {CLIPS - names}"
+    node_names = {node.get("name") for node in gltf["nodes"]}
+    assert {"Arm1","Arm-1","Leg1","Leg-1"}.issubset(node_names), f"{path}: missing independent limbs"
+    for animation in gltf["animations"]:
+        channels = animation["channels"]
+        assert any(channel["target"]["path"] == "translation" for channel in channels), f"{path}: missing root motion"
+        assert any(channel["target"]["path"] == "rotation" and gltf["nodes"][channel["target"]["node"]]["name"].startswith("Arm") for channel in channels), f"{path}: missing arm animation in {animation['name']}"
+        if animation["name"] in ("move","death"):
+            assert any(channel["target"]["path"] == "rotation" and gltf["nodes"][channel["target"]["node"]]["name"].startswith("Leg") for channel in channels), f"{path}: missing leg animation in {animation['name']}"
     assert len(gltf["nodes"]) >= 12, f"{path}: no geometry nodes"
     for node in gltf["nodes"]:
         if "mesh" in node:
