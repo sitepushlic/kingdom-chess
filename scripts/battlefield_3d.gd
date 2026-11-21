@@ -235,6 +235,17 @@ func _ready() -> void:
 			_cylinder(0.22, 0.075, trim_shadow, crest, Vector3.ZERO)
 			_cylinder(0.16, 0.09, trim_bronze, crest, Vector3(0, 0.052, 0), 0.11)
 			_sphere(0.075, trim_bronze, crest, Vector3(0, 0.12, 0))
+	# Two-tone inset rails: low-poly, shared meshes and zero additional lights.
+	var filigree_dark: StandardMaterial3D = _material(Color("#312b38"), 0.48, 0.38)
+	for side in [-1, 1]:
+		_box(Vector3(7.55, 0.025, 0.042), filigree_dark, board_root, Vector3(0, 0.057, float(side) * 4.02))
+		_box(Vector3(0.042, 0.025, 7.55), filigree_dark, board_root, Vector3(float(side) * 4.02, 0.057, 0))
+	# Eight heraldic corner plates give the frame depth without overlapping tiles.
+	for side_x in [-1, 1]:
+		for side_z in [-1, 1]:
+			for step in [0, 1]:
+				var ornament: MeshInstance3D = _box(Vector3(0.23, 0.055, 0.075), trim_bronze, board_root, Vector3(float(side_x) * (4.28 + float(step) * 0.12), 0.085, float(side_z) * 4.28))
+				ornament.rotation.y = float(side_z) * 0.785398
 	# Four carved corner plinths with gem insets, outside the playable
 	# squares. Keep them static and under the mobile light budget.
 	var corner_stone: StandardMaterial3D = _material(Color("#625168"), 0.28, 0.47)
