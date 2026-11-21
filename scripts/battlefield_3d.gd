@@ -43,6 +43,8 @@ var rim_light: OmniLight3D
 var torch_flames: Array[MeshInstance3D] = []
 var board_gems: Array[MeshInstance3D] = []
 var board_gem_halos: Array[MeshInstance3D] = []
+var ambient_motes: Array[MeshInstance3D] = []
+var ambient_mote_origins: Array[Vector3] = []
 var current_region := -1
 var mission_visual_variant: int = 0
 var gear_signature := ""
@@ -76,6 +78,8 @@ func set_visual_quality(tier: int) -> void:
 		rim_light.visible = visual_quality > 0
 	for halo in board_gem_halos:
 		halo.visible = visual_quality >= 2
+	for mote in ambient_motes:
+		mote.visible = visual_quality >= 2
 
 
 var hero_model_cell: int = -1
@@ -1002,6 +1006,21 @@ func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
 				spike.rotation.z = side * 0.22
 			var eclipse := _ring(0.95, 0.10, magic, region_scenery, Vector3(0, 2.70, 7.30))
 			eclipse.rotation.x = PI * 0.5
+	# A bounded halo of 12 drifting particles around the arena.
+	# Geometry only, no particle emitter or extra light source. Hidden
+	# completely in low and medium visual-quality presets.
+	ambient_motes.clear()
+	ambient_mote_origins.clear()
+	for mote_index in range(12):
+		var mote_angle: float = TAU * float(mote_index) / 12.0
+		var mote_radius: float = 5.1 + float(mote_index % 3) * 0.27
+		var mote_pos := Vector3(cos(mote_angle) * mote_radius, 0.8 + float(mote_index % 4) * 0.28, sin(mote_angle) * mote_radius)
+		var mote: MeshInstance3D = _sphere(0.055, magic, region_scenery, mote_pos)
+		mote.name = "AmbientMote_%02d" % mote_index
+		mote.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mote.visible = visual_quality >= 2
+		ambient_motes.append(mote)
+		ambient_mote_origins.append(mote_pos)
 	# Mission-specific visual dressing outside the playable 8x8 board.
 	# Layout 0: standards, layout 1: runic obelisks, layout 2: ward circles.
 	for side in [-1.0, 1.0]:
@@ -1422,6 +1441,14 @@ func _process(delta: float) -> void:
 				var halo: MeshInstance3D = board_gem_halos[gem_index]
 				halo.rotation.z = clock * 0.45 + float(gem_index)
 				halo.scale = Vector3.ONE * (0.88 + 0.14 * sin(phase + 0.8))
+	if visual_quality >= 2:
+		for mote_index in range(ambient_motes.size()):
+			var mote: MeshInstance3D = ambient_motes[mote_index]
+			if not is_instance_valid(mote):
+				continue
+			var origin: Vector3 = ambient_mote_origins[mote_index]
+			var wave: float = clock * (0.7 + float(mote_index % 4) * 0.12) + float(mote_index) * 0.91
+			mote.position = origin + Vector3(0.09 * sin(wave * 0.7), 0.18 * sin(wave), 0.09 * cos(wave * 0.7))
 	for n in range(animated_scenery.size()):
 		if not fx_enabled: break
 		var orb: MeshInstance3D = animated_scenery[n]
