@@ -566,3 +566,15 @@ For EVERY future implementation session:
 **Known limitations:** incomplete HP-aware checkmate/AP edge cases; host networking action replay and reconnection; procedural rather than commercial-quality authored/rigged 3D models; limited authored animations, rarity visuals, region art; campaign balance and Android FPS/thermals unmeasured.
 
 **Next run:** obtain latest Actions logs and fix failures first; audit compatibility of saved battles and LAN snapshots; implement deterministic checkmate and AP edge-case tests; advance actual original 3D asset pipeline; benchmark Android on device; update handoff with exact commits and verified outcomes. Continue without confirmation, but never claim a completed game without tests.
+
+## Full handoff — 2026-11-21, immediate manual graphics session
+
+**Workflow:** User explicitly suspended automation and requested immediate interactive development. Scheduled automation `Automation_d67c67895a088191a0759a2a7766539e` was successfully disabled; do NOT re-enable without explicit user request. User wants no intermediate status messages: report only after a priority item is FULLY complete, unless an actual blocker requires attention.
+
+**Product/architecture:** Godot 4.3 Android portrait chess/RPG, chess legality, HP/AP combat, 30 heroes with gated progression, 7 equipment rarities, 18 missions/6 regions, LAN, high-quality 3D graphics/animation/VFX. `scripts/main.gd` combat/UI/network/save; `scripts/battlefield_3d.gd` 3D render/animation; `scripts/progression.gd` progression; `scripts/hero_roster.gd` hero data; `tests/smoke.gd` tests; `.github/workflows/android.yml` CI.
+
+**Commits:** `eaeb2bf66aea67b2d063085c77137ba01da22b3d` adds 3D burst sparks to impact/healing effects with geometry-only meshes, shared spark mesh/material, quality-tier budget (low 0, medium 5, high 9), short lifetime and cleanup. `506377fb2ce80d6f0a6f77ddd7dd5ac14e227bf3` adds Godot smoke assertions for quality-dependent counts. This documentation commit records the session.
+
+**Verification:** GitHub accepted commits; smoke/CI execution, Android APK and device FPS remain UNVERIFIED. Quality-tier spark behavior has assertions but no confirmed test run. Visual improvement is a small VFX step, NOT full graphics priority completion.
+
+**Graphics priority remaining:** authored original high-quality rigged GLB heroes (30 differentiated appearances), combat animations, distinct gear rarity sets, full six-region environmental art, camera polish, hit feedback, GPU/CPU profiling and Android performance QA. Current procedural piece models and limited VFX are not commercial-ready. Other blockers: chess checkmate/AP/HP edge cases, network replay, progression balance and Android testing. Continue actual graphics implementation before reporting priority complete.
