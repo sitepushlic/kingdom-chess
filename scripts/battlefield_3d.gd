@@ -22,6 +22,9 @@ var board_root: Node3D
 var region_scenery: Node3D
 var animated_scenery: Array[MeshInstance3D] = []
 var torches: Array[OmniLight3D] = []
+var world_environment: WorldEnvironment
+var key_light: DirectionalLight3D
+var rim_light: OmniLight3D
 var torch_flames: Array[MeshInstance3D] = []
 var current_region := -1
 var gear_signature := ""
@@ -113,6 +116,7 @@ func _ready() -> void:
 	env.ambient_light_energy = 0.6
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	world.environment = env
+	world_environment = world
 	add_child(world)
 	board_root = Node3D.new()
 	add_child(board_root)
@@ -161,12 +165,14 @@ func _ready() -> void:
 	key.light_energy = 1.5
 	key.shadow_enabled = true
 	add_child(key)
+	key_light = key
 	var rim := OmniLight3D.new()
 	rim.position = Vector3(-3, 5, -3)
 	rim.light_color = Color("#729bff")
 	rim.light_energy = 1.6
 	rim.omni_range = 16.0
 	add_child(rim)
+	rim_light = rim
 	camera = Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.size = 12.7
@@ -417,6 +423,14 @@ func set_region(region_index: int) -> void:
 		mat.albedo_color = palette[0] if (int(index / 8) + index % 8) % 2 == 0 else palette[1]
 	for torch in torches:
 		torch.light_color = palette[2]
+	# Region lighting changes the actual 3D scene, not just tile colours.
+	# Keep ambient illumination high enough to distinguish pieces on mobile.
+	var environment: Environment = world_environment.environment
+	environment.background_color = palette[0].darkened(0.72)
+	environment.ambient_light_color = palette[1].lightened(0.20)
+	key_light.light_color = palette[1].lightened(0.35)
+	rim_light.light_color = palette[2]
+	rim_light.light_energy = 1.25 if region_index == 5 else 1.6
 	_rebuild_region_scenery(region_index, palette)
 
 func set_hazards(cells: Array[int], modifier: String) -> void:
