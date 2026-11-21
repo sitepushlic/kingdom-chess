@@ -1091,6 +1091,26 @@ func _run() -> void:
 	_assert_ok(not game.battlefield_3d.board_style_customized, "Resetting board skin returns to biome palette")
 	_assert_ok(game.battlefield_3d.tile_materials[0].albedo_color == Color("#28395e"), "Biome reset restores active region colors")
 	game.battlefield_3d.set_region(0)
+	# Replacing regional enemy GLBs must never visually heal damaged units.
+	var health_sample: Array = []
+	var max_health_sample: Array = []
+	for cell in range(64):
+		health_sample.append(50)
+		max_health_sample.append(100)
+	game.battlefield_3d.sync_board(game.pieces, -1, [], -1, health_sample, max_health_sample)
+	var damaged_enemy_cell: int = -1
+	for cell in game.battlefield_3d.piece_nodes.keys():
+		if str(game.battlefield_3d.piece_types.get(cell, "")) == "p":
+			damaged_enemy_cell = cell
+			break
+	if damaged_enemy_cell >= 0:
+		var old_fill: MeshInstance3D = (game.battlefield_3d.piece_nodes[damaged_enemy_cell] as Node3D).get_meta("health_fill")
+		_assert_ok(absf(old_fill.scale.x - 0.5) < 0.001, "Enemy 3D HP bar reflects actual damage before biome switch")
+		game.battlefield_3d.set_region(2)
+		var rebuilt_fill: MeshInstance3D = (game.battlefield_3d.piece_nodes[damaged_enemy_cell] as Node3D).get_meta("health_fill")
+		_assert_ok(rebuilt_fill != old_fill and absf(rebuilt_fill.scale.x - 0.5) < 0.001, "Enemy HP bar survives full biome mesh replacement")
+	game.battlefield_3d.sync_board(game.pieces, -1, [], -1, game.hp, game.max_hp)
+
 	var scenery_counts: Array[int] = []
 	var region_light_colors: Array[Color] = []
 	for region_index in range(6):
