@@ -19,8 +19,19 @@ Starting source SHA: `ae427c0eb0405d18f79348cf0e26562e1ccca87b`.
 - GitHub Actions passed on this exact source SHA: [fast art run 44940064543](https://github.com/sitepushlic/kingdom-chess/actions/runs/44940064543) and [Godot run 44940064537](https://github.com/sitepushlic/kingdom-chess/actions/runs/44940064537), job `136955084394`. Godot 4.3 import, actual main-scene launch, and gameplay smoke all passed. Both GLB validation and 432-socket rig QA passed. The full Godot workflow skipped only cache-hit verification and reproducibility because it was a push run; reproducibility passed in the fast-art workflow and locally.
 - The previous failures `44936307760` and `44936307793` were both on `4b027da6` and failed at the rook-head attachment assertion before Godot import; that blocker is resolved.
 
+### Next action from that source commit (completed below)
+Inspect the canonical roster and expand `docs/ART_MANIFEST.md` into a per-asset production/QA matrix. The next-session action is recorded in the current update below.
+
+## SESSION UPDATE — 2026-11-22 — HERO PRODUCTION MATRIX
+Starting branch SHA: `71de2e3dcdf50ae7b1a40fbe7a39af78fcba7446`.
+
+- Reworked `docs/ART_MANIFEST.md` against all 30 canonical `hero_roster.gd` records. Added individual proposed silhouettes, weapons and palettes; exact ID/path; current generation and QA status; runtime socket mapping (`Arm1`, `SpineChest`, `Arm-1`); clip contract; proposed mobile budgets; and explicit screenshot/acceptance counts.
+- Added a category status ledger for 30 heroes, 36 enemies, 6 bosses, 21 equipment models, 6 regions and 18 mission variants. It distinguishes CI-generated/imported content from authored source and visually accepted work. All authored-source and visual acceptance counts remain zero; no screenshots or art files were created in this session.
+- Blender 4.3.2 is installed in the Work environment. Use it for the next actual authoring batch; preserve `.blend` source, export GLB, and integrate exports so CI does not overwrite them with the procedural generator.
+- This documentation-only change was not run through tests. The last code verification remains source commit `066764b` and exact passing Actions runs listed above.
+
 ### First next action
-Continue Gate B: inspect the complete canonical hero roster and current `docs/ART_MANIFEST.md`, then make the manifest a per-asset production/QA matrix with exact hero IDs, paths, silhouettes, materials, rigs, clips, budgets, and evidence status. Follow with authored-asset work and rendered visual inspection; passing procedural QA/import is not final visual acceptance. APK remains untouched.
+Author `hero_01`–`hero_06` as one Blender source batch using the new briefs; export the six GLBs, preserve the shared rig/socket/animation contract, import them in Godot 4.3, visually inspect front/three-quarter/in-game views, then update the asset pipeline and CI so generated placeholders cannot overwrite accepted models. No APK.
 
 ## 1. USER'S DIRECT ORDERS — HIGHEST PRIORITY
 1. Finish **priority 1: complete playable 3D graphics** for Kingdom Chess, not a demo, static concept art, or another batch of superficial procedural blockouts.
