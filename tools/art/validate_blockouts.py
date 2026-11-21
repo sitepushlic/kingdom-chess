@@ -114,6 +114,11 @@ def validate(path, require_animation=True):
         assert any(.05<row[1]<.95 for row in skin_weights), f"{path}: cloth does not actually blend two bones"
         inverse_matrices=decode_attribute(skin["inverseBindMatrices"])
         assert all(abs(row[15]-1)<1e-6 and all(math.isfinite(v) for v in row) for row in inverse_matrices), f"{path}: invalid inverse bind matrices"
+        assert "Head" in node_names, f"{path}: missing animated neck pivot"
+        head_joint=next(node for node in gltf["nodes"] if node.get("name")=="Head")
+        head_children=[gltf["nodes"][index].get("name","") for index in head_joint.get("children",[])]
+        assert "HeadMesh" in head_children and "BrowRidge" in head_children, f"{path}: face does not follow head pivot"
+        assert any(name.startswith("Eye") for name in head_children), f"{path}: eyes not attached to animated head"
         assert {"Arm1","Arm-1","Leg1","Leg-1"}.issubset(node_names), f"{path}: missing independent limbs"
         for joint_name in ("Arm1","Arm-1","Leg1","Leg-1"):
             joint_index = next(i for i,node in enumerate(gltf["nodes"]) if node.get("name")==joint_name)
@@ -130,6 +135,7 @@ def validate(path, require_animation=True):
         assert any(channel["target"]["path"] == "rotation" and gltf["nodes"][channel["target"]["node"]]["name"]=="BodyRig" for channel in channels), f"{path}: missing full-body lean animation"
         if require_animation:
             assert any(channel["target"]["path"]=="rotation" and gltf["nodes"][channel["target"]["node"]]["name"]=="CapeHem" for channel in channels), f"{path}: missing skinned mantle sway track"
+            assert any(channel["target"]["path"]=="rotation" and gltf["nodes"][channel["target"]["node"]]["name"]=="Head" for channel in channels), f"{path}: missing head animation"
         assert any(channel["target"]["path"] == "rotation" and gltf["nodes"][channel["target"]["node"]]["name"].startswith("Arm") for channel in channels), f"{path}: missing arm animation in {animation['name']}"
         if animation["name"] in ("move","death"):
             assert any(channel["target"]["path"] == "rotation" and gltf["nodes"][channel["target"]["node"]]["name"].startswith("Leg") for channel in channels), f"{path}: missing leg animation in {animation['name']}"
