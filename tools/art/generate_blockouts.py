@@ -380,6 +380,67 @@ def make_character(identifier, boss=False):
     torso_ibm=accessor(torso_inverse,"32f",2,5126,"MAT4")
     skins.append({"name":"TorsoSkin","joints":[hip_index,hip_index+1],
                   "skeleton":hip_index,"inverseBindMatrices":torso_ibm})
+    # Weighted limb surfaces: shoulder/hip pivots remain named Arm±1 and
+    # Leg±1 for gameplay equipment sockets. Each surface is now a genuine
+    # two-joint glTF skin rather than an undeformed rigid cube.
+    limb_skin_bones={}
+    for limb_name in ("Arm1","Arm-1","Leg1","Leg-1"):
+        pivot_index=next(i for i,node in enumerate(nodes)
+                         if node.get("name")==limb_name)
+        pivot=nodes[pivot_index]
+        old_mesh_index=next(i for i in pivot["children"]
+                            if nodes[i].get("name")==limb_name+"Mesh")
+        old_mesh=nodes[old_mesh_index]
+        # Reuse the original mesh node as a skinned node, but move it under
+        # BodyRig so its world transform remains identity at bind time.
+        pivot["children"].remove(old_mesh_index)
+        nodes[1]["children"].append(old_mesh_index)
+        center=[pivot["translation"][j]+old_mesh["translation"][j]
+                for j in range(3)]
+        dimensions=[value*2 for value in old_mesh["scale"]]
+        is_arm=limb_name.startswith("Arm")
+        lower_joint_index=len(nodes)
+        lower_offset=-.24 if is_arm else -.225
+        nodes.append({"name":limb_name+"Lower",
+                      "translation":[0,lower_offset,0]})
+        pivot["children"].append(lower_joint_index)
+        old_mesh.pop("scale",None)
+        old_mesh.pop("rotation",None)
+        old_mesh["translation"]=[0,0,0]
+        old_mesh["mesh"]=len(meshes)
+        old_mesh["skin"]=len(skins)
+        verts=[]
+        weights=[]
+        joints=[]
+        for x,y,z in CUBE_VERTS:
+            verts.extend((center[0]+x*dimensions[0]/2,
+                          center[1]+y*dimensions[1]/2,
+                          center[2]+z*dimensions[2]/2))
+            distal=.82 if y<0 else .18
+            weights.extend((1-distal,distal,0,0))
+            joints.extend((0,1,0,0))
+        mins=[center[j]-dimensions[j]/2 for j in range(3)]
+        maxs=[center[j]+dimensions[j]/2 for j in range(3)]
+        pos_index=accessor(verts,"72f",24,5126,"VEC3",34962,
+                           (mins,maxs))
+        joint_index=accessor(joints,"96B",24,5121,"VEC4",34962)
+        weight_index=accessor(weights,"96f",24,5126,"VEC4",34962)
+        meshes.append({"name":limb_name+"DeformingSurface","primitives":[{
+            "attributes":{"POSITION":pos_index,"NORMAL":normals,
+                          "JOINTS_0":joint_index,"WEIGHTS_0":weight_index},
+            "indices":indices,"material":1}]})
+        root=pivot["translation"]
+        lower=[root[0],root[1]+lower_offset,root[2]]
+        inverse=[]
+        for position in (root,lower):
+            inverse.extend((1,0,0,0, 0,1,0,0, 0,0,1,0,
+                            -position[0],-position[1],-position[2],1))
+        inverse_index=accessor(inverse,"32f",2,5126,"MAT4")
+        skins.append({"name":limb_name+"Skin",
+                      "joints":[pivot_index,lower_joint_index],
+                      "skeleton":pivot_index,
+                      "inverseBindMatrices":inverse_index})
+        limb_skin_bones[limb_name]=lower_joint_index
     # Six named glTF clips animate the full character pivot. These are
     # rigid transform clips, NOT skeletal animations.
     clips = {
@@ -496,6 +557,24 @@ def make_character(identifier, boss=False):
         samplers.append({"input":t,"output":spine_output,"interpolation":"LINEAR"})
         channels.append({"sampler":len(samplers)-1,
                          "target":{"node":hip_index+1,"path":"rotation"}})
+        # Distal joint flex makes elbows and knees deform independently
+        # of the upper-arm and hip swings.
+        for limb_name,lower_index in limb_skin_bones.items():
+            flex={
+                "idle":[0,.025,0], "move":[0,.20,-.14],
+                "attack":[0,-.34,.28,0], "hit":[0,.23,0],
+                "death":[0,.28,.45], "cast":[0,-.23,0],
+            }[name]
+            if limb_name.startswith("Leg"):
+                flex=[value*.55 for value in flex]
+            elif limb_name.endswith("-1"):
+                flex=[-value for value in flex]
+            poses=[(math.sin(v/2),0,0,math.cos(v/2)) for v in flex]
+            output=accessor([v for pose in poses for v in pose],
+                            str(len(poses)*4)+"f",len(poses),5126,"VEC4")
+            samplers.append({"input":t,"output":output,"interpolation":"LINEAR"})
+            channels.append({"sampler":len(samplers)-1,
+                             "target":{"node":lower_index,"path":"rotation"}})
         for limb, angles in limb_poses[name].items():
             if limb not in node_ids:
                 continue
