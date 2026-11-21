@@ -1344,6 +1344,12 @@ func _raid_victory() -> void:
 	battle_log = "НАГРАДА ГЛАВЫ: %s!" % item["name"] if raid_wins % 3 == 0 and raid_wins <= 18 else "Добыча: %s (%s), +%d к атаке" % [item["name"], Progression.RARITIES[int(item["rarity"])], int(item["attack"])]
 	if raid_wins == 18:
 		battle_log += "\nСЮЖЕТ ЗАВЕРШЁН: все шесть регионов освобождены. Открыты бесконечные экспедиции с новыми сочетаниями противников."
+	var newly_unlocked: Array[String] = []
+	for hero in HeroRoster.HEROES:
+		if HeroRoster.unlocked(hero, raid_wins, player_level) and not HeroRoster.unlocked(hero, raid_wins - 1, player_level):
+			newly_unlocked.append(str(hero["name"]))
+	if not newly_unlocked.is_empty():
+		battle_log += "\nНОВЫЕ ГЕРОИ: %s! Открой список героев, чтобы выбрать лидера." % ", ".join(newly_unlocked)
 	_save_profile()
 
 func _use_potion() -> void:
@@ -2105,7 +2111,12 @@ func _draw() -> void:
 	phase_label.text = "ФАЗА II • ЯРОСТЬ ПАДШЕГО" if boss_phase == 2 else "ФАЗА I • ПРОБУЖДЕНИЕ"
 	inventory_label.text = "Ур. %d  •  Опыт: %d/%d  •  Золото: %d  •  Зелья: %d" % [player_level,experience,Progression.experience_needed(player_level),gold,potions]
 	equipment_label.text = "⚔ +%d  ⛨ +%d  ♥ +%d  ✦ %d%%  ☽ %d%%\nТрофеи: %d  •  Побед: %d" % [_attack_bonus(),_armor_bonus(),_item_stat("hp"),_item_stat("crit"),_item_stat("lifesteal"),equipment.size(),raid_wins]
-	info.text = ("♛ ЛИДЕР: %s • %s\n" % [HeroRoster.get_hero(selected_hero)["name"], HeroRoster.TIER_NAMES[int(HeroRoster.get_hero(selected_hero)["rarity"])]] if mode == "raid" else "") + ("⛨ ЩИТ АКТИВЕН\n" if shield_active else "") + ("ГЛАВА %d • %s\nМИССИЯ: %s\nЦЕЛЬ: %s\nБОСС: %d/%d HP • Раунд %d\n" % [raid_stage, raid_region, str(raid_mission.get("title", raid_encounter)), str(raid_mission.get("goal", "Победи босса.")), boss_hp, 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35, raid_round] if mode == "raid" else "") + battle_log
+	var next_hero: Dictionary = HeroRoster.next_unlock(raid_wins, player_level) if mode == "raid" else {}
+	var next_quest: String = ""
+	if not next_hero.is_empty():
+		var quest: Dictionary = HeroRoster.quest_progress(next_hero, raid_wins, player_level)
+		next_quest = "СЛЕДУЮЩИЙ ГЕРОЙ: %s • победы %d/%d, ур. %d/%d\n" % [next_hero["name"], quest["wins"], quest["required_wins"], quest["level"], quest["required_level"]]
+	info.text = ("♛ ЛИДЕР: %s • %s\n" % [HeroRoster.get_hero(selected_hero)["name"], HeroRoster.TIER_NAMES[int(HeroRoster.get_hero(selected_hero)["rarity"])]] if mode == "raid" else "") + next_quest + ("⛨ ЩИТ АКТИВЕН\n" if shield_active else "") + ("ГЛАВА %d • %s\nМИССИЯ: %s\nЦЕЛЬ: %s\nБОСС: %d/%d HP • Раунд %d\n" % [raid_stage, raid_region, str(raid_mission.get("title", raid_encounter)), str(raid_mission.get("goal", "Победи босса.")), boss_hp, 240 + (raid_stage - 1) * 100 + int(raid_wins / 6.0) * 35, raid_round] if mode == "raid" else "") + battle_log
 	if selected >= 0 and selected < 64 and pieces[selected] != "":
 		var hero: String = pieces[selected]
 		var hero_attack: int = DAMAGE[hero.to_upper()] + ((_attack_bonus() + (_effective_level() - 1) * 2) if mode == "raid" and _team(hero) == 1 else 0)
