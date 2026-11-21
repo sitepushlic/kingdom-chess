@@ -1043,6 +1043,12 @@ func _run() -> void:
 	_assert_ok(scenery_counts[0] != scenery_counts[1], "Fortress and frostland environments use different geometry")
 	game.battlefield_3d.set_region(0)
 	_assert_ok(game.battlefield_3d.region_scenery.get_child_count() == scenery_counts[0], "Switching regions rebuilds scenery without accumulation")
+	_assert_ok(game.battlefield_3d.biome_material_cache.size() == 6, "Six biomes share six stable material sets")
+	var cached_forge_material: Material = game.battlefield_3d.biome_material_cache[0][0]
+	game.battlefield_3d.set_region(1)
+	game.battlefield_3d.set_region(0)
+	_assert_ok(game.battlefield_3d.biome_material_cache[0][0] == cached_forge_material, "Revisiting a region reuses existing PBR materials")
+	_assert_ok(game.battlefield_3d.biome_material_cache.size() == 6, "Region switching does not grow material cache")
 	for asset_name in ["pawn", "rook", "knight", "bishop", "queen", "king"]:
 		var mesh_path: String = "res://assets/characters/%s.obj" % asset_name
 		_assert_ok(ResourceLoader.exists(mesh_path), "Original 3D mesh exists for " + asset_name)
