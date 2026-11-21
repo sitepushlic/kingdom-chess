@@ -32,6 +32,8 @@ var torch_flames: Array[MeshInstance3D] = []
 var current_region := -1
 var gear_signature := ""
 var hero_gear: Dictionary = {}
+var selected_hero_visual: Dictionary = {}
+var selected_hero_signature := ""
 var boss_crown: Material
 var attack_effects: Array[Node3D] = []
 var base_camera_position := Vector3(0, 11.8, 8.7)
@@ -324,6 +326,40 @@ func _add_character_surface_detail(kind: String, white: bool, parent: Node3D) ->
 			_ring(0.23, 0.038, edge, parent, Vector3(0, 1.09, 0))
 			_sphere(0.08, gem, parent, Vector3(0, 1.38, -0.06))
 
+func set_selected_hero_visual(hero: Dictionary) -> void:
+	var next_signature: String = str(hero.get("id", ""))
+	if selected_hero_signature == next_signature: return
+	selected_hero_signature = next_signature
+	selected_hero_visual = hero.duplicate(true)
+	# Force a fresh model on the next board synchronization so the selected
+	# hero's identity appears in 3D, not only in the roster UI.
+	for cell in piece_types.keys():
+		if str(piece_types[cell]) == str(hero.get("piece", "")):
+			piece_types[cell] = ""
+
+func _add_selected_hero_identity(kind: String, parent: Node3D) -> void:
+	if selected_hero_visual.is_empty() or str(selected_hero_visual.get("piece", "")) != kind: return
+	var identifier: String = str(selected_hero_visual.get("id", "hero_01"))
+	var number: int = clampi(int(identifier.trim_prefix("hero_")), 1, 30)
+	var rarity: int = clampi(int(selected_hero_visual.get("rarity", 0)), 0, 6)
+	var hue: float = fmod(float(number * 47), 360.0) / 360.0
+	var base: Color = Color.from_hsv(hue, 0.58, 0.88)
+	var crest_mat: StandardMaterial3D = _material(base, 0.68, 0.22, base.darkened(0.48))
+	var emblem := Node3D.new()
+	emblem.name = "HeroIdentity_%02d" % number
+	parent.add_child(emblem)
+	# A distinct silhouette, hue and insignia for each roster identity.
+	var spikes: int = 2 + (number % 5)
+	for i in range(spikes):
+		var angle: float = TAU * float(i) / float(spikes)
+		var stone := _box(Vector3(0.065, 0.14 + 0.035 * float(rarity), 0.07), crest_mat, emblem, Vector3(cos(angle) * 0.25, 1.26, sin(angle) * 0.25))
+		stone.rotation.y = angle
+	_sphere(0.095 + float(rarity) * 0.008, crest_mat, emblem, Vector3(0, 1.31, -0.16))
+	if rarity >= 3:
+		var halo := _ring(0.28, 0.02, crest_mat, emblem, Vector3(0, 1.14, 0))
+		halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	emblem.set_meta("hero_id", identifier)
+
 func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 	var unit := Node3D.new()
 	var white := letter == letter.to_upper()
@@ -369,6 +405,7 @@ func _build_piece(letter: String, is_boss: bool = false) -> Node3D:
 			_box(Vector3(0.12, 0.47, 0.12), gold_material, unit, Vector3(0, 1.41, 0))
 			_box(Vector3(0.37, 0.10, 0.12), gold_material, unit, Vector3(0, 1.48, 0))
 	_add_character_surface_detail(kind, white, unit)
+	if white: _add_selected_hero_identity(kind, unit)
 	# Each class has an identifiable elevated crest, even at portrait mobile scale.
 	if kind == "N":
 		for side in [-1.0, 1.0]:
