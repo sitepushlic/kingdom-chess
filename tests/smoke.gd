@@ -279,6 +279,8 @@ func _run() -> void:
 		_assert_ok(game.battlefield_3d.CHARACTER_SCENE_PATHS.has(class_letter), "Every chess class has an authored 3D asset path")
 		var sample: Node3D = game.battlefield_3d._build_piece(class_letter)
 		_assert_ok(sample.get_meta("health_fill", null) != null, "Imported-model fallback keeps the combat health bar")
+		_assert_ok(sample.get_meta("visual_rig", null) is Node3D, "Each class has an independently animatable 3D character rig")
+		_assert_ok((sample.get_meta("visual_rig") as Node3D).get_child_count() > 0, "Visual rig contains actual geometry")
 		sample.queue_free()
 	_assert_ok(Progression.CAMPAIGN.size() == 18, "Complete 18-mission story campaign")
 	var mission_titles: Dictionary = {}
