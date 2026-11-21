@@ -500,3 +500,33 @@ static func available_count(wins: int, level: int) -> int:
 static func valid_selection(id: String, wins: int, level: int) -> String:
 	var hero := get_hero(id)
 	return str(hero["id"]) if str(hero["id"]) == id and unlocked(hero, wins, level) else "hero_01"
+
+static func quest_progress(hero: Dictionary, wins: int, level: int) -> Dictionary:
+	# Both campaign victories and player level are mandatory; no premium shortcut.
+	var required_wins: int = maxi(0, int(hero.get("wins", 0)))
+	var required_level: int = maxi(1, int(hero.get("level", 1)))
+	var current_wins: int = clampi(wins, 0, required_wins)
+	var current_level: int = clampi(level, 0, required_level)
+	return {
+		"wins": current_wins,
+		"required_wins": required_wins,
+		"level": current_level,
+		"required_level": required_level,
+		"unlocked": wins >= required_wins and level >= required_level
+	}
+
+static func next_unlock(wins: int, level: int) -> Dictionary:
+	# Choose the closest locked hero by normalized remaining progress.
+	var best: Dictionary = {}
+	var best_distance: float = INF
+	for hero in HEROES:
+		if unlocked(hero, wins, level):
+			continue
+		var progress: Dictionary = quest_progress(hero, wins, level)
+		var win_gap: float = float(progress["required_wins"] - progress["wins"]) / float(maxi(1, int(progress["required_wins"])))
+		var level_gap: float = float(progress["required_level"] - progress["level"]) / float(maxi(1, int(progress["required_level"])))
+		var distance: float = win_gap + level_gap
+		if distance < best_distance:
+			best_distance = distance
+			best = hero.duplicate(true)
+	return best
