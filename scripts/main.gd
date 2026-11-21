@@ -1101,6 +1101,8 @@ func _save_profile() -> void:
 	})
 
 func _item_stat(stat: String) -> int:
+	# Equal-stat local PvP: earned gear, hero rarity and level never decide a chess duel.
+	if mode == "arena": return 0
 	if lan_connected and not lan_host and shared_raid_stats.has(stat):
 		return int(shared_raid_stats[stat])
 	var total := 0
@@ -1118,6 +1120,7 @@ func _item_stat(stat: String) -> int:
 	return total
 
 func _has_trait(trait_id: int) -> bool:
+	if mode == "arena": return false
 	for slot in Progression.ITEM_SLOTS:
 		var index: int = int(equipped_slots.get(slot, -1))
 		if index >= 0 and index < equipment.size() and Progression.can_equip(equipment[index], raid_wins, player_level) and int(equipment[index].get("trait_id", -1)) == trait_id:
