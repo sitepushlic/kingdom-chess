@@ -14,6 +14,8 @@ var hazard_markers: Array[MeshInstance3D] = []
 var king_warning: MeshInstance3D
 var checked_king_square := -1
 var selected_square_visual: int = -1
+var last_move_markers: Array[MeshInstance3D] = []
+var last_move_cells: Array[int] = []
 var poison_indicators: Dictionary = {}
 var enemy_poison_indicators: Dictionary = {}
 var active_hazards: Array[int] = []
@@ -392,6 +394,14 @@ func _ready() -> void:
 	king_warning.name = "KingCheckWarning"
 	king_warning.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	king_warning.visible = false
+	# Two persistent low-poly rings record the previous move.
+	var last_move_material: StandardMaterial3D = _material(Color("#f2c777"), 0.36, 0.30, Color("#9a642b"))
+	for marker_index in range(2):
+		var trail_ring: MeshInstance3D = _ring(0.37 if marker_index == 0 else 0.44, 0.022, last_move_material, board_root, Vector3.ZERO)
+		trail_ring.name = "LastMoveOrigin" if marker_index == 0 else "LastMoveDestination"
+		trail_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		trail_ring.visible = false
+		last_move_markers.append(trail_ring)
 	for x in [-4.45, 4.45]:
 		for z in [-4.45, 4.45]:
 			_cylinder(0.24, 0.18, dark_material, board_root, Vector3(x, -0.12, z))
@@ -1717,8 +1727,24 @@ func _play_authored_clip(rig: Node3D, clip: String) -> bool:
 			return true
 	return false
 
+func clear_last_move_visual() -> void:
+	last_move_cells.clear()
+	for marker in last_move_markers:
+		if is_instance_valid(marker):
+			marker.visible = false
+
+func _set_last_move_visual(source: int, target: int) -> void:
+	if source < 0 or source >= 64 or target < 0 or target >= 64:
+		return
+	last_move_cells = [source, target]
+	for i in range(mini(2, last_move_markers.size())):
+		var marker: MeshInstance3D = last_move_markers[i]
+		marker.position = _square_position(last_move_cells[i]) + Vector3(0.0, 0.055, 0.0)
+		marker.visible = true
+
 func animate_move(source: int, target: int) -> void:
 	if not piece_nodes.has(source): return
+	_set_last_move_visual(source, target)
 	var actor: Node3D = piece_nodes[source]
 	if piece_nodes.has(target):
 		if hero_model_cell == target: hero_model_cell = -1
