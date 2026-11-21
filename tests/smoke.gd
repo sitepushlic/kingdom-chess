@@ -146,6 +146,27 @@ func _run() -> void:
 	game.battlefield_3d.set_selected_hero_visual(HeroRoster.get_hero("hero_30"))
 	var rare_hero_visual := game.battlefield_3d._build_piece("K")
 	_assert_ok(rare_hero_visual.find_child("HeroIdentity_30", true, false) != null, "Highest rarity hero has distinct 3D crest")
+	# Generated GLBs are required in CI before Godot import. Verify hero-ID
+	# and region-boss models really load and contain all six authored clip names.
+	var required_clips := ["idle", "move", "attack", "hit", "death", "cast"]
+	for asset_name in ["hero_01", "hero_15", "hero_30", "boss_region_0", "boss_region_5"]:
+		var asset_path: String = "res://assets/characters/%s.glb" % asset_name
+		_assert_ok(ResourceLoader.exists(asset_path), "Generated GLB exists: " + asset_name)
+		var imported: Resource = load(asset_path)
+		_assert_ok(imported is PackedScene, "Generated GLB imports as scene: " + asset_name)
+		if imported is PackedScene:
+			var model: Node = (imported as PackedScene).instantiate()
+			var player: AnimationPlayer = model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+			_assert_ok(player != null, "GLB animation player exists: " + asset_name)
+			if player != null:
+				for clip_name in required_clips:
+					var found: bool = player.has_animation(clip_name)
+					for library_name in player.get_animation_library_list():
+						var library: AnimationLibrary = player.get_animation_library(library_name)
+						if library != null and library.has_animation(clip_name):
+							found = true
+					_assert_ok(found, "GLB clip %s exists: %s" % [clip_name, asset_name])
+			model.free()
 	# Every roster ID must generate a unique physical signature, not only a tint.
 	var hero_art_signatures: Dictionary = {}
 	for hero_number in range(1, 31):
