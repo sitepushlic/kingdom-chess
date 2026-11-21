@@ -190,6 +190,7 @@ func _ready() -> void:
 	battlefield_3d = Battlefield3D.new()
 	battlefield_viewport.add_child(battlefield_3d)
 	battlefield_3d.set_visual_quality(graphics_quality)
+	battlefield_3d.set_coordinate_labels_enabled(coordinates_visible)
 	battlefield_3d.set_board_visual_style(selected_board)
 	battlefield_3d.set_castle_visual_levels(castle)
 	battlefield_container.gui_input.connect(_on_3d_board_input)
