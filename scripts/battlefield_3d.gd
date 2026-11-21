@@ -67,6 +67,7 @@ var primitive_mesh_cache: Dictionary = {}
 # Reused VFX resources: avoid shader/material allocations on each attack.
 var impact_materials: Dictionary = {}
 var attack_trail_materials: Dictionary = {}
+var biome_material_cache: Dictionary = {}
 # Smooth biome lighting transitions without allocating materials or extra lights.
 var region_light_target: Color = Color("#7c92b1")
 var region_background_target: Color = Color("#0b1422")
@@ -1188,9 +1189,16 @@ func _rebuild_region_scenery(region_index: int, palette: Array) -> void:
 		region_scenery.remove_child(child)
 		child.queue_free()
 	var region := clampi(region_index, 0, 5)
-	var stone := _material(palette[0].lightened(0.20), 0.25, 0.68)
-	var trim := _material(palette[1].darkened(0.28), 0.48, 0.38)
-	var magic := _material(palette[2], 0.22, 0.20, palette[2] * 0.65)
+	if not biome_material_cache.has(region):
+		biome_material_cache[region] = [
+			_material(palette[0].lightened(0.20), 0.25, 0.68),
+			_material(palette[1].darkened(0.28), 0.48, 0.38),
+			_material(palette[2], 0.22, 0.20, palette[2] * 0.65)
+		]
+	var region_materials: Array = biome_material_cache[region]
+	var stone: StandardMaterial3D = region_materials[0]
+	var trim: StandardMaterial3D = region_materials[1]
+	var magic: StandardMaterial3D = region_materials[2]
 	for n in range(12):
 		var angle := (float(n) + 0.5) * TAU / 12.0
 		var radius := 5.25 + float(n % 3) * 0.34
