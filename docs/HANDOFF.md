@@ -231,3 +231,12 @@ For EVERY future implementation session:
 - Commit `58653fe`: smoke tests assert each class has layered geometry within its VisualRig.
 - Commit `1f12e05`: updated character art README with asset selection order and limitations.
 - Latest post-edit CI was queued during handoff; verify its actual result and fix any failures. Highest-priority missing: original production rigged GLBs with authored animation clips, high-quality PBR textures, unique enemy meshes, device visual QA and frame-time profiling.
+
+## Hero collection and quest unlocks — 2026-11-21
+- User requested **many selectable named characters with lore, classes, different values and strongest heroes earned through specific gameplay tasks**.
+- Commit `d115d8d` adds `scripts/hero_roster.gd` with **30 individually named heroes**, Russian backstories, chess-piece classes (K/Q/R/B/N/P), combat roles (Бастион, Натиск, Точность, Магия), seven rarity tiers (common through relic), and explicit attack/armor/HP/crit stats. Every hero has an unlock quest requirement; six starter heroes available immediately, rare heroes unlocked by campaign/expedition boss wins, mythic requires level 20, relic requires level 35 and 22–25 wins. These are deterministic earned rewards, not paid random loot.
+- Commit `012e2d2` adds persistent `selected_hero` to profile defaults/sanitization; rejects selection of locked or nonexistent heroes when loading saves.
+- Commit `12c897a` adds in-game 30-hero roster popup, story/stat/quest details, selection, saved leader, and HP bonus. Commit `86b0f78` adds menu entry and integrates leader attack/armor/crit into raid combat, displays leader identity. Locked heroes cannot be selected; leader cannot be changed mid-raid.
+- Commit `2f4c683` adds smoke tests for 30 unique heroes, 7 tiers, 6 starter options, earnable full roster, and locked save selection.
+- **Important limitations**: these are 30 gameplay identities sharing six chess class mesh silhouettes, NOT 30 distinct authored 3D character models. Quest requirements are currently cumulative boss wins + levels, not unique mission-specific objectives. Need expand to actual varied quest trackers, individual abilities, per-hero art, party composition and meaningful tactical selection.
+- CI after changes queued at #244; verify and repair before claiming success. Check https://github.com/sitepushlic/kingdom-chess/actions .
